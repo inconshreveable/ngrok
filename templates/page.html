@@ -1,0 +1,105 @@
+<html>
+    <head>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/default.min.css">
+        <script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
+        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+        <script type="text/javascript">
+            $(function() {
+                $("ul.request.nav a").click(function() {
+                    $(this).closest("div").find(".raw, .headers, .summary").hide();
+                    $(this).closest("div").find("." + $(this).attr("target")).show();
+                    $(this).closest("ul").find("li.active").removeClass("active");
+                    $(this).parent().addClass("active");
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            body { margin-top: 50px; }
+            ul.history > li { none; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #ccc; }
+            .headers, .raw { display: none; }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="navbar navbar-inverse navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <a class="brand" href="#">ngrok</a>
+                        <ul class="nav">
+                            <li class="active"><a href="#">Inbound Requests</a></li>
+                            <li><a href="#">Outbound Requests</a></li>
+                            <li><a href="#">Configuration</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <ul class="history unstyled">
+            {{ range .GetHistory }}
+                <li>
+                    <div class="row">
+                        <div class="span6">
+                            {{ with .GetRequest }}
+                                <h3>{{ .Method }} {{ .URL.Path }}</h3>
+                                <ul class="request nav nav-pills">
+                                    <li class="active"><a target="summary" href="#">Summary</a></li>
+                                    <li><a href="#" target="headers">Headers</a></li>
+                                    <li><a href="#" target="raw">Raw</a></li>
+                                </ul>
+
+                                <div class="raw">
+                                    {{ with $raw := dumpRequest . }}
+                                        <pre><code class="http">{{ $raw }}</code></pre>
+                                    {{ end }}
+                                </div>
+
+                                <div class="headers">
+                                    {{ with .Header }}
+                                        <h6>Headers</h6>
+                                        <table class="table">
+                                        {{ range $key, $value := .}}
+                                            <tr>
+                                                <th> {{ $key }} </th>
+                                                <td> {{ $value }} </td>
+                                            </tr>
+                                        {{ end }}
+                                        </table>
+                                    {{ end }}
+                                </div>
+
+                                <div class="summary">
+                                    {{ with .URL.Query }}
+                                        <h6>Query Params</h6>
+                                        <table class="table">
+                                        {{ range $key, $value := .}}
+                                            <tr>
+                                                <th> {{ $key }} </th>
+                                                <td> {{ $value }} </td>
+                                            </tr>
+                                        {{ end }}
+                                        </table>
+                                    {{ end }}
+
+                                    {{ template "body" . }}
+                                </div>
+                            {{ end }}
+                        </div>
+                        <div class="span6">
+                            {{ with .GetResponse }}
+                                <h3>{{ .Status }}</h3>
+
+                                {{ with $raw := dumpResponse . }}
+                                    <pre><code class="http">{{ $raw }}</code></pre>
+                                {{ end }}
+                            {{ end }}
+                        </div>
+                    </div>
+                </li>
+            {{ end }}
+            </ul>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,23 @@
+{{ define "body" }}
+
+{{ with $json := handleJson . }}
+    <pre><code class="json">{{ $json.Str }}</code></pre>
+    {{ with $json.Err }}
+        <div class="alert">{{ $json.Err }}</div>
+    {{ end }}
+{{ end }}
+
+{{ with $form := handleForm . }}
+    <h6>Form Params</h6>
+    <ul>
+    {{ range $key, $values := $form }}
+        {{ range $value := $values }}
+            <li>
+                {{ $key }}: {{ $value }}
+            </li>
+        {{ end }}
+    {{ end }}
+    </ul>
+{{ end }}
+
+{{ end }}
