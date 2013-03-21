@@ -127,12 +127,12 @@ func (h *Http) run() {
 			template.New("page.html").Funcs(funcMap).ParseFiles("./templates/page.html", "./templates/body.html"))
 
 		for _, htxn := range s.GetHistory() {
-                        req, resp := htxn.GetRequest(), htxn.GetResponse()
+			req, resp := htxn.GetRequest(), htxn.GetResponse()
 
 			req.Body = NewRepeatableReader(req.Body)
-                        if resp != nil && resp.Body != nil {
-                            resp.Body = NewRepeatableReader(resp.Body)
-                        }
+			if resp != nil && resp.Body != nil {
+				resp.Body = NewRepeatableReader(resp.Body)
+			}
 		}
 
 		// write the response

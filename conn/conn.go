@@ -8,24 +8,24 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"ngrok"
+	"ngrok/log"
 )
 
 type Conn interface {
 	net.Conn
-	ngrok.Logger
+	log.Logger
 	Id() string
 }
 
 type tcpConn struct {
 	net.Conn
-	ngrok.Logger
+	log.Logger
 	id  int32
 	typ string
 }
 
 func NewTCP(conn net.Conn, typ string) *tcpConn {
-	c := &tcpConn{conn, ngrok.NewPrefixLogger(), rand.Int31(), typ}
+	c := &tcpConn{conn, log.NewPrefixLogger(), rand.Int31(), typ}
 	c.AddLogPrefix(c.Id())
 	c.Info("New connection from %v", conn.RemoteAddr())
 	return c

@@ -5,9 +5,9 @@ import (
 	"crypto/rand"
 	"fmt"
 	"net"
-	"ngrok"
 	"ngrok/client/ui"
 	"ngrok/conn"
+	nlog "ngrok/log"
 	"ngrok/proto"
 	"runtime"
 	"time"
@@ -26,7 +26,7 @@ func connect(addr string, typ string) (c conn.Conn, err error) {
 		return
 	}
 
-	//log.Debug("Dialing %v", addr)
+	log.Debug("Dialing %v", addr)
 	if tcpConn, err = net.DialTCP("tcp", nil, tcpAddr); err != nil {
 		return
 	}
@@ -86,9 +86,9 @@ func control(s *State) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("Recovering from failure %v, attempting to reconnect to server after 10 seconds . . .", r)
-			time.Sleep(10 * time.Second)
 			s.status = "reconnecting"
 			s.Update()
+			time.Sleep(10 * time.Second)
 			go control(s)
 		}
 	}()
@@ -155,14 +155,14 @@ func mkid() string {
 }
 
 func Main() {
-	ngrok.LogToFile()
-	//	ngrok.LogToConsole()
+	// XXX: should do this only if they ask us too
+	nlog.LogToFile()
 
 	// parse options
 	opts := parseArgs()
 
 	// init terminal, http UI
-	//termView := ui.NewTerm()
+	termView := ui.NewTerm()
 	httpView := ui.NewHttp(9999)
 
 	// init client state
@@ -171,8 +171,8 @@ func Main() {
 		id: mkid(),
 
 		// ui communication channels
-		//            ui: ui.NewUi(termView, httpView),
-		ui: ui.NewUi(httpView),
+		ui: ui.NewUi(termView, httpView),
+		//ui: ui.NewUi(httpView),
 
 		// command-line options
 		opts: opts,

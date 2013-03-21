@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 	"net"
-	"ngrok"
 	"ngrok/conn"
+	"ngrok/log"
 	"ngrok/proto"
 )
 
@@ -28,7 +28,7 @@ type Tunnel struct {
 	proxies chan conn.Conn
 
 	// logger
-	ngrok.Logger
+	log.Logger
 }
 
 func newTunnel(msg *proto.RegMsg, ctl *Control) {
@@ -36,7 +36,7 @@ func newTunnel(msg *proto.RegMsg, ctl *Control) {
 		regMsg:  msg,
 		ctl:     ctl,
 		proxies: make(chan conn.Conn),
-		Logger:  ngrok.NewPrefixLogger(),
+		Logger:  log.NewPrefixLogger(),
 	}
 
 	switch t.regMsg.Protocol {

@@ -1,23 +1,26 @@
-package ngrok
+package log
 
 import (
 	log "code.google.com/p/log4go"
 	"fmt"
 )
 
-var Log log.Logger
+const (
+	logfile string = "ngrok.log"
+)
 
 func init() {
-	Log = make(log.Logger)
-	//    Log.AddFilter("log", log.DEBUG, log.NewFileLogWriter("ngrok.log", true))
+	// log4go automatically sets the global logger to write to stdout
+	// and we don't want that by default
+	delete(log.Global, "stdout")
 }
 
 func LogToConsole() {
-	Log.AddFilter("log", log.DEBUG, log.NewConsoleLogWriter())
+	log.Global.AddFilter("log", log.DEBUG, log.NewConsoleLogWriter())
 }
 
 func LogToFile() {
-	Log.AddFilter("log", log.DEBUG, log.NewFileLogWriter("ngrok.log", true))
+	log.Global.AddFilter("log", log.DEBUG, log.NewFileLogWriter(logfile, true))
 }
 
 type Logger interface {
@@ -29,11 +32,12 @@ type Logger interface {
 }
 
 type PrefixLogger struct {
+	*log.Logger
 	prefix string
 }
 
 func NewPrefixLogger() Logger {
-	return &PrefixLogger{}
+	return &PrefixLogger{Logger: &log.Global}
 }
 
 func (pl *PrefixLogger) pfx(fmtstr string) interface{} {
@@ -41,19 +45,19 @@ func (pl *PrefixLogger) pfx(fmtstr string) interface{} {
 }
 
 func (pl *PrefixLogger) Debug(arg0 string, args ...interface{}) {
-	Log.Debug(pl.pfx(arg0), args...)
+	pl.Logger.Debug(pl.pfx(arg0), args...)
 }
 
 func (pl *PrefixLogger) Info(arg0 string, args ...interface{}) {
-	Log.Info(pl.pfx(arg0), args...)
+	pl.Logger.Info(pl.pfx(arg0), args...)
 }
 
 func (pl *PrefixLogger) Warn(arg0 string, args ...interface{}) error {
-	return Log.Warn(pl.pfx(arg0), args...)
+	return pl.Logger.Warn(pl.pfx(arg0), args...)
 }
 
 func (pl *PrefixLogger) Error(arg0 string, args ...interface{}) error {
-	return Log.Error(pl.pfx(arg0), args...)
+	return pl.Logger.Error(pl.pfx(arg0), args...)
 }
 
 func (pl *PrefixLogger) AddLogPrefix(prefix string) {

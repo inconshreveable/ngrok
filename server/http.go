@@ -56,7 +56,7 @@ func httpHandler(tcpConn net.Conn) {
 
 	if tunnel == nil {
 		conn.Info("Not tunnel found for hostname %s", req.Host)
-                return
+		return
 	}
 
 	tunnel.HandlePublicConnection(conn)

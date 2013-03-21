@@ -3,10 +3,10 @@ package server
 import (
 	log "code.google.com/p/log4go"
 	"flag"
-        "fmt"
+	"fmt"
 	"net"
-	"ngrok"
 	"ngrok/conn"
+	nlog "ngrok/log"
 	"ngrok/proto"
 	"regexp"
 )
@@ -117,7 +117,7 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 }
 
 func Main() {
-	ngrok.LogToConsole()
+	nlog.LogToConsole()
 	done := make(chan int)
 	// parse options
 	opts := parseArgs()

@@ -1,16 +1,16 @@
 package client
 
 import (
-        "time"
 	"container/list"
 	"net/http"
+	"time"
 )
 
 type RequestHistoryEntry struct {
-	req  *http.Request
-	resp *http.Response
-        start time.Time
-        duration time.Duration
+	req      *http.Request
+	resp     *http.Response
+	start    time.Time
+	duration time.Duration
 }
 
 type RequestHistory struct {
@@ -20,7 +20,7 @@ type RequestHistory struct {
 	resps      chan *http.Response
 	history    *list.List
 	onChange   func([]*RequestHistoryEntry)
-        metrics *ClientMetrics
+	metrics    *ClientMetrics
 }
 
 func NewRequestHistory(maxSize int, metrics *ClientMetrics, onChange func([]*RequestHistoryEntry)) *RequestHistory {
@@ -31,7 +31,7 @@ func NewRequestHistory(maxSize int, metrics *ClientMetrics, onChange func([]*Req
 		resps:      make(chan *http.Response),
 		history:    list.New(),
 		onChange:   onChange,
-                metrics:    metrics,
+		metrics:    metrics,
 	}
 
 	go func() {
@@ -50,7 +50,7 @@ func NewRequestHistory(maxSize int, metrics *ClientMetrics, onChange func([]*Req
 }
 
 func (rh *RequestHistory) addRequest(req *http.Request) {
-        rh.metrics.reqMeter.Mark(1)
+	rh.metrics.reqMeter.Mark(1)
 	if rh.history.Len() >= rh.maxSize {
 		entry := rh.history.Remove(rh.history.Back()).(*RequestHistoryEntry)
 		delete(rh.reqToEntry, entry.req)
@@ -64,8 +64,8 @@ func (rh *RequestHistory) addRequest(req *http.Request) {
 
 func (rh *RequestHistory) addResponse(resp *http.Response) {
 	if entry, ok := rh.reqToEntry[resp.Request]; ok {
-                entry.duration = time.Since(entry.start)
-                rh.metrics.reqTimer.Update(entry.duration)
+		entry.duration = time.Since(entry.start)
+		rh.metrics.reqTimer.Update(entry.duration)
 
 		entry.resp = resp
 		rh.onChange(rh.copy())
