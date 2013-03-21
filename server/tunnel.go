@@ -89,7 +89,7 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 			panic(err)
 		}
 
-		conn := conn.NewLogged(tcpConn, "pub")
+		conn := conn.NewTCP(tcpConn, "pub")
 		conn.AddLogPrefix(t.Id())
 
 		go func() {

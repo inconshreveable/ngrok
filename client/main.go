@@ -31,7 +31,7 @@ func connect(addr string, typ string) (c conn.Conn, err error) {
 		return
 	}
 
-	c = conn.NewLogged(tcpConn, typ)
+	c = conn.NewTCP(tcpConn, typ)
 	c.Debug("Connected to: %v", tcpAddr)
 	return c, nil
 }

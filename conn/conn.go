@@ -17,26 +17,26 @@ type Conn interface {
 	Id() string
 }
 
-type loggedConn struct {
+type tcpConn struct {
 	net.Conn
 	ngrok.Logger
 	id  int32
 	typ string
 }
 
-func NewLogged(conn net.Conn, typ string) *loggedConn {
-	c := &loggedConn{conn, ngrok.NewPrefixLogger(), rand.Int31(), typ}
+func NewTCP(conn net.Conn, typ string) *tcpConn {
+	c := &tcpConn{conn, ngrok.NewPrefixLogger(), rand.Int31(), typ}
 	c.AddLogPrefix(c.Id())
 	c.Info("New connection from %v", conn.RemoteAddr())
 	return c
 }
 
-func (c *loggedConn) Close() error {
+func (c *tcpConn) Close() error {
 	c.Debug("Closing")
 	return c.Conn.Close()
 }
 
-func (c *loggedConn) Id() string {
+func (c *tcpConn) Id() string {
 	return fmt.Sprintf("%s:%x", c.typ, c.id)
 }
 
@@ -65,28 +65,28 @@ func Join(c Conn, c2 Conn) (int64, int64) {
 	return fromBytes, toBytes
 }
 
-type loggedHttpConn struct {
-	*loggedConn
+type httpConn struct {
+	*tcpConn
 	reqBuf *bytes.Buffer
 }
 
-func NewHttp(conn net.Conn, typ string) *loggedHttpConn {
-	return &loggedHttpConn{
-		NewLogged(conn, typ),
+func NewHttp(conn net.Conn, typ string) *httpConn {
+	return &httpConn{
+		NewTCP(conn, typ),
 		bytes.NewBuffer(make([]byte, 0, 1024)),
 	}
 }
 
-func (c *loggedHttpConn) ReadRequest() (*http.Request, error) {
-	r := io.TeeReader(c.loggedConn, c.reqBuf)
+func (c *httpConn) ReadRequest() (*http.Request, error) {
+	r := io.TeeReader(c.tcpConn, c.reqBuf)
 	return http.ReadRequest(bufio.NewReader(r))
 }
 
-func (c *loggedConn) ReadFrom(r io.Reader) (n int64, err error) {
+func (c *tcpConn) ReadFrom(r io.Reader) (n int64, err error) {
 	// special case when we're reading from an http request where
 	// we had to parse the request and consume bytes from the socket
 	// and store them in a temporary request buffer
-	if httpConn, ok := r.(*loggedHttpConn); ok {
+	if httpConn, ok := r.(*httpConn); ok {
 		if n, err = httpConn.reqBuf.WriteTo(c); err != nil {
 			return
 		}

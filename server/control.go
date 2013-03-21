@@ -33,7 +33,7 @@ type Control struct {
 
 func NewControl(tcpConn *net.TCPConn) {
 	c := &Control{
-		conn:     conn.NewLogged(tcpConn, "ctl"),
+		conn:     conn.NewTCP(tcpConn, "ctl"),
 		out:      make(chan (interface{}), 1),
 		in:       make(chan (proto.Message), 1),
 		stop:     make(chan (int), 1),

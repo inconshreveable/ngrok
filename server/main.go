@@ -89,7 +89,7 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 			panic(err)
 		}
 
-		conn := conn.NewLogged(tcpConn, "pxy")
+		conn := conn.NewTCP(tcpConn, "pxy")
 
 		go func() {
 			defer func() {
