@@ -15,6 +15,7 @@ type State interface {
 	GetPublicUrl() string
 	GetLocalAddr() string
 	GetStatus() string
+	GetProtocol() string
 	GetHistory() []HttpRequest
 	IsStopping() bool
 	GetConnectionMetrics() (metrics.Meter, metrics.Timer)

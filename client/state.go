@@ -10,6 +10,7 @@ type State struct {
 	id        string
 	ui        *ui.Ui
 	publicUrl string
+	protocol  string
 	history   *RequestHistory
 	opts      *Options
 	metrics   *ClientMetrics
@@ -25,6 +26,7 @@ func (s State) GetVersion() string   { return "" }
 func (s State) GetPublicUrl() string { return s.publicUrl }
 func (s State) GetLocalAddr() string { return s.opts.localaddr }
 func (s State) GetStatus() string    { return s.status }
+func (s State) GetProtocol() string  { return s.protocol }
 func (s State) GetHistory() []ui.HttpRequest {
 	// go sucks
 	historyEntries := make([]ui.HttpRequest, len(s.historyEntries))

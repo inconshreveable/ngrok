@@ -89,8 +89,8 @@ func (t *Term) draw(updates chan State) {
 			msec := float64(time.Millisecond)
 
 			printf(0, 2, "%-30s%s", "Version", state.GetVersion())
-			printf(0, 3, "%-30s%s", "Public URL", state.GetPublicUrl())
-			printf(0, 4, "%-30s%s", "Local Address", state.GetLocalAddr())
+			printf(0, 3, "%-30s%s -> %s", "Forwarding", state.GetPublicUrl(), state.GetLocalAddr())
+			printf(0, 4, "%-30s%s", "HTTP Dashboard", "http://127.0.0.1:9999")
 			printfAttr(0, 5, t.statusColorMap[state.GetStatus()], "%-30s%s", "Tunnel Status", state.GetStatus())
 
 			connMeter, connTimer := state.GetConnectionMetrics()
@@ -106,13 +106,15 @@ func (t *Term) draw(updates chan State) {
 			printf(0, 11, "%-30s%d", "Bytes Out", bytesOutCount.Count())
 			printf(0, 12, "%-30s%.2f", "Bytes Out/req", bytesOut.Mean())
 
-			printf(0, 14, "Last HTTP Requests")
-			for i, http := range state.GetHistory() {
-				req := http.GetRequest()
-				resp := http.GetResponse()
-				printf(0, 15+i, "%s %v", req.Method, req.URL)
-				if resp != nil {
-					printf(30, 15+i, "%s", resp.Status)
+			if state.GetProtocol() == "http" {
+				printf(0, 13, "HTTP Requests")
+				for i, http := range state.GetHistory() {
+					req := http.GetRequest()
+					resp := http.GetResponse()
+					printf(0, 15+i, "%s %v", req.Method, req.URL)
+					if resp != nil {
+						printf(30, 15+i, "%s", resp.Status)
+					}
 				}
 			}
 

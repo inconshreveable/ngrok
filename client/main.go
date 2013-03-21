@@ -197,6 +197,7 @@ func Main() {
 
 	// set initial ui state
 	s.status = "connecting"
+	s.protocol = opts.protocol
 	s.Update()
 
 	go control(s)
