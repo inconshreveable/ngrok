@@ -119,6 +119,12 @@ func control(s *State) {
 		panic(err)
 	}
 
+	if regAck.Error != "" {
+		emsg := fmt.Sprintf("Server failed to allocate tunnel: %s", regAck.Error)
+		s.ui.Cmds <- ui.Command{ui.QUIT, emsg}
+		return
+	}
+
 	// update UI state
 	conn.Info("Tunnel established at %v", regAck.Url)
 	//state.version = regAck.Version
@@ -195,14 +201,16 @@ func Main() {
 
 	go control(s)
 
+	quitMessage := ""
 	s.ui.Wait.Add(1)
 	go func() {
 		defer s.ui.Wait.Done()
 		for {
 			select {
 			case cmd := <-s.ui.Cmds:
-				switch cmd {
+				switch cmd.Code {
 				case ui.QUIT:
+					quitMessage = cmd.Payload.(string)
 					s.stopping = true
 					s.Update()
 					return
@@ -212,4 +220,5 @@ func Main() {
 	}()
 
 	s.ui.Wait.Wait()
+	fmt.Println(quitMessage)
 }

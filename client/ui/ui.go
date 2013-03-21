@@ -4,7 +4,10 @@ import (
 	"sync"
 )
 
-type Command int
+type Command struct {
+	Code    int
+	Payload interface{}
+}
 
 const (
 	QUIT = iota

@@ -128,7 +128,7 @@ func (t *Term) input() {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyCtrlC:
-				t.ui.Cmds <- QUIT
+				t.ui.Cmds <- Command{QUIT, ""}
 				return
 			}
 		}

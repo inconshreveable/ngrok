@@ -28,7 +28,7 @@ func NewTunnelManager(domain string) *TunnelManager {
 	}
 }
 
-func (m *TunnelManager) Add(t *Tunnel) {
+func (m *TunnelManager) Add(t *Tunnel) error {
 	assignTunnel := func(url string) bool {
 		m.Lock()
 		defer m.Unlock()
@@ -47,7 +47,7 @@ func (m *TunnelManager) Add(t *Tunnel) {
 		addr := t.listener.Addr().(*net.TCPAddr)
 		url = fmt.Sprintf("tcp://%s:%d", m.domain, addr.Port)
 		if !assignTunnel(url) {
-			panic("TCP at %s already registered!")
+			return t.Error("TCP at %s already registered!", url)
 		}
 		metrics.tcpTunnelMeter.Mark(1)
 
@@ -60,7 +60,7 @@ func (m *TunnelManager) Add(t *Tunnel) {
 
 		if url != "" {
 			if !assignTunnel(url) {
-				panic(fmt.Sprintf("The tunnel address %s is already registered!", url))
+				return t.Warn("The tunnel address %s is already registered!", url)
 			}
 		} else {
 			// try to give the same subdomain back if it's available
@@ -85,7 +85,7 @@ func (m *TunnelManager) Add(t *Tunnel) {
 		}
 
 	default:
-		panic(t.Error("Unrecognized protocol type %s", t.regMsg.Protocol))
+		return t.Error("Unrecognized protocol type %s", t.regMsg.Protocol)
 	}
 
 	t.url = url
@@ -102,6 +102,8 @@ func (m *TunnelManager) Add(t *Tunnel) {
 	default:
 		metrics.otherCounter.Inc(1)
 	}
+
+	return nil
 }
 
 func (m *TunnelManager) Del(url string) {

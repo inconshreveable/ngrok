@@ -61,6 +61,7 @@ type RegAckMsg struct {
 	Type      string
 	Url       string
 	ProxyAddr string
+	Error     string
 }
 
 type RegProxyMsg struct {

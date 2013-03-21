@@ -22,7 +22,7 @@ type Control struct {
 	// channels for communicating messages over the connection
 	out  chan (interface{})
 	in   chan (proto.Message)
-	stop chan (int)
+	stop chan (proto.Message)
 
 	// heartbeat
 	lastPong int64
@@ -36,7 +36,7 @@ func NewControl(tcpConn *net.TCPConn) {
 		conn:     conn.NewTCP(tcpConn, "ctl"),
 		out:      make(chan (interface{}), 1),
 		in:       make(chan (proto.Message), 1),
-		stop:     make(chan (int), 1),
+		stop:     make(chan (proto.Message), 1),
 		lastPong: time.Now().Unix(),
 	}
 
@@ -55,9 +55,6 @@ func (c *Control) managerThread() {
 		}
 		ping.Stop()
 		reap.Stop()
-		close(c.out)
-		close(c.in)
-		close(c.stop)
 		c.conn.Close()
 	}()
 
@@ -76,7 +73,10 @@ func (c *Control) managerThread() {
 				return
 			}
 
-		case <-c.stop:
+		case m := <-c.stop:
+			if m != nil {
+				proto.WriteMsg(c.conn, m)
+			}
 			return
 
 		case msg := <-c.in:
@@ -100,7 +100,7 @@ func (c *Control) readThread() {
 		if err := recover(); err != nil {
 			c.conn.Info("Control::readThread failed with error %v: %s", err, debug.Stack())
 		}
-		c.stop <- 1
+		c.stop <- nil
 	}()
 
 	// read messages from the control channel

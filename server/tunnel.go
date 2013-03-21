@@ -53,28 +53,28 @@ func newTunnel(msg *proto.RegMsg, ctl *Control) {
 	default:
 	}
 
-	tunnels.Add(t)
+	if err := tunnels.Add(t); err != nil {
+		t.ctl.stop <- &proto.RegAckMsg{Error: fmt.Sprint(err)}
+		return
+	}
+
 	t.ctl.conn.AddLogPrefix(t.Id())
 	t.AddLogPrefix(t.Id())
 	t.Info("Registered new tunnel")
 	t.ctl.out <- &proto.RegAckMsg{Url: t.url, ProxyAddr: fmt.Sprintf("%s", proxyAddr)}
-
-	//go t.managerThread()
 }
 
 func (t *Tunnel) shutdown() {
+	// XXX: this is completely unused right now
 	t.Info("Shutting down")
 	// stop any go routines
 	// close all proxy and public connections
 	// stop any metrics
-	t.ctl.stop <- 1
+	t.ctl.stop <- nil
 }
 
 func (t *Tunnel) Id() string {
 	return t.url
-}
-
-func (t *Tunnel) managerThread() {
 }
 
 /**
