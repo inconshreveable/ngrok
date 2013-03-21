@@ -3,6 +3,7 @@ package server
 import (
 	log "code.google.com/p/log4go"
 	"flag"
+        "fmt"
 	"net"
 	"ngrok"
 	"ngrok/conn"
@@ -73,9 +74,9 @@ func controlListener(addr *net.TCPAddr, domain string) {
 /**
  * Listens for new proxy connections from tunnel clients
  */
-func proxyListener(addr *net.TCPAddr) {
+func proxyListener(addr *net.TCPAddr, domain string) {
 	listener, err := net.ListenTCP("tcp", addr)
-	proxyAddr = listener.Addr().String()
+	proxyAddr = fmt.Sprintf("%s:%d", domain, getTCPPort(listener.Addr()))
 
 	if err != nil {
 		panic(err)
@@ -123,7 +124,7 @@ func Main() {
 
 	tunnels = NewTunnelManager(opts.domain)
 
-	go proxyListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.proxyPort})
+	go proxyListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.proxyPort}, opts.domain)
 	go controlListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.tunnelPort}, opts.domain)
 	go httpListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.publicPort})
 
