@@ -7,10 +7,11 @@ It is a man-in-the-middle proxy server that you run locally on your development 
     - Expose a local http server to the internet on a subdomain of ngrok.com
 
 
-# Compiling ngrok
+## Compiling ngrok
 Binaries get placed in ./bin
 
     git clone git@github.com:inconshreveable/ngrok.git
+    cd ngrok
     go get -d ./...
     make
     bin/ngrok [LOCAL PORT]
