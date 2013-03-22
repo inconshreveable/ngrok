@@ -10,21 +10,28 @@ import (
 	"time"
 )
 
+const (
+	cacheDuration        time.Duration = 24 * time.Hour
+	cacheCleanupInterval time.Duration = time.Minute
+)
+
 /**
  * TunnelManager: Manages a set of tunnels
  */
 type TunnelManager struct {
-	domain         string
-	tunnels        map[string]*Tunnel
-	domainAffinity *cache.Cache
+	domain           string
+	tunnels          map[string]*Tunnel
+	idDomainAffinity *cache.Cache
+	ipDomainAffinity *cache.Cache
 	sync.RWMutex
 }
 
 func NewTunnelManager(domain string) *TunnelManager {
 	return &TunnelManager{
-		domain:         domain,
-		tunnels:        make(map[string]*Tunnel),
-		domainAffinity: cache.New(24*time.Hour, time.Minute),
+		domain:           domain,
+		tunnels:          make(map[string]*Tunnel),
+		idDomainAffinity: cache.New(cacheDuration, cacheCleanupInterval),
+		ipDomainAffinity: cache.New(cacheDuration, cacheCleanupInterval),
 	}
 }
 
@@ -63,10 +70,17 @@ func (m *TunnelManager) Add(t *Tunnel) error {
 				return t.Warn("The tunnel address %s is already registered!", url)
 			}
 		} else {
+			clientIp := t.ctl.conn.RemoteAddr().(*net.TCPAddr).IP.String()
+			clientId := t.regMsg.ClientId
+
 			// try to give the same subdomain back if it's available
-			subdomain, ok := m.domainAffinity.Get(t.regMsg.ClientId)
-			if !ok {
-				subdomain = fmt.Sprintf("%x", rand.Int31())
+			subdomain := fmt.Sprintf("%x", rand.Int31())
+			if lastDomain, ok := m.idDomainAffinity.Get(clientId); ok {
+				t.Debug("Found affinity for subdomain %s with client id %s", subdomain, clientId)
+				subdomain = lastDomain.(string)
+			} else if lastDomain, ok = m.ipDomainAffinity.Get(clientIp); ok {
+				t.Debug("Found affinity for subdomain %s with client ip %s", subdomain, clientIp)
+				subdomain = lastDomain.(string)
 			}
 
 			// pick one randomly
@@ -81,7 +95,8 @@ func (m *TunnelManager) Add(t *Tunnel) error {
 
 			// save our choice for later
 			// XXX: this is going to leak memory
-			m.domainAffinity.Set(t.regMsg.ClientId, subdomain, 0)
+			m.idDomainAffinity.Set(clientId, subdomain, 0)
+			m.ipDomainAffinity.Set(clientIp, subdomain, 0)
 		}
 
 	default:
