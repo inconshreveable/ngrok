@@ -56,6 +56,11 @@ func (c *Control) managerThread() {
 		ping.Stop()
 		reap.Stop()
 		c.conn.Close()
+
+		// shutdown the tunnel if it's open
+		if c.tun != nil {
+			c.tun.shutdown()
+		}
 	}()
 
 	for {
@@ -83,7 +88,7 @@ func (c *Control) managerThread() {
 			switch msg.GetType() {
 			case "RegMsg":
 				c.conn.Info("Registering new tunnel")
-				newTunnel(msg.(*proto.RegMsg), c)
+				c.tun = newTunnel(msg.(*proto.RegMsg), c)
 
 			case "PongMsg":
 				atomic.StoreInt64(&c.lastPong, time.Now().Unix())

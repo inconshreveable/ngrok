@@ -1,10 +1,11 @@
 package server
 
 import (
+	log "code.google.com/p/log4go"
 	"fmt"
 	"net"
 	"ngrok/conn"
-	"ngrok/log"
+	nlog "ngrok/log"
 	"ngrok/proto"
 )
 
@@ -28,15 +29,15 @@ type Tunnel struct {
 	proxies chan conn.Conn
 
 	// logger
-	log.Logger
+	nlog.Logger
 }
 
-func newTunnel(msg *proto.RegMsg, ctl *Control) {
-	t := &Tunnel{
+func newTunnel(msg *proto.RegMsg, ctl *Control) (t *Tunnel) {
+	t = &Tunnel{
 		regMsg:  msg,
 		ctl:     ctl,
 		proxies: make(chan conn.Conn),
-		Logger:  log.NewPrefixLogger(),
+		Logger:  nlog.NewPrefixLogger(),
 	}
 
 	switch t.regMsg.Protocol {
@@ -62,14 +63,23 @@ func newTunnel(msg *proto.RegMsg, ctl *Control) {
 	t.AddLogPrefix(t.Id())
 	t.Info("Registered new tunnel")
 	t.ctl.out <- &proto.RegAckMsg{Url: t.url, ProxyAddr: fmt.Sprintf("%s", proxyAddr)}
+	return
 }
 
 func (t *Tunnel) shutdown() {
-	// XXX: this is completely unused right now
 	t.Info("Shutting down")
-	// stop any go routines
-	// close all proxy and public connections
-	// stop any metrics
+
+	// if we have a public listener (this is a raw TCP tunnel, shut it down
+	if t.listener != nil {
+		t.listener.Close()
+	}
+
+	// remove ourselves from the tunnel registry
+	tunnels.Del(t.url)
+
+	// XXX: should we shut down all of the proxy connections?
+
+	// XXX: will this block if this is being called from Control's shutdown code?
 	t.ctl.stop <- nil
 }
 
@@ -82,6 +92,12 @@ func (t *Tunnel) Id() string {
  */
 func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 	for {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Warn("listenTcp failed with error %v", r)
+			}
+		}()
+
 		// accept public connections
 		tcpConn, err := listener.AcceptTCP()
 
@@ -92,20 +108,18 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 		conn := conn.NewTCP(tcpConn, "pub")
 		conn.AddLogPrefix(t.Id())
 
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					conn.Warn("Failed with error %v", r)
-				}
-			}()
-			defer conn.Close()
-
-			t.HandlePublicConnection(conn)
-		}()
+		go t.HandlePublicConnection(conn)
 	}
 }
 
 func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
+	defer publicConn.Close()
+	defer func() {
+		if r := recover(); r != nil {
+			publicConn.Warn("HandlePublicConnection failed with error %v", r)
+		}
+	}()
+
 	metrics.requestTimer.Time(func() {
 		metrics.requestMeter.Mark(1)
 
