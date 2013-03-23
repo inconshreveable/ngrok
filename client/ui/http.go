@@ -72,6 +72,19 @@ func (h *Http) run() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		funcMap := template.FuncMap{
+                        "classForStatus": func(status string) string {
+                            switch status[0] {
+                                case '2':
+                                    return "text-info"
+                                case '3':
+                                    return "muted"
+                                case '4':
+                                    return "text-warning"
+                                case '5':
+                                    return "text-error"
+                            }
+                            return ""
+                        },
 			"dumpResponse": func(resp *http.Response) (interface{}, error) {
 				b, err := httputil.DumpResponse(resp, false)
 				body := new(bytes.Buffer)

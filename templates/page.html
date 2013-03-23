@@ -89,7 +89,7 @@
                         </div>
                         <div class="span6">
                             {{ with .GetResponse }}
-                                <h3>{{ .Status }}</h3>
+                                <h3 class="{{ classForStatus .Status }}">{{ .Status }}</h3>
 
                                 {{ with $raw := dumpResponse . }}
                                     <pre><code class="http">{{ $raw }}</code></pre>
