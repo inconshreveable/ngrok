@@ -1,2 +1,5 @@
 *.swp
 bin/
+pkg/
+src/code.google.com
+src/github.com

@@ -1,13 +1,18 @@
-.PHONY: default bindir server client
+.PHONY: default server client deps clean all
 
-default: client server
+default: all
 
-bindir:
-	mkdir -p bin
+deps:
+	GOPATH=`pwd` go get -v ngrok/...
 
-server: bindir
-	GOPATH=~ go build -o bin/ngrokd main/server.go
+server: deps
+	GOPATH=`pwd` go install main/ngrokd
 
-client: bindir
-	GOPATH=~ go build -o bin/ngrok main/client.go
+client: deps
+	GOPATH=`pwd` go install main/ngrok
 
+all: deps
+	GOPATH=`pwd` go install main/...
+
+clean:
+	GOPATH=`pwd` go clean ngrok/...
