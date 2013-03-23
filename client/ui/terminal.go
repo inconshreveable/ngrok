@@ -38,6 +38,7 @@ func printf(x, y int, arg0 string, args ...interface{}) {
 type Term struct {
 	ui             *Ui
 	statusColorMap map[string]termbox.Attribute
+	updates        chan (State)
 }
 
 func NewTerm() *Term {
@@ -47,6 +48,7 @@ func NewTerm() *Term {
 			"reconnecting": termbox.ColorRed,
 			"online":       termbox.ColorGreen,
 		},
+		updates: make(chan State),
 	}
 }
 
@@ -62,7 +64,7 @@ func (t *Term) run() {
 
 	// open channels for incoming application state changes
 	// and broadbasts
-	updates := t.ui.Updates.Reg()
+	t.updates = t.ui.Updates.Reg()
 
 	// init/close termbox library
 	termbox.Init()
@@ -70,13 +72,23 @@ func (t *Term) run() {
 
 	go t.input()
 
-	t.draw(updates)
+	t.draw()
 }
 
-func (t *Term) draw(updates chan State) {
+func (t *Term) draw() {
+	var state State
 	for {
 		select {
-		case state := <-updates:
+		case newState := <-t.updates:
+			if newState != nil {
+				state = newState
+			}
+
+			if state == nil {
+				// log.Info("Got update to draw, but no state to draw with")
+				continue
+			}
+
 			// program is shutting down
 			if state.IsStopping() {
 				return
@@ -84,36 +96,33 @@ func (t *Term) draw(updates chan State) {
 
 			clear()
 
+			x, _ := termbox.Size()
+			quitMsg := "(Ctrl+C to quit)"
+			printf(x-len(quitMsg), 0, quitMsg)
+
 			printfAttr(0, 0, termbox.ColorBlue|termbox.AttrBold, "ngrok")
 
 			msec := float64(time.Millisecond)
 
-			printf(0, 2, "%-30s%s", "Version", state.GetVersion())
-			printf(0, 3, "%-30s%s -> %s", "Forwarding", state.GetPublicUrl(), state.GetLocalAddr())
-			printf(0, 4, "%-30s%s", "HTTP Dashboard", "http://127.0.0.1:9999")
-			printfAttr(0, 5, t.statusColorMap[state.GetStatus()], "%-30s%s", "Tunnel Status", state.GetStatus())
+			printfAttr(0, 2, t.statusColorMap[state.GetStatus()], "%-30s%s", "Tunnel Status", state.GetStatus())
+			printf(0, 3, "%-30s%s", "Version", state.GetVersion())
+			printf(0, 4, "%-30s%s", "Protocol", state.GetProtocol())
+			printf(0, 5, "%-30s%s -> %s", "Forwarding", state.GetPublicUrl(), state.GetLocalAddr())
+			printf(0, 6, "%-30s%s", "HTTP Dashboard", "http://127.0.0.1:9999")
 
 			connMeter, connTimer := state.GetConnectionMetrics()
-			printf(0, 6, "%-30s%d", "# Conn", connMeter.Count())
-			printf(0, 7, "%-30s%.2fms", "Mean Conn Time", connTimer.Mean()/msec)
-			printf(0, 8, "%-30s%.2fms", "Conn Time 95th PCTL", connTimer.Percentile(0.95)/msec)
-
-			bytesInCount, bytesIn := state.GetBytesInMetrics()
-			printf(0, 9, "%-30s%d", "Bytes In", bytesInCount.Count())
-			printf(0, 10, "%-30s%.2f", "Avg Bytes/req", bytesIn.Mean())
-
-			bytesOutCount, bytesOut := state.GetBytesOutMetrics()
-			printf(0, 11, "%-30s%d", "Bytes Out", bytesOutCount.Count())
-			printf(0, 12, "%-30s%.2f", "Bytes Out/req", bytesOut.Mean())
+			printf(0, 7, "%-30s%d", "# Conn", connMeter.Count())
+			printf(0, 8, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
 
 			if state.GetProtocol() == "http" {
-				printf(0, 13, "HTTP Requests")
+				printf(0, 10, "HTTP Requests")
+				printf(0, 11, "-------------")
 				for i, http := range state.GetHistory() {
 					req := http.GetRequest()
 					resp := http.GetResponse()
-					printf(0, 15+i, "%s %v", req.Method, req.URL)
+					printf(0, 12+i, "%s %v", req.Method, req.URL)
 					if resp != nil {
-						printf(30, 15+i, "%s", resp.Status)
+						printf(30, 12+i, "%s", resp.Status)
 					}
 				}
 			}
@@ -133,6 +142,12 @@ func (t *Term) input() {
 				t.ui.Cmds <- Command{QUIT, ""}
 				return
 			}
+
+		case termbox.EventResize:
+			t.updates <- nil
+
+		case termbox.EventError:
+			panic(ev.Err)
 		}
 	}
 }
