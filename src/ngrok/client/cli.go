@@ -26,7 +26,7 @@ type Options struct {
 
 func fail(msg string, args ...interface{}) {
 	//log.Error(msg, args..)
-	fmt.Printf(msg, args...)
+	fmt.Printf(msg + "\n", args...)
 	flag.PrintDefaults()
 	os.Exit(1)
 }
