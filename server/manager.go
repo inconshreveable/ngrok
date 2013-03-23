@@ -93,8 +93,8 @@ func (m *TunnelManager) Add(t *Tunnel) error {
 				}
 			}
 
-			// save our choice for later
-			// XXX: this is going to leak memory
+			// save our choice so we can try to give clients back the same
+			// tunnel later
 			m.idDomainAffinity.Set(clientId, subdomain, 0)
 			m.ipDomainAffinity.Set(clientIp, subdomain, 0)
 		}
