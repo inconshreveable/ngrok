@@ -6,7 +6,7 @@ import (
 	"net"
 	"ngrok/conn"
 	nlog "ngrok/log"
-	"ngrok/proto"
+	"ngrok/msg"
 )
 
 /**
@@ -14,7 +14,7 @@ import (
  *         route public traffic to a firewalled endpoint.
  */
 type Tunnel struct {
-	regMsg *proto.RegMsg
+	regMsg *msg.RegMsg
 
 	// public url
 	url string
@@ -32,9 +32,9 @@ type Tunnel struct {
 	nlog.Logger
 }
 
-func newTunnel(msg *proto.RegMsg, ctl *Control) (t *Tunnel) {
+func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	t = &Tunnel{
-		regMsg:  msg,
+		regMsg:  m,
 		ctl:     ctl,
 		proxies: make(chan conn.Conn),
 		Logger:  nlog.NewPrefixLogger(),
@@ -55,14 +55,14 @@ func newTunnel(msg *proto.RegMsg, ctl *Control) (t *Tunnel) {
 	}
 
 	if err := tunnels.Add(t); err != nil {
-		t.ctl.stop <- &proto.RegAckMsg{Error: fmt.Sprint(err)}
+		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprint(err)}
 		return
 	}
 
 	t.ctl.conn.AddLogPrefix(t.Id())
 	t.AddLogPrefix(t.Id())
 	t.Info("Registered new tunnel")
-	t.ctl.out <- &proto.RegAckMsg{Url: t.url, ProxyAddr: fmt.Sprintf("%s", proxyAddr)}
+	t.ctl.out <- &msg.RegAckMsg{Url: t.url, ProxyAddr: fmt.Sprintf("%s", proxyAddr)}
 	return
 }
 
@@ -124,7 +124,7 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 		metrics.requestMeter.Mark(1)
 
 		t.Debug("Requesting new proxy connection")
-		t.ctl.out <- &proto.ReqProxyMsg{}
+		t.ctl.out <- &msg.ReqProxyMsg{}
 
 		proxyConn := <-t.proxies
 		t.Info("Returning proxy connection %s", proxyConn.Id())

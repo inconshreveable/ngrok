@@ -2,13 +2,15 @@ package client
 
 import (
 	log "code.google.com/p/log4go"
-	"crypto/rand"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"ngrok/client/ui"
 	"ngrok/conn"
 	nlog "ngrok/log"
+	"ngrok/msg"
 	"ngrok/proto"
+	"ngrok/util"
 	"runtime"
 	"time"
 )
@@ -39,7 +41,7 @@ func connect(addr string, typ string) (c conn.Conn, err error) {
 /**
  * Establishes and manages a tunnel proxy connection with the server
  */
-func proxy(proxyAddr string, s *State) {
+func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	start := time.Now()
 	remoteConn, err := connect(proxyAddr, "pxy")
 	if err != nil {
@@ -47,7 +49,7 @@ func proxy(proxyAddr string, s *State) {
 	}
 
 	defer remoteConn.Close()
-	err = proto.WriteMsg(remoteConn, &proto.RegProxyMsg{Url: s.publicUrl})
+	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{Url: s.publicUrl})
 
 	if err != nil {
 		panic(err)
@@ -63,33 +65,29 @@ func proxy(proxyAddr string, s *State) {
 	m := s.metrics
 	m.proxySetupTimer.Update(time.Since(start))
 	m.connMeter.Mark(1)
-	s.Update()
+	ctl.Update(s)
 	m.connTimer.Time(func() {
-		if s.opts.protocol == "http" {
-			teeConn := conn.NewTee(remoteConn)
-			remoteConn = teeConn
-			go conn.ParseHttp(teeConn, s.history.reqs, s.history.resps)
-		}
+		localConn := s.protocol.WrapConn(localConn)
 		bytesIn, bytesOut := conn.Join(localConn, remoteConn)
 		m.bytesIn.Update(bytesIn)
 		m.bytesOut.Update(bytesOut)
 		m.bytesInCount.Inc(bytesIn)
 		m.bytesOutCount.Inc(bytesOut)
 	})
-	s.Update()
+	ctl.Update(s)
 }
 
 /**
  * Establishes and manages a tunnel control connection with the server
  */
-func control(s *State) {
+func control(s *State, ctl *ui.Controller) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("Recovering from failure %v, attempting to reconnect to server after 10 seconds . . .", r)
 			s.status = "reconnecting"
-			s.Update()
+			ctl.Update(s)
 			time.Sleep(10 * time.Second)
-			go control(s)
+			go control(s, ctl)
 		}
 	}()
 
@@ -101,7 +99,7 @@ func control(s *State) {
 	defer conn.Close()
 
 	// register with the server
-	err = proto.WriteMsg(conn, &proto.RegMsg{
+	err = msg.WriteMsg(conn, &msg.RegMsg{
 		Protocol:  s.opts.protocol,
 		OS:        runtime.GOOS,
 		Hostname:  s.opts.hostname,
@@ -114,14 +112,14 @@ func control(s *State) {
 	}
 
 	// wait for the server to ack our register
-	var regAck proto.RegAckMsg
-	if err = proto.ReadMsgInto(conn, &regAck); err != nil {
+	var regAck msg.RegAckMsg
+	if err = msg.ReadMsgInto(conn, &regAck); err != nil {
 		panic(err)
 	}
 
 	if regAck.Error != "" {
 		emsg := fmt.Sprintf("Server failed to allocate tunnel: %s", regAck.Error)
-		s.ui.Cmds <- ui.Command{ui.QUIT, emsg}
+		ctl.Cmds <- ui.Command{ui.QUIT, emsg}
 		return
 	}
 
@@ -130,34 +128,23 @@ func control(s *State) {
 	//state.version = regAck.Version
 	s.publicUrl = regAck.Url
 	s.status = "online"
-	s.Update()
+	ctl.Update(s)
 
 	// main control loop
 	for {
-		var msg proto.Message
-		if msg, err = proto.ReadMsg(conn); err != nil {
+		var m msg.Message
+		if m, err = msg.ReadMsg(conn); err != nil {
 			panic(err)
 		}
 
-		switch msg.GetType() {
+		switch m.GetType() {
 		case "ReqProxyMsg":
-			go proxy(regAck.ProxyAddr, s)
+			go proxy(regAck.ProxyAddr, s, ctl)
 
 		case "PingMsg":
-			proto.WriteMsg(conn, &proto.PongMsg{})
+			msg.WriteMsg(conn, &msg.PongMsg{})
 		}
 	}
-}
-
-// create a random identifier for this client
-func mkid() string {
-	b := make([]byte, 8)
-	_, err := rand.Read(b)
-	if err != nil {
-		panic(fmt.Sprintf("Couldn't create random client identifier, %v", err))
-	}
-	return fmt.Sprintf("%x", b)
-
 }
 
 func Main() {
@@ -167,18 +154,12 @@ func Main() {
 	// parse options
 	opts := parseArgs()
 
-	// init terminal, http UI
-	termView := ui.NewTerm()
-	httpView := ui.NewHttp(9999)
-
 	// init client state
 	s := &State{
-		// unique client id
-		id: mkid(),
+		status: "connecting",
 
-		// ui communication channels
-		ui: ui.NewUi(termView, httpView),
-		//ui: ui.NewUi(httpView),
+		// unique client id
+		id: util.RandId(),
 
 		// command-line options
 		opts: opts,
@@ -187,39 +168,51 @@ func Main() {
 		metrics: NewClientMetrics(),
 	}
 
-	// request history
-	// XXX: don't use a callback, use a channel
-	// and define it inline in the struct
-	s.history = NewRequestHistory(opts.historySize, s.metrics, func(history []*RequestHistoryEntry) {
-		s.historyEntries = history
-		s.Update()
-	})
+	switch opts.protocol {
+	case "http":
+		s.protocol = proto.NewHttp()
+	case "tcp":
+		s.protocol = proto.NewTcp()
+	}
 
-	// set initial ui state
-	s.status = "connecting"
-	s.protocol = opts.protocol
-	s.Update()
+	// init ui
+	ctl := ui.NewController()
+	ui.NewTermView(ctl)
+	ui.NewWebView(ctl, s, 9999)
 
-	go control(s)
+	go control(s, ctl)
 
 	quitMessage := ""
-	s.ui.Wait.Add(1)
+	ctl.Wait.Add(1)
 	go func() {
-		defer s.ui.Wait.Done()
+		defer ctl.Wait.Done()
 		for {
 			select {
-			case cmd := <-s.ui.Cmds:
+			case cmd := <-ctl.Cmds:
 				switch cmd.Code {
 				case ui.QUIT:
 					quitMessage = cmd.Payload.(string)
 					s.stopping = true
-					s.Update()
+					ctl.Update(s)
 					return
+				case ui.REPLAY:
+					go func() {
+						payload := cmd.Payload.([]byte)
+						localConn, err := connect(s.opts.localaddr, "prv")
+						if err != nil {
+							log.Warn("Failed to open private leg %s: %v", s.opts.localaddr, err)
+							return
+						}
+						//defer localConn.Close()
+						localConn = s.protocol.WrapConn(localConn)
+						localConn.Write(payload)
+						ioutil.ReadAll(localConn)
+					}()
 				}
 			}
 		}
 	}()
 
-	s.ui.Wait.Wait()
+	ctl.Wait.Wait()
 	fmt.Println(quitMessage)
 }

@@ -7,7 +7,7 @@ import (
 	"net"
 	"ngrok/conn"
 	nlog "ngrok/log"
-	"ngrok/proto"
+	"ngrok/msg"
 	"regexp"
 )
 
@@ -99,8 +99,8 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 				}
 			}()
 
-			var regPxy proto.RegProxyMsg
-			if err = proto.ReadMsgInto(conn, &regPxy); err != nil {
+			var regPxy msg.RegProxyMsg
+			if err = msg.ReadMsgInto(conn, &regPxy); err != nil {
 				panic(err)
 			}
 

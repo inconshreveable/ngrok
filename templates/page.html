@@ -14,6 +14,16 @@
                     $(this).parent().addClass("active");
                     return false;
                 });
+
+                $(".replay").click(function() {
+                    $.ajax({
+                      type: "POST",
+                      url: "/http/in/replay",
+                      data: { txnid: $(this).closest(".txn").attr("txnid") }
+                    });
+                    
+                    return false;
+                });
             });
         </script>
         <style type="text/css">
@@ -38,16 +48,17 @@
                 </div>
             </div>
             <ul class="history unstyled">
-            {{ range .GetHistory }}
-                <li>
+            {{ range .HttpRequests.Slice }}
+                <li class="txn" txnid="{{ .Id }}">
                     <div class="row">
                         <div class="span6">
-                            {{ with .GetRequest }}
+                            {{ with .Req }}
                                 <h3>{{ .Method }} {{ .URL.Path }}</h3>
                                 <ul class="request nav nav-pills">
                                     <li class="active"><a target="summary" href="#">Summary</a></li>
                                     <li><a href="#" target="headers">Headers</a></li>
                                     <li><a href="#" target="raw">Raw</a></li>
+                                    <li class="pull-right"><button class="replay btn btn-primary">Replay</button></li>
                                 </ul>
 
                                 <div class="raw">
@@ -88,7 +99,7 @@
                             {{ end }}
                         </div>
                         <div class="span6">
-                            {{ with .GetResponse }}
+                            {{ with .Resp }}
                                 <h3 class="{{ classForStatus .Status }}">{{ .Status }}</h3>
 
                                 {{ with $raw := dumpResponse . }}

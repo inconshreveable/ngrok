@@ -35,36 +35,34 @@ func printf(x, y int, arg0 string, args ...interface{}) {
 	printfAttr(x, y, fgColor, arg0, args...)
 }
 
-type Term struct {
-	ui             *Ui
+type TermView struct {
+	ctl            *Controller
 	statusColorMap map[string]termbox.Attribute
-	updates        chan (State)
+	updates        chan interface{}
 }
 
-func NewTerm() *Term {
-	return &Term{
+func NewTermView(ctl *Controller) *TermView {
+	t := &TermView{
+		ctl:     ctl,
+		updates: ctl.Updates.Reg(),
 		statusColorMap: map[string]termbox.Attribute{
 			"connecting":   termbox.ColorCyan,
 			"reconnecting": termbox.ColorRed,
 			"online":       termbox.ColorGreen,
 		},
-		updates: make(chan State),
 	}
-}
 
-func (t *Term) SetUi(ui *Ui) {
-	t.ui = ui
 	go t.run()
+	return t
 }
 
-func (t *Term) run() {
-	// make sure we shut down cleanly
-	t.ui.Wait.Add(1)
-	defer t.ui.Wait.Done()
+func (t *TermView) run() {
+	// XXX: clean this up? maybe Term should have its own waitgroup for
+	// both run and draw
 
-	// open channels for incoming application state changes
-	// and broadbasts
-	t.updates = t.ui.Updates.Reg()
+	// make sure we shut down cleanly
+	t.ctl.Wait.Add(1)
+	defer t.ctl.Wait.Done()
 
 	// init/close termbox library
 	termbox.Init()
@@ -75,13 +73,13 @@ func (t *Term) run() {
 	t.draw()
 }
 
-func (t *Term) draw() {
+func (t *TermView) draw() {
 	var state State
 	for {
 		select {
 		case newState := <-t.updates:
 			if newState != nil {
-				state = newState
+				state = newState.(State)
 			}
 
 			if state == nil {
@@ -106,7 +104,7 @@ func (t *Term) draw() {
 
 			printfAttr(0, 2, t.statusColorMap[state.GetStatus()], "%-30s%s", "Tunnel Status", state.GetStatus())
 			printf(0, 3, "%-30s%s", "Version", state.GetVersion())
-			printf(0, 4, "%-30s%s", "Protocol", state.GetProtocol())
+			printf(0, 4, "%-30s%s", "Protocol", state.GetProtocol().GetName())
 			printf(0, 5, "%-30s%s -> %s", "Forwarding", state.GetPublicUrl(), state.GetLocalAddr())
 			printf(0, 6, "%-30s%s", "HTTP Dashboard", "http://127.0.0.1:9999")
 
@@ -114,32 +112,34 @@ func (t *Term) draw() {
 			printf(0, 7, "%-30s%d", "# Conn", connMeter.Count())
 			printf(0, 8, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
 
-			if state.GetProtocol() == "http" {
-				printf(0, 10, "HTTP Requests")
-				printf(0, 11, "-------------")
-				for i, http := range state.GetHistory() {
-					req := http.GetRequest()
-					resp := http.GetResponse()
-					printf(0, 12+i, "%s %v", req.Method, req.URL)
-					if resp != nil {
-						printf(30, 12+i, "%s", resp.Status)
+			/*
+				if state.GetProtocol() == "http" {
+					printf(0, 10, "HTTP Requests")
+					printf(0, 11, "-------------")
+					for i, http := range state.GetHistory() {
+						req := http.GetRequest()
+						resp := http.GetResponse()
+						printf(0, 12+i, "%s %v", req.Method, req.URL)
+						if resp != nil {
+							printf(30, 12+i, "%s", resp.Status)
+						}
 					}
 				}
-			}
+			*/
 
 			termbox.Flush()
 		}
 	}
 }
 
-func (t *Term) input() {
+func (t *TermView) input() {
 	for {
 		ev := termbox.PollEvent()
 		switch ev.Type {
 		case termbox.EventKey:
 			switch ev.Key {
 			case termbox.KeyCtrlC:
-				t.ui.Cmds <- Command{QUIT, ""}
+				t.ctl.Cmds <- Command{QUIT, ""}
 				return
 			}
 

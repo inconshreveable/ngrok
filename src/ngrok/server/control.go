@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 	"ngrok/conn"
-	"ngrok/proto"
+	"ngrok/msg"
 	"runtime/debug"
 	"sync/atomic"
 	"time"
@@ -21,8 +21,8 @@ type Control struct {
 
 	// channels for communicating messages over the connection
 	out  chan (interface{})
-	in   chan (proto.Message)
-	stop chan (proto.Message)
+	in   chan (msg.Message)
+	stop chan (msg.Message)
 
 	// heartbeat
 	lastPong int64
@@ -35,8 +35,8 @@ func NewControl(tcpConn *net.TCPConn) {
 	c := &Control{
 		conn:     conn.NewTCP(tcpConn, "ctl"),
 		out:      make(chan (interface{}), 1),
-		in:       make(chan (proto.Message), 1),
-		stop:     make(chan (proto.Message), 1),
+		in:       make(chan (msg.Message), 1),
+		stop:     make(chan (msg.Message), 1),
 		lastPong: time.Now().Unix(),
 	}
 
@@ -66,10 +66,10 @@ func (c *Control) managerThread() {
 	for {
 		select {
 		case m := <-c.out:
-			proto.WriteMsg(c.conn, m)
+			msg.WriteMsg(c.conn, m)
 
 		case <-ping.C:
-			proto.WriteMsg(c.conn, &proto.PingMsg{})
+			msg.WriteMsg(c.conn, &msg.PingMsg{})
 
 		case <-reap.C:
 			if (time.Now().Unix() - c.lastPong) > 60 {
@@ -80,21 +80,21 @@ func (c *Control) managerThread() {
 
 		case m := <-c.stop:
 			if m != nil {
-				proto.WriteMsg(c.conn, m)
+				msg.WriteMsg(c.conn, m)
 			}
 			return
 
-		case msg := <-c.in:
-			switch msg.GetType() {
+		case m := <-c.in:
+			switch m.GetType() {
 			case "RegMsg":
 				c.conn.Info("Registering new tunnel")
-				c.tun = newTunnel(msg.(*proto.RegMsg), c)
+				c.tun = newTunnel(m.(*msg.RegMsg), c)
 
 			case "PongMsg":
 				atomic.StoreInt64(&c.lastPong, time.Now().Unix())
 
 			case "VersionReqMsg":
-				c.out <- &proto.VersionRespMsg{Version: version}
+				c.out <- &msg.VersionRespMsg{Version: version}
 			}
 		}
 	}
@@ -110,7 +110,7 @@ func (c *Control) readThread() {
 
 	// read messages from the control channel
 	for {
-		if msg, err := proto.ReadMsg(c.conn); err != nil {
+		if msg, err := msg.ReadMsg(c.conn); err != nil {
 			if err == io.EOF {
 				c.conn.Info("EOF")
 				return

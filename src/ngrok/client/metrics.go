@@ -14,9 +14,6 @@ type ClientMetrics struct {
 	connGauge       metrics.Gauge
 	connMeter       metrics.Meter
 	connTimer       metrics.Timer
-	reqGauge        metrics.Gauge
-	reqMeter        metrics.Meter
-	reqTimer        metrics.Timer
 	proxySetupTimer metrics.Timer
 	bytesIn         metrics.Histogram
 	bytesOut        metrics.Histogram
@@ -29,9 +26,6 @@ func NewClientMetrics() *ClientMetrics {
 		connGauge:       metrics.NewGauge(),
 		connMeter:       metrics.NewMeter(),
 		connTimer:       metrics.NewTimer(),
-		reqGauge:        metrics.NewGauge(),
-		reqMeter:        metrics.NewMeter(),
-		reqTimer:        metrics.NewTimer(),
 		proxySetupTimer: metrics.NewTimer(),
 		bytesIn:         metrics.NewHistogram(metrics.NewExpDecaySample(sampleSize, sampleAlpha)),
 		bytesOut:        metrics.NewHistogram(metrics.NewExpDecaySample(sampleSize, sampleAlpha)),

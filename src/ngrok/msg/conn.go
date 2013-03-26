@@ -1,4 +1,4 @@
-package proto
+package msg
 
 import (
 	"encoding/binary"
