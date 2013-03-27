@@ -14,8 +14,8 @@ It is a man-in-the-middle proxy server that you run locally on your development 
 ngrok has _no_ dependencies. Just download a single binary for your platform and
 run it.
 
-[Linux](http://ngrok.com/dl/linux_386/ngrok")
-[Mac OSX](http://ngrok.com/dl/darwin_386/ngrok")
+- [Linux](http://ngrok.com/dl/linux_386/ngrok")
+- [Mac OSX](http://ngrok.com/dl/darwin_386/ngrok")
 
 
 ## Compiling ngrok
