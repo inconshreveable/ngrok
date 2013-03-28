@@ -16,6 +16,7 @@ run it.
 
 - [Linux](http://ngrok.com/dl/linux_386/ngrok)
 - [Mac OSX](http://ngrok.com/dl/darwin_386/ngrok)
+- [Windows](http://ngrok.com/dl/windows_386/ngrok.exe)
 
 
 ## Compiling ngrok
