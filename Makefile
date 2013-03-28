@@ -1,18 +1,33 @@
-.PHONY: default server client deps clean all
+.PHONY: default server client deps clean all release-client release-server bindata
+BUILDTAGS=
+export GOPATH:=$(shell pwd)
 
 default: all
 
 deps:
-	GOPATH=`pwd` go get -v ngrok/...
+	go get -v ngrok/...
 
 server: deps
-	GOPATH=`pwd` go install main/ngrokd
+	go install -tags '$(BUILDTAGS)' main/ngrokd
 
 client: deps
-	GOPATH=`pwd` go install main/ngrok
+	go install -tags '$(BUILDTAGS)' main/ngrok
 
-all: deps
-	GOPATH=`pwd` go install main/...
+release-client: BUILDTAGS=release
+release-client: bindata client
+
+release-server: BUILDTAGS=release
+release-server: server
+
+release-all: release-client release-server
+
+bindata:
+	echo $$GOPATH
+	go get github.com/inconshreveable/go-bindata
+	./bin/go-bindata -b release -i templates/page.html -o src/ngrok/client/ui/static/page.html.go -m -p static -f PageHtml
+	./bin/go-bindata -b release -i templates/body.html -o src/ngrok/client/ui/static/body.html.go -m -p static -f BodyHtml
+
+all: client server
 
 clean:
-	GOPATH=`pwd` go clean ngrok/...
+	go clean ngrok/...
