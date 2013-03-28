@@ -2,6 +2,7 @@
 package ui
 
 import (
+        "strings"
 	"bytes"
 	"encoding/json"
 	"html/template"
@@ -11,6 +12,7 @@ import (
 	"net/url"
 	"ngrok/proto"
 	"ngrok/util"
+        "ngrok/client/ui/static"
 )
 
 func readBody(r *http.Request) ([]byte, error) {
@@ -110,7 +112,7 @@ func (h *WebHttpView) register() {
 				return string(b), err
 			},
 			"handleForm": func(req *http.Request) (values interface{}, err error) {
-				if req.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
+				if !strings.Contains(req.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
 					return
 				}
 
@@ -123,7 +125,7 @@ func (h *WebHttpView) register() {
 				return
 			},
 			"handleJson": func(req *http.Request) interface{} {
-				if req.Header.Get("Content-Type") != "application/json" {
+				if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
 					return nil
 				}
 
@@ -152,7 +154,8 @@ func (h *WebHttpView) register() {
 		}
 
 		tmpl := template.Must(
-			template.New("page.html").Funcs(funcMap).ParseFiles("./templates/page.html", "./templates/body.html"))
+			template.New("page.html").Funcs(funcMap).Parse(string(static.PageHtml())))
+                template.Must(tmpl.Parse(string(static.BodyHtml())))
 
 		// write the response
 		if err := tmpl.Execute(w, h); err != nil {

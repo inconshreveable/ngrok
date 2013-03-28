@@ -30,6 +30,7 @@
             body { margin-top: 50px; }
             ul.history > li { none; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #ccc; }
             .headers, .raw { display: none; }
+            table.params { font-family: Courier, monospace; }
         </style>
     </head>
 
@@ -70,7 +71,7 @@
                                 <div class="headers">
                                     {{ with .Header }}
                                         <h6>Headers</h6>
-                                        <table class="table">
+                                        <table class="table params">
                                         {{ range $key, $value := .}}
                                             <tr>
                                                 <th> {{ $key }} </th>
@@ -84,7 +85,7 @@
                                 <div class="summary">
                                     {{ with .URL.Query }}
                                         <h6>Query Params</h6>
-                                        <table class="table">
+                                        <table class="table params">
                                         {{ range $key, $value := .}}
                                             <tr>
                                                 <th> {{ $key }} </th>

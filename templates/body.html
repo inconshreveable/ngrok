@@ -9,15 +9,16 @@
 
 {{ with $form := handleForm . }}
     <h6>Form Params</h6>
-    <ul>
+    <table class="table params">
     {{ range $key, $values := $form }}
         {{ range $value := $values }}
-            <li>
-                {{ $key }}: {{ $value }}
-            </li>
+            <tr>
+                <th>{{ $key }}</th>
+                <td>{{ $value }}</td>
+            </tr>
         {{ end }}
     {{ end }}
-    </ul>
+    </table>
 {{ end }}
 
 {{ end }}
