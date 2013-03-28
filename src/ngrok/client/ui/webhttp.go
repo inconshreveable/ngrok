@@ -2,7 +2,6 @@
 package ui
 
 import (
-        "strings"
 	"bytes"
 	"encoding/json"
 	"html/template"
@@ -10,9 +9,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"ngrok/client/ui/static"
 	"ngrok/proto"
 	"ngrok/util"
-        "ngrok/client/ui/static"
+	"strings"
 )
 
 func readBody(r *http.Request) ([]byte, error) {
@@ -155,7 +155,7 @@ func (h *WebHttpView) register() {
 
 		tmpl := template.Must(
 			template.New("page.html").Funcs(funcMap).Parse(string(static.PageHtml())))
-                template.Must(tmpl.Parse(string(static.BodyHtml())))
+		template.Must(tmpl.Parse(string(static.BodyHtml())))
 
 		// write the response
 		if err := tmpl.Execute(w, h); err != nil {

@@ -3,15 +3,15 @@
 package static
 
 import (
-    "io/ioutil"
+	"io/ioutil"
 )
 
 func ReadFileOrPanic(path string) []byte {
-    bytes, err := ioutil.ReadFile(path)
-    if err != nil {
-        panic(err)
-    }
-    return bytes
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
 }
 
 func BodyHtml() []byte { return ReadFileOrPanic("templates/body.html") }
