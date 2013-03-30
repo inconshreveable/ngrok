@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
         "net"
 )
 
@@ -23,6 +22,7 @@ type Options struct {
 	url         string
 	subdomain   string
 	historySize int
+        webport int
 }
 
 func fail(msg string, args ...interface{}) {
@@ -65,8 +65,7 @@ func parseLocalAddr() string {
 	}
 
 	// try to parse as a connection string
-	parts := strings.Split(addr, ":")
-        host, port, err := net.SplitHostPort(addr)
+        _, port, err := net.SplitHostPort(addr)
         if err != nil {
                 fail("%v", err)
         }
@@ -116,10 +115,10 @@ func parseArgs() *Options {
 		"http",
 		"The protocol of the traffic over the tunnel {'http', 'tcp'} (default: 'http')")
 
-	historySize := flag.Int(
-		"history",
-		20,
-		"The number of previous requests to keep in your history")
+        webport := flag.Int(
+                "webport",
+                4040,
+                "The port on which the web interface is served")
 
 	flag.Parse()
 
@@ -130,6 +129,6 @@ func parseArgs() *Options {
 		subdomain:   *subdomain,
 		localaddr:   parseLocalAddr(),
 		protocol:    parseProtocol(*protocol),
-		historySize: *historySize,
+		webport:     *webport,
 	}
 }

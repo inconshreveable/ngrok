@@ -178,7 +178,7 @@ func Main() {
 	// init ui
 	ctl := ui.NewController()
 	ui.NewTermView(ctl)
-	ui.NewWebView(ctl, s, 9999)
+	ui.NewWebView(ctl, s, opts.webport)
 
 	go control(s, ctl)
 
