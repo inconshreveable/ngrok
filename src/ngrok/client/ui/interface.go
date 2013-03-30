@@ -11,7 +11,7 @@ type State interface {
 	GetLocalAddr() string
 	GetStatus() string
 	GetProtocol() proto.Protocol
-        GetWebPort() int
+	GetWebPort() int
 	IsStopping() bool
 	GetConnectionMetrics() (metrics.Meter, metrics.Timer)
 	GetBytesInMetrics() (metrics.Counter, metrics.Histogram)

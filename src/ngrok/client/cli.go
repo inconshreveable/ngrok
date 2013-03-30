@@ -4,9 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
-        "net"
 )
 
 var (
@@ -22,7 +22,7 @@ type Options struct {
 	url         string
 	subdomain   string
 	historySize int
-        webport int
+	webport     int
 }
 
 func fail(msg string, args ...interface{}) {
@@ -65,10 +65,10 @@ func parseLocalAddr() string {
 	}
 
 	// try to parse as a connection string
-        _, port, err := net.SplitHostPort(addr)
-        if err != nil {
-                fail("%v", err)
-        }
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		fail("%v", err)
+	}
 
 	if parsePort(port) != nil {
 		fail("'%s' is not a valid port number (1-65535)", port)
@@ -115,20 +115,20 @@ func parseArgs() *Options {
 		"http",
 		"The protocol of the traffic over the tunnel {'http', 'tcp'} (default: 'http')")
 
-        webport := flag.Int(
-                "webport",
-                4040,
-                "The port on which the web interface is served")
+	webport := flag.Int(
+		"webport",
+		4040,
+		"The port on which the web interface is served")
 
 	flag.Parse()
 
 	return &Options{
-		server:      *server,
-		auth:        *auth,
-		hostname:    *hostname,
-		subdomain:   *subdomain,
-		localaddr:   parseLocalAddr(),
-		protocol:    parseProtocol(*protocol),
-		webport:     *webport,
+		server:    *server,
+		auth:      *auth,
+		hostname:  *hostname,
+		subdomain: *subdomain,
+		localaddr: parseLocalAddr(),
+		protocol:  parseProtocol(*protocol),
+		webport:   *webport,
 	}
 }
