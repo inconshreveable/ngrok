@@ -106,7 +106,7 @@ func (t *TermView) draw() {
 			printf(0, 3, "%-30s%s", "Version", state.GetVersion())
 			printf(0, 4, "%-30s%s", "Protocol", state.GetProtocol().GetName())
 			printf(0, 5, "%-30s%s -> %s", "Forwarding", state.GetPublicUrl(), state.GetLocalAddr())
-			printf(0, 6, "%-30s%s", "HTTP Dashboard", "http://127.0.0.1:9999")
+			printf(0, 6, "%-30s%s", "Web Interface", "http://127.0.0.1:%d", state.GetWebPort())
 
 			connMeter, connTimer := state.GetConnectionMetrics()
 			printf(0, 7, "%-30s%d", "# Conn", connMeter.Count())

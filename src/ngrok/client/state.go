@@ -22,6 +22,7 @@ type State struct {
 func (s State) GetVersion() string          { return "" }
 func (s State) GetPublicUrl() string        { return s.publicUrl }
 func (s State) GetLocalAddr() string        { return s.opts.localaddr }
+func (s State) GetWebPort() int             { return s.opts.webport }
 func (s State) GetStatus() string           { return s.status }
 func (s State) GetProtocol() proto.Protocol { return s.protocol }
 func (s State) IsStopping() bool            { return s.stopping }
