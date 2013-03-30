@@ -1,7 +1,7 @@
 package proto
 
 import (
-	metrics "github.com/rcrowley/go-metrics"
+	metrics "github.com/inconshreveable/go-metrics"
 	"net/http"
 	"net/http/httputil"
 	"ngrok/conn"

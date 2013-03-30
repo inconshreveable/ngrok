@@ -1,7 +1,7 @@
 package client
 
 import (
-	metrics "github.com/rcrowley/go-metrics"
+	metrics "github.com/inconshreveable/go-metrics"
 	"ngrok/proto"
 )
 

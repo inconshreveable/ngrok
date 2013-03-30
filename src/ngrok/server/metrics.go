@@ -3,7 +3,7 @@ package server
 import (
 	log "code.google.com/p/log4go"
 	"encoding/json"
-	gometrics "github.com/rcrowley/go-metrics"
+	gometrics "github.com/inconshreveable/go-metrics"
 	"time"
 )
 
