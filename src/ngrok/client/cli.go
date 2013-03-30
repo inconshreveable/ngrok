@@ -25,7 +25,6 @@ type Options struct {
 }
 
 func fail(msg string, args ...interface{}) {
-	//log.Error(msg, args..)
 	fmt.Printf(msg+"\n", args...)
 	flag.PrintDefaults()
 	os.Exit(1)
@@ -66,13 +65,13 @@ func parseLocalAddr() string {
 
 	// try to parse as a connection string
 	parts := strings.Split(addr, ":")
-	if len(parts) != 2 {
-		fail("%s is not a port number of a host:port connection string", addr)
-	}
+        host, port, err := net.SplitHostPort(addr)
+        if err != nil {
+                fail("%v", err)
+        }
 
-	if parsePort(parts[1]) != nil {
-		fail("The port of the connection string '%s' is not a valid port number (1-65535)",
-			parts[1])
+	if parsePort(port) != nil {
+		fail("'%s' is not a valid port number (1-65535)", port)
 	}
 
 	return addr
