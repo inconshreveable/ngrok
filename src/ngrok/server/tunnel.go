@@ -60,6 +60,10 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		return
 	}
 
+	if m.Version != msg.Version {
+		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprintf("Incompatible versions. Server %s, client %s.", msg.Version, m.Version)}
+	}
+
 	// pre-encode the http basic auth for fast comparisons later
 	if m.HttpAuth != "" {
 		m.HttpAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(m.HttpAuth))
@@ -68,7 +72,12 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	t.ctl.conn.AddLogPrefix(t.Id())
 	t.AddLogPrefix(t.Id())
 	t.Info("Registered new tunnel")
-	t.ctl.out <- &msg.RegAckMsg{Url: t.url, ProxyAddr: fmt.Sprintf("%s", proxyAddr)}
+	t.ctl.out <- &msg.RegAckMsg{
+		Url:       t.url,
+		ProxyAddr: fmt.Sprintf("%s", proxyAddr),
+		Version:   msg.Version,
+	}
+
 	return
 }
 

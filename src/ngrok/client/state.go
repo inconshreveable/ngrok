@@ -2,23 +2,26 @@ package client
 
 import (
 	metrics "github.com/inconshreveable/go-metrics"
+	"ngrok/msg"
 	"ngrok/proto"
 )
 
 // client state
 type State struct {
-	id        string
-	publicUrl string
-	protocol  proto.Protocol
-	opts      *Options
-	metrics   *ClientMetrics
+	id            string
+	publicUrl     string
+	serverVersion string
+	protocol      proto.Protocol
+	opts          *Options
+	metrics       *ClientMetrics
 
 	// just for UI purposes
 	status string
 }
 
 // implement client.ui.State
-func (s State) GetVersion() string          { return "" }
+func (s State) GetClientVersion() string    { return msg.Version }
+func (s State) GetServerVersion() string    { return msg.Version }
 func (s State) GetPublicUrl() string        { return s.publicUrl }
 func (s State) GetLocalAddr() string        { return s.opts.localaddr }
 func (s State) GetWebPort() int             { return s.opts.webport }

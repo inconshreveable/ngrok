@@ -80,7 +80,7 @@ func (v *TermView) Render() {
 	status := v.state.GetStatus()
 	v.APrintf(colorForConn(status), 0, 2, "%-30s%s", "Tunnel Status", status)
 
-	v.Printf(0, 3, "%-30s%s", "Version", v.state.GetVersion())
+	v.Printf(0, 3, "%-30s%s/%s", "Version", v.state.GetClientVersion(), v.state.GetServerVersion())
 	v.Printf(0, 4, "%-30s%s", "Protocol", v.state.GetProtocol().GetName())
 	v.Printf(0, 5, "%-30s%s -> %s", "Forwarding", v.state.GetPublicUrl(), v.state.GetLocalAddr())
 	webAddr := fmt.Sprintf("http://localhost:%d", v.state.GetWebPort())

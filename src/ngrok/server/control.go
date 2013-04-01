@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	pingInterval     = 30 * time.Second
-	connReapInterval = pingInterval * 5
+	pingTimeoutInterval = 30 * time.Second
+	connReapInterval    = 10 * time.Second
 )
 
 type Control struct {
@@ -25,7 +25,7 @@ type Control struct {
 	stop chan (msg.Message)
 
 	// heartbeat
-	lastPong int64
+	lastPing int64
 
 	// tunnel
 	tun *Tunnel
@@ -37,7 +37,7 @@ func NewControl(tcpConn *net.TCPConn) {
 		out:      make(chan (interface{}), 1),
 		in:       make(chan (msg.Message), 1),
 		stop:     make(chan (msg.Message), 1),
-		lastPong: time.Now().Unix(),
+		lastPing: time.Now().Unix(),
 	}
 
 	go c.managerThread()
@@ -45,7 +45,6 @@ func NewControl(tcpConn *net.TCPConn) {
 }
 
 func (c *Control) managerThread() {
-	ping := time.NewTicker(pingInterval)
 	reap := time.NewTicker(connReapInterval)
 
 	// all shutdown functionality in here
@@ -53,7 +52,6 @@ func (c *Control) managerThread() {
 		if err := recover(); err != nil {
 			c.conn.Info("Control::managerThread failed with error %v: %s", err, debug.Stack())
 		}
-		ping.Stop()
 		reap.Stop()
 		c.conn.Close()
 
@@ -68,11 +66,9 @@ func (c *Control) managerThread() {
 		case m := <-c.out:
 			msg.WriteMsg(c.conn, m)
 
-		case <-ping.C:
-			msg.WriteMsg(c.conn, &msg.PingMsg{})
-
 		case <-reap.C:
-			if (time.Now().Unix() - c.lastPong) > 60 {
+			lastPing := time.Unix(c.lastPing, 0)
+			if time.Since(lastPing) > pingTimeoutInterval {
 				c.conn.Info("Lost heartbeat")
 				metrics.lostHeartbeatMeter.Mark(1)
 				return
@@ -84,16 +80,17 @@ func (c *Control) managerThread() {
 			}
 			return
 
-		case m := <-c.in:
-			switch m.GetType() {
-			case "RegMsg":
+		case mRaw := <-c.in:
+			switch m := mRaw.(type) {
+			case *msg.RegMsg:
 				c.conn.Info("Registering new tunnel")
-				c.tun = newTunnel(m.(*msg.RegMsg), c)
+				c.tun = newTunnel(m, c)
 
-			case "PongMsg":
-				atomic.StoreInt64(&c.lastPong, time.Now().Unix())
+			case *msg.PingMsg:
+				atomic.StoreInt64(&c.lastPing, time.Now().Unix())
+				c.out <- &msg.PongMsg{}
 
-			case "VersionReqMsg":
+			case *msg.VersionMsg:
 				c.out <- &msg.VersionRespMsg{Version: version}
 			}
 		}

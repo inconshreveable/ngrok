@@ -27,23 +27,15 @@ func init() {
 	TypeMap["MetricsRespMsg"] = t((*MetricsRespMsg)(nil))
 }
 
-type Message interface {
-	GetType() string
-	SetType(string)
-}
+type Message interface{}
 
 type Envelope struct {
-	Version string
 	Type    string
 	Payload json.RawMessage
 }
 
-type TypeEmbed struct {
-	Type string
-}
-
 type RegMsg struct {
-	TypeEmbed
+	Version   string
 	Protocol  string
 	Hostname  string
 	Subdomain string
@@ -56,52 +48,35 @@ type RegMsg struct {
 }
 
 type RegAckMsg struct {
-	TypeEmbed
-	Type      string
+	Version   string
 	Url       string
 	ProxyAddr string
 	Error     string
 }
 
 type RegProxyMsg struct {
-	TypeEmbed
 	Url string
 }
 
 type ReqProxyMsg struct {
-	TypeEmbed
 }
 
 type PingMsg struct {
-	TypeEmbed
 }
 
 type PongMsg struct {
-	TypeEmbed
 }
 
 type VersionMsg struct {
-	TypeEmbed
 }
 
 type VersionRespMsg struct {
-	TypeEmbed
 	Version string
 }
 
 type MetricsMsg struct {
-	TypeEmbed
 }
 
 type MetricsRespMsg struct {
-	TypeEmbed
 	Metrics string
-}
-
-func (m *TypeEmbed) GetType() string {
-	return m.Type
-}
-
-func (m *TypeEmbed) SetType(typ string) {
-	m.Type = typ
 }

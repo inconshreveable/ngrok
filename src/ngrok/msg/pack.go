@@ -23,7 +23,6 @@ func unpack(buffer []byte, msgIn Message) (msg Message, err error) {
 
 		// guess type
 		msg = reflect.New(t).Interface().(Message)
-		msg.SetType(env.Type)
 	} else {
 		msg = msgIn
 	}
@@ -43,11 +42,9 @@ func Unpack(buffer []byte) (msg Message, err error) {
 
 func Pack(payload interface{}) ([]byte, error) {
 	return json.Marshal(struct {
-		Version string
 		Type    string
 		Payload interface{}
 	}{
-		Version: Version,
 		Type:    reflect.TypeOf(payload).Elem().Name(),
 		Payload: payload,
 	})

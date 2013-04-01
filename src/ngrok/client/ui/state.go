@@ -6,7 +6,8 @@ import (
 )
 
 type State interface {
-	GetVersion() string
+	GetClientVersion() string
+	GetServerVersion() string
 	GetPublicUrl() string
 	GetLocalAddr() string
 	GetStatus() string

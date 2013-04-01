@@ -108,6 +108,7 @@ func control(s *State, ctl *ui.Controller) {
 		Hostname:  s.opts.hostname,
 		Subdomain: s.opts.subdomain,
 		ClientId:  s.id,
+		Version:   msg.Version,
 	})
 
 	if err != nil {
@@ -131,6 +132,7 @@ func control(s *State, ctl *ui.Controller) {
 	//state.version = regAck.Version
 	s.publicUrl = regAck.Url
 	s.status = "online"
+	s.serverVersion = regAck.Version
 	ctl.Update(s)
 
 	// main control loop
@@ -140,12 +142,13 @@ func control(s *State, ctl *ui.Controller) {
 			panic(err)
 		}
 
-		switch m.GetType() {
-		case "ReqProxyMsg":
+		switch m.(type) {
+		case *msg.ReqProxyMsg:
 			go proxy(regAck.ProxyAddr, s, ctl)
 
-		case "PingMsg":
-			msg.WriteMsg(conn, &msg.PongMsg{})
+		case *msg.PongMsg:
+			//msg.WriteMsg(conn, &msg.PongMsg{})
+			// XXX: update our live status
 		}
 	}
 }
@@ -194,6 +197,7 @@ func Main() {
 			case cmd := <-ctl.Cmds:
 				switch cmd.Code {
 				case ui.QUIT:
+					quitMessage = cmd.Payload.(string)
 					ctl.DoShutdown()
 					return
 				case ui.REPLAY:
