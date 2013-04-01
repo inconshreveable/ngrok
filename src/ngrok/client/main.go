@@ -14,7 +14,13 @@ import (
 	"ngrok/proto"
 	"ngrok/util"
 	"runtime"
+	"sync/atomic"
 	"time"
+)
+
+const (
+	pingInterval   = 20 * time.Second
+	maxPongLatency = 15 * time.Second
 )
 
 /** 
@@ -79,6 +85,44 @@ func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	ctl.Update(s)
 }
 
+/*
+ * Hearbeating ensure our connection ngrokd is still live
+ */
+func heartbeat(lastPongAddr *int64, c conn.Conn) {
+	lastPing := time.Unix(atomic.LoadInt64(lastPongAddr)-1, 0)
+	ping := time.NewTicker(pingInterval)
+	pongCheck := time.NewTicker(time.Second)
+
+	defer func() {
+		c.Close()
+		ping.Stop()
+		pongCheck.Stop()
+	}()
+
+	for {
+		select {
+		case <-pongCheck.C:
+			lastPong := time.Unix(0, atomic.LoadInt64(lastPongAddr))
+			needPong := lastPong.Sub(lastPing) < 0
+			pongLatency := time.Since(lastPing)
+
+			if needPong && pongLatency > maxPongLatency {
+				c.Info("Last ping: %v, Last pong: %v", lastPing, lastPong)
+				c.Info("Connection stale, haven't gotten PongMsg in %d seconds", int(pongLatency.Seconds()))
+				return
+			}
+
+		case <-ping.C:
+			err := msg.WriteMsg(c, &msg.PingMsg{})
+			if err != nil {
+				c.Debug("Got error %v when writing PingMsg", err)
+				return
+			}
+			lastPing = time.Now()
+		}
+	}
+}
+
 /**
  * Establishes and manages a tunnel control connection with the server
  */
@@ -129,11 +173,14 @@ func control(s *State, ctl *ui.Controller) {
 
 	// update UI state
 	conn.Info("Tunnel established at %v", regAck.Url)
-	//state.version = regAck.Version
 	s.publicUrl = regAck.Url
 	s.status = "online"
 	s.serverVersion = regAck.Version
 	ctl.Update(s)
+
+	// start the heartbeat
+	lastPong := time.Now().UnixNano()
+	go heartbeat(&lastPong, conn)
 
 	// main control loop
 	for {
@@ -147,8 +194,7 @@ func control(s *State, ctl *ui.Controller) {
 			go proxy(regAck.ProxyAddr, s, ctl)
 
 		case *msg.PongMsg:
-			//msg.WriteMsg(conn, &msg.PongMsg{})
-			// XXX: update our live status
+			atomic.StoreInt64(&lastPong, time.Now().UnixNano())
 		}
 	}
 }

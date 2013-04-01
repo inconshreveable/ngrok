@@ -6,7 +6,6 @@ import (
 	"ngrok/conn"
 	"ngrok/msg"
 	"runtime/debug"
-	"sync/atomic"
 	"time"
 )
 
@@ -25,7 +24,7 @@ type Control struct {
 	stop chan (msg.Message)
 
 	// heartbeat
-	lastPing int64
+	lastPing time.Time
 
 	// tunnel
 	tun *Tunnel
@@ -37,7 +36,7 @@ func NewControl(tcpConn *net.TCPConn) {
 		out:      make(chan (interface{}), 1),
 		in:       make(chan (msg.Message), 1),
 		stop:     make(chan (msg.Message), 1),
-		lastPing: time.Now().Unix(),
+		lastPing: time.Now(),
 	}
 
 	go c.managerThread()
@@ -67,8 +66,7 @@ func (c *Control) managerThread() {
 			msg.WriteMsg(c.conn, m)
 
 		case <-reap.C:
-			lastPing := time.Unix(c.lastPing, 0)
-			if time.Since(lastPing) > pingTimeoutInterval {
+			if time.Since(c.lastPing) > pingTimeoutInterval {
 				c.conn.Info("Lost heartbeat")
 				metrics.lostHeartbeatMeter.Mark(1)
 				return
@@ -87,7 +85,7 @@ func (c *Control) managerThread() {
 				c.tun = newTunnel(m, c)
 
 			case *msg.PingMsg:
-				atomic.StoreInt64(&c.lastPing, time.Now().Unix())
+				c.lastPing = time.Now()
 				c.out <- &msg.PongMsg{}
 
 			case *msg.VersionMsg:
