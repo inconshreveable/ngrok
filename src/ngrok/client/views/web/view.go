@@ -1,15 +1,16 @@
 // interative web user interface
-package ui
+package web
 
 import (
 	"fmt"
 	"net/http"
+	"ngrok/client/ui"
 	"ngrok/proto"
 )
 
 type WebView struct{}
 
-func NewWebView(ctl *Controller, state State, port int) *WebView {
+func NewWebView(ctl *ui.Controller, state ui.State, port int) *WebView {
 	w := &WebView{}
 
 	switch p := state.GetProtocol().(type) {

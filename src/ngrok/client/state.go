@@ -14,8 +14,7 @@ type State struct {
 	metrics   *ClientMetrics
 
 	// just for UI purposes
-	status   string
-	stopping bool
+	status string
 }
 
 // implement client.ui.State
@@ -25,7 +24,6 @@ func (s State) GetLocalAddr() string        { return s.opts.localaddr }
 func (s State) GetWebPort() int             { return s.opts.webport }
 func (s State) GetStatus() string           { return s.status }
 func (s State) GetProtocol() proto.Protocol { return s.protocol }
-func (s State) IsStopping() bool            { return s.stopping }
 
 func (s State) GetConnectionMetrics() (metrics.Meter, metrics.Timer) {
 	return s.metrics.connMeter, s.metrics.connTimer

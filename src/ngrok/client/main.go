@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net"
 	"ngrok/client/ui"
+	"ngrok/client/views/term"
+	"ngrok/client/views/web"
 	"ngrok/conn"
 	nlog "ngrok/log"
 	"ngrok/msg"
@@ -177,8 +179,8 @@ func Main() {
 
 	// init ui
 	ctl := ui.NewController()
-	ui.NewTermView(ctl)
-	ui.NewWebView(ctl, s, opts.webport)
+	term.New(ctl, s)
+	web.NewWebView(ctl, s, opts.webport)
 
 	go control(s, ctl)
 
@@ -191,9 +193,7 @@ func Main() {
 			case cmd := <-ctl.Cmds:
 				switch cmd.Code {
 				case ui.QUIT:
-					quitMessage = cmd.Payload.(string)
-					s.stopping = true
-					ctl.Update(s)
+					ctl.DoShutdown()
 					return
 				case ui.REPLAY:
 					go func() {

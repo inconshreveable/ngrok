@@ -1,5 +1,5 @@
 // interative web user interface
-package ui
+package web
 
 import (
 	"bytes"
@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"ngrok/client/ui/static"
+	"ngrok/client/ui"
+	"ngrok/client/views/web/static"
 	"ngrok/proto"
 	"ngrok/util"
 	"strings"
@@ -28,13 +29,13 @@ type WebHttpTxn struct {
 }
 
 type WebHttpView struct {
-	ctl          *Controller
+	ctl          *ui.Controller
 	httpProto    *proto.Http
 	HttpRequests *util.Ring
 	idToTxn      map[string]*WebHttpTxn
 }
 
-func NewWebHttpView(ctl *Controller, proto *proto.Http) *WebHttpView {
+func NewWebHttpView(ctl *ui.Controller, proto *proto.Http) *WebHttpView {
 	w := &WebHttpView{
 		ctl:          ctl,
 		httpProto:    proto,
@@ -80,7 +81,7 @@ func (h *WebHttpView) register() {
 			if err != nil {
 				panic(err)
 			}
-			h.ctl.Cmds <- Command{REPLAY, bodyBytes}
+			h.ctl.Cmds <- ui.Command{ui.REPLAY, bodyBytes}
 			w.Write([]byte(http.StatusText(200)))
 		} else {
 			// XXX: 400

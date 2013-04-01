@@ -8,16 +8,6 @@ import (
 	"sync"
 )
 
-type Command struct {
-	Code    int
-	Payload interface{}
-}
-
-const (
-	QUIT = iota
-	REPLAY
-)
-
 type Controller struct {
 	// the model sends updates through this broadcast channel
 	Updates *util.Broadcast
@@ -27,13 +17,17 @@ type Controller struct {
 
 	// all threads may add themself to this to wait for clean shutdown
 	Wait *sync.WaitGroup
+
+	// channel to signal shutdown
+	Shutdown chan int
 }
 
 func NewController() *Controller {
 	ctl := &Controller{
-		Updates: util.NewBroadcast(),
-		Cmds:    make(chan Command),
-		Wait:    new(sync.WaitGroup),
+		Updates:  util.NewBroadcast(),
+		Cmds:     make(chan Command),
+		Wait:     new(sync.WaitGroup),
+		Shutdown: make(chan int),
 	}
 
 	return ctl
@@ -41,4 +35,17 @@ func NewController() *Controller {
 
 func (ctl *Controller) Update(state State) {
 	ctl.Updates.In() <- state
+}
+
+func (ctl *Controller) DoShutdown() {
+	close(ctl.Shutdown)
+}
+
+func (ctl *Controller) IsShuttingDown() bool {
+	select {
+	case <-ctl.Shutdown:
+		return true
+	default:
+	}
+	return false
 }

@@ -24,8 +24,8 @@ release-all: release-client release-server
 bindata:
 	echo $$GOPATH
 	go get github.com/inconshreveable/go-bindata
-	./bin/go-bindata -b release -i templates/page.html -o src/ngrok/client/ui/static/page.html.go -m -p static -f PageHtml
-	./bin/go-bindata -b release -i templates/body.html -o src/ngrok/client/ui/static/body.html.go -m -p static -f BodyHtml
+	./bin/go-bindata -b release -i templates/page.html -o src/ngrok/client/views/web/static/page.html.go -m -p static -f PageHtml
+	./bin/go-bindata -b release -i templates/body.html -o src/ngrok/client/views/web/static/body.html.go -m -p static -f BodyHtml
 
 all: client server
 
