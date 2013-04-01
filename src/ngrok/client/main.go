@@ -104,6 +104,7 @@ func control(s *State, ctl *ui.Controller) {
 	err = msg.WriteMsg(conn, &msg.RegMsg{
 		Protocol:  s.opts.protocol,
 		OS:        runtime.GOOS,
+		HttpAuth:  s.opts.httpAuth,
 		Hostname:  s.opts.hostname,
 		Subdomain: s.opts.subdomain,
 		ClientId:  s.id,

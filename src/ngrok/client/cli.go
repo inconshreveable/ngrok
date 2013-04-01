@@ -15,7 +15,7 @@ var (
 
 type Options struct {
 	server      string
-	auth        string
+	httpAuth    string
 	hostname    string
 	localaddr   string
 	protocol    string
@@ -95,8 +95,8 @@ func parseArgs() *Options {
 		"ngrok.com:2280",
 		"The remote ngrok server")
 
-	auth := flag.String(
-		"auth",
+	httpAuth := flag.String(
+		"httpauth",
 		"",
 		"username:password HTTP basic auth creds protecting the public tunnel endpoint")
 
@@ -124,7 +124,7 @@ func parseArgs() *Options {
 
 	return &Options{
 		server:    *server,
-		auth:      *auth,
+		httpAuth:  *httpAuth,
 		hostname:  *hostname,
 		subdomain: *subdomain,
 		localaddr: parseLocalAddr(),

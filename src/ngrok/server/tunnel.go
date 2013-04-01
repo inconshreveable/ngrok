@@ -2,6 +2,7 @@ package server
 
 import (
 	log "code.google.com/p/log4go"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"ngrok/conn"
@@ -57,6 +58,11 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	if err := tunnels.Add(t); err != nil {
 		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprint(err)}
 		return
+	}
+
+	// pre-encode the http basic auth for fast comparisons later
+	if m.HttpAuth != "" {
+		m.HttpAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(m.HttpAuth))
 	}
 
 	t.ctl.conn.AddLogPrefix(t.Id())

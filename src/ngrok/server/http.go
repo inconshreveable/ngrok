@@ -6,6 +6,15 @@ import (
 	"ngrok/conn"
 )
 
+const (
+	NotAuthorized = `HTTP/1.0 401 Not Authorized
+WWW-Authenticate: Basic realm="ngrok"
+Content-Length: 23
+
+Authorization required
+`
+)
+
 /**
  * Listens for new http connections from the public internet
  */
@@ -50,12 +59,21 @@ func httpHandler(tcpConn net.Conn) {
 	if err != nil {
 		panic(err)
 	}
+
+	// multiplex to find the right backend host
 	conn.Debug("Found hostname %s in request", req.Host)
-
 	tunnel := tunnels.Get("http://" + req.Host)
-
 	if tunnel == nil {
 		conn.Info("No tunnel found for hostname %s", req.Host)
+		return
+	}
+
+	// satisfy auth, if necessary
+	conn.Debug("From client: %s", req.Header.Get("Authorization"))
+	conn.Debug("To match: %s", tunnel.regMsg.HttpAuth)
+	if req.Header.Get("Authorization") != tunnel.regMsg.HttpAuth {
+		conn.Info("Authentication failed")
+		conn.Write([]byte(NotAuthorized))
 		return
 	}
 

@@ -44,16 +44,15 @@ type TypeEmbed struct {
 
 type RegMsg struct {
 	TypeEmbed
-	Protocol         string
-	Hostname         string
-	Subdomain        string
-	ClientId         string
-	HttpAuthUser     string
-	HttpAuthPassword string
-	User             string
-	Password         string
-	OS               string
-	Arch             string
+	Protocol  string
+	Hostname  string
+	Subdomain string
+	ClientId  string
+	HttpAuth  string
+	User      string
+	Password  string
+	OS        string
+	Arch      string
 }
 
 type RegAckMsg struct {
