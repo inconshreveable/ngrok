@@ -53,14 +53,23 @@ func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	start := time.Now()
 	remoteConn, err := connect(proxyAddr, "pxy")
 	if err != nil {
-		panic(err)
+                // XXX: What is the proper response here?
+                // display something to the user?
+                // retry?
+                // reset control connection?
+                log.Error("Failed to establish proxy connection: %v", err)
+                return
 	}
 
 	defer remoteConn.Close()
 	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{Url: s.publicUrl})
-
 	if err != nil {
-		panic(err)
+                // XXX: What is the proper response here?
+                // display something to the user?
+                // retry?
+                // reset control connection?
+                log.Error("Failed to write RegProxyMsg: %v", err)
+                return
 	}
 
 	localConn, err := connect(s.opts.localaddr, "prv")
