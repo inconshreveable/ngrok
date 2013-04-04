@@ -81,7 +81,7 @@ func (h *WebHttpView) register() {
 			if err != nil {
 				panic(err)
 			}
-			h.ctl.Cmds <- ui.CmdRequest{bodyBytes}
+			h.ctl.Cmds <- ui.CmdRequest{Payload: bodyBytes}
 			w.Write([]byte(http.StatusText(200)))
 		} else {
 			// XXX: 400

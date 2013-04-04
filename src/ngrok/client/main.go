@@ -171,7 +171,7 @@ func control(s *State, ctl *ui.Controller) {
 
 	if regAck.Error != "" {
 		emsg := fmt.Sprintf("Server failed to allocate tunnel: %s", regAck.Error)
-		ctl.Cmds <- ui.CmdQuit{emsg}
+		ctl.Cmds <- ui.CmdQuit{Message: emsg}
 		return
 	}
 
