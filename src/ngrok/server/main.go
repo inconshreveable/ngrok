@@ -46,22 +46,18 @@ func parseArgs() *Options {
 	}
 }
 
-func getTCPPort(addr net.Addr) int {
-	return addr.(*net.TCPAddr).Port
-}
-
 /**
  * Listens for new control connections from tunnel clients
  */
 func controlListener(addr *net.TCPAddr, domain string) {
 	// listen for incoming connections
-	conns, err := conn.Listen(addr, "ctl")
+	listener, err := conn.Listen(addr, "ctl")
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info("Listening for control connections on %d", getTCPPort(addr))
-	for c := range conns {
+	log.Info("Listening for control connections on %d", listener.Port)
+	for c := range listener.Conns {
 		NewControl(c)
 	}
 }
@@ -70,15 +66,15 @@ func controlListener(addr *net.TCPAddr, domain string) {
  * Listens for new proxy connections from tunnel clients
  */
 func proxyListener(addr *net.TCPAddr, domain string) {
-	conns, err := conn.Listen(addr, "pxy")
+	listener, err := conn.Listen(addr, "pxy")
 	if err != nil {
 		panic(err)
 	}
 
 	// set global proxy addr variable
-	proxyAddr = fmt.Sprintf("%s:%d", domain, getTCPPort(addr))
-	log.Info("Listening for proxy connection on %d", getTCPPort(addr))
-	for conn := range conns {
+	proxyAddr = fmt.Sprintf("%s:%d", domain, listener.Port)
+	log.Info("Listening for proxy connection on %d", listener.Port)
+	for conn := range listener.Conns {
 		go func() {
 			// fail gracefully if the proxy connection dies
 			defer func() {

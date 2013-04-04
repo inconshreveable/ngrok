@@ -3,6 +3,7 @@ package server
 import (
 	log "code.google.com/p/log4go"
 	"net"
+        "fmt"
 	"ngrok/conn"
 )
 
@@ -13,6 +14,12 @@ Content-Length: 23
 
 Authorization required
 `
+
+        NotFound = `HTTP/1.0 404 Not Found
+Content-Length: %d
+
+Tunnel %s not found
+`
 )
 
 /**
@@ -20,22 +27,14 @@ Authorization required
  */
 func httpListener(addr *net.TCPAddr) {
 	// bind/listen for incoming connections
-	listener, err := net.ListenTCP("tcp", addr)
+        listener, err := conn.Listen(addr, "pub")
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info("Listening for public http connections on %v", getTCPPort(listener.Addr()))
-	for {
-		// accept new public connections
-		tcpConn, err := listener.AcceptTCP()
-
-		if err != nil {
-			panic(err)
-		}
-
-		// handle the new connection asynchronously
-		go httpHandler(tcpConn)
+	log.Info("Listening for public http connections on %v", listener.Port)
+	for conn := range listener.Conns {
+		go httpHandler(conn)
 	}
 }
 
@@ -65,6 +64,7 @@ func httpHandler(tcpConn net.Conn) {
 	tunnel := tunnels.Get("http://" + req.Host)
 	if tunnel == nil {
 		conn.Info("No tunnel found for hostname %s", req.Host)
+                conn.Write([]byte(fmt.Sprintf(NotFound, len(req.Host) + 18, req.Host)))
 		return
 	}
 

@@ -24,20 +24,29 @@ type tcpConn struct {
 	typ string
 }
 
+type Listener struct {
+        *net.TCPAddr
+        Conns chan Conn
+}
+
 func wrapTcpConn(conn net.Conn, typ string) *tcpConn {
 	c := &tcpConn{conn, log.NewPrefixLogger(), rand.Int31(), typ}
 	c.AddLogPrefix(c.Id())
 	return c
 }
 
-func Listen(addr *net.TCPAddr, typ string) (conns chan Conn, err error) {
+func Listen(addr *net.TCPAddr, typ string) (l *Listener, err error) {
 	// listen for incoming connections
 	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		return
 	}
 
-	conns = make(chan Conn)
+	l = &Listener{
+            TCPAddr: listener.Addr().(*net.TCPAddr),
+            Conns: make(chan Conn),
+        }
+
 	go func() {
 		for {
 			tcpConn, err := listener.AcceptTCP()
@@ -47,10 +56,10 @@ func Listen(addr *net.TCPAddr, typ string) (conns chan Conn, err error) {
 
 			c := wrapTcpConn(tcpConn, typ)
 			c.Info("New connection from %v", tcpConn.RemoteAddr())
-			conns <- c
+			l.Conns <- c
 		}
 	}()
-	return
+        return
 }
 
 func Wrap(conn net.Conn, typ string) *tcpConn {
