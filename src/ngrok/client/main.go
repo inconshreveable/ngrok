@@ -4,6 +4,7 @@ import (
 	log "code.google.com/p/log4go"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"ngrok/client/ui"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -108,17 +109,35 @@ func heartbeat(lastPongAddr *int64, c conn.Conn) {
 	}
 }
 
+func reconnectingControl(s *State, ctl *ui.Controller) {
+	// how long we should wait before we reconnect
+	maxWait := 30 * time.Second
+	wait := 1 * time.Second
+
+	for {
+		control(s, ctl)
+
+		if s.status == "online" {
+			wait = 1 * time.Second
+		}
+
+		log.Info("Waiting %d seconds before reconnecting", int(wait.Seconds()))
+		time.Sleep(wait)
+		// exponentially increase wait time
+		wait = 2 * wait
+		wait = time.Duration(math.Min(float64(wait), float64(maxWait)))
+		s.status = "reconnecting"
+		ctl.Update(s)
+	}
+}
+
 /**
  * Establishes and manages a tunnel control connection with the server
  */
 func control(s *State, ctl *ui.Controller) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Recovering from failure %v, attempting to reconnect to server after 10 seconds . . .", r)
-			s.status = "reconnecting"
-			ctl.Update(s)
-			time.Sleep(10 * time.Second)
-			go control(s, ctl)
+			log.Error("control recovering from failure %v", r)
 		}
 	}()
 
@@ -217,7 +236,7 @@ func Main() {
 	term.New(ctl, s)
 	web.NewWebView(ctl, s, opts.webport)
 
-	go control(s, ctl)
+	go reconnectingControl(s, ctl)
 
 	quitMessage := ""
 	ctl.Wait.Add(1)
