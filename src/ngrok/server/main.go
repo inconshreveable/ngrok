@@ -55,19 +55,14 @@ func getTCPPort(addr net.Addr) int {
  */
 func controlListener(addr *net.TCPAddr, domain string) {
 	// listen for incoming connections
-	listener, err := net.ListenTCP("tcp", addr)
+	conns, err := conn.Listen(addr, "ctl")
 	if err != nil {
 		panic(err)
 	}
 
 	log.Info("Listening for control connections on %d", getTCPPort(addr))
-	for {
-		tcpConn, err := listener.AcceptTCP()
-		if err != nil {
-			panic(err)
-		}
-
-		NewControl(tcpConn)
+	for c := range conns {
+		NewControl(c)
 	}
 }
 
@@ -75,23 +70,17 @@ func controlListener(addr *net.TCPAddr, domain string) {
  * Listens for new proxy connections from tunnel clients
  */
 func proxyListener(addr *net.TCPAddr, domain string) {
-	listener, err := net.ListenTCP("tcp", addr)
-	proxyAddr = fmt.Sprintf("%s:%d", domain, getTCPPort(listener.Addr()))
-
+	conns, err := conn.Listen(addr, "pxy")
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info("Listening for proxy connection on %d", getTCPPort(listener.Addr()))
-	for {
-		tcpConn, err := listener.AcceptTCP()
-		if err != nil {
-			panic(err)
-		}
-
-		conn := conn.NewTCP(tcpConn, "pxy")
-
+	// set global proxy addr variable
+	proxyAddr = fmt.Sprintf("%s:%d", domain, getTCPPort(addr))
+	log.Info("Listening for proxy connection on %d", getTCPPort(addr))
+	for conn := range conns {
 		go func() {
+			// fail gracefully if the proxy connection dies
 			defer func() {
 				if r := recover(); r != nil {
 					conn.Warn("Failed with error: %v", r)
@@ -99,18 +88,20 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 				}
 			}()
 
+			// read the proxy register message
 			var regPxy msg.RegProxyMsg
 			if err = msg.ReadMsgInto(conn, &regPxy); err != nil {
 				panic(err)
 			}
 
+			// look up the tunnel for this proxy
 			conn.Info("Registering new proxy for %s", regPxy.Url)
-
 			tunnel := tunnels.Get(regPxy.Url)
 			if tunnel == nil {
 				panic("No tunnel found for: " + regPxy.Url)
 			}
 
+			// register the proxy connection with the tunnel
 			tunnel.RegisterProxy(conn)
 		}()
 	}

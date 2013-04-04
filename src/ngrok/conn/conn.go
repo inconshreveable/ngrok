@@ -24,11 +24,57 @@ type tcpConn struct {
 	typ string
 }
 
-func NewTCP(conn net.Conn, typ string) *tcpConn {
+func wrapTcpConn(conn net.Conn, typ string) *tcpConn {
 	c := &tcpConn{conn, log.NewPrefixLogger(), rand.Int31(), typ}
 	c.AddLogPrefix(c.Id())
-	c.Info("New connection from %v", conn.RemoteAddr())
 	return c
+}
+
+func Listen(addr *net.TCPAddr, typ string) (conns chan Conn, err error) {
+	// listen for incoming connections
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return
+	}
+
+	conns = make(chan Conn)
+	go func() {
+		for {
+			tcpConn, err := listener.AcceptTCP()
+			if err != nil {
+				panic(err)
+			}
+
+			c := wrapTcpConn(tcpConn, typ)
+			c.Info("New connection from %v", tcpConn.RemoteAddr())
+			conns <- c
+		}
+	}()
+	return
+}
+
+func Wrap(conn net.Conn, typ string) *tcpConn {
+	return wrapTcpConn(conn, typ)
+}
+
+func Dial(addr, typ string) (conn *tcpConn, err error) {
+	var (
+		tcpAddr *net.TCPAddr
+		tcpConn *net.TCPConn
+	)
+
+	if tcpAddr, err = net.ResolveTCPAddr("tcp", addr); err != nil {
+		return
+	}
+
+	//log.Debug("Dialing %v", addr)
+	if tcpConn, err = net.DialTCP("tcp", nil, tcpAddr); err != nil {
+		return
+	}
+
+	conn = wrapTcpConn(tcpConn, typ)
+	conn.Debug("New connection to: %v", tcpAddr)
+	return conn, nil
 }
 
 func (c *tcpConn) Close() error {
@@ -72,7 +118,7 @@ type httpConn struct {
 
 func NewHttp(conn net.Conn, typ string) *httpConn {
 	return &httpConn{
-		NewTCP(conn, typ),
+		wrapTcpConn(conn, typ),
 		bytes.NewBuffer(make([]byte, 0, 1024)),
 	}
 }

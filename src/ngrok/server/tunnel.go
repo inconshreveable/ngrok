@@ -120,8 +120,9 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 			panic(err)
 		}
 
-		conn := conn.NewTCP(tcpConn, "pub")
+		conn := conn.Wrap(tcpConn, "pub")
 		conn.AddLogPrefix(t.Id())
+		conn.Info("New connection from %v", conn.RemoteAddr())
 
 		go t.HandlePublicConnection(conn)
 	}

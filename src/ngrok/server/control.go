@@ -2,7 +2,6 @@ package server
 
 import (
 	"io"
-	"net"
 	"ngrok/conn"
 	"ngrok/msg"
 	"runtime/debug"
@@ -30,9 +29,9 @@ type Control struct {
 	tun *Tunnel
 }
 
-func NewControl(tcpConn *net.TCPConn) {
+func NewControl(conn conn.Conn) {
 	c := &Control{
-		conn:     conn.NewTCP(tcpConn, "ctl"),
+		conn:     conn,
 		out:      make(chan (interface{}), 1),
 		in:       make(chan (msg.Message), 1),
 		stop:     make(chan (msg.Message), 1),

@@ -4,7 +4,6 @@ import (
 	log "code.google.com/p/log4go"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"ngrok/client/ui"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -23,56 +22,33 @@ const (
 	maxPongLatency = 15 * time.Second
 )
 
-/** 
- * Connect to the ngrok server
- */
-func connect(addr string, typ string) (c conn.Conn, err error) {
-	var (
-		tcpAddr *net.TCPAddr
-		tcpConn *net.TCPConn
-	)
-
-	if tcpAddr, err = net.ResolveTCPAddr("tcp", addr); err != nil {
-		return
-	}
-
-	log.Debug("Dialing %v", addr)
-	if tcpConn, err = net.DialTCP("tcp", nil, tcpAddr); err != nil {
-		return
-	}
-
-	c = conn.NewTCP(tcpConn, typ)
-	c.Debug("Connected to: %v", tcpAddr)
-	return c, nil
-}
-
 /**
  * Establishes and manages a tunnel proxy connection with the server
  */
 func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	start := time.Now()
-	remoteConn, err := connect(proxyAddr, "pxy")
+	remoteConn, err := conn.Dial(proxyAddr, "pxy")
 	if err != nil {
-                // XXX: What is the proper response here?
-                // display something to the user?
-                // retry?
-                // reset control connection?
-                log.Error("Failed to establish proxy connection: %v", err)
-                return
+		// XXX: What is the proper response here?
+		// display something to the user?
+		// retry?
+		// reset control connection?
+		log.Error("Failed to establish proxy connection: %v", err)
+		return
 	}
 
 	defer remoteConn.Close()
 	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{Url: s.publicUrl})
 	if err != nil {
-                // XXX: What is the proper response here?
-                // display something to the user?
-                // retry?
-                // reset control connection?
-                log.Error("Failed to write RegProxyMsg: %v", err)
-                return
+		// XXX: What is the proper response here?
+		// display something to the user?
+		// retry?
+		// reset control connection?
+		log.Error("Failed to write RegProxyMsg: %v", err)
+		return
 	}
 
-	localConn, err := connect(s.opts.localaddr, "prv")
+	localConn, err := conn.Dial(s.opts.localaddr, "prv")
 	if err != nil {
 		remoteConn.Warn("Failed to open private leg %s: %v", s.opts.localaddr, err)
 		return
@@ -147,7 +123,7 @@ func control(s *State, ctl *ui.Controller) {
 	}()
 
 	// establish control channel
-	conn, err := connect(s.opts.server, "ctl")
+	conn, err := conn.Dial(s.opts.server, "ctl")
 	if err != nil {
 		panic(err)
 	}
@@ -258,7 +234,8 @@ func Main() {
 				case ui.REPLAY:
 					go func() {
 						payload := cmd.Payload.([]byte)
-						localConn, err := connect(s.opts.localaddr, "prv")
+						var localConn conn.Conn
+						localConn, err := conn.Dial(s.opts.localaddr, "prv")
 						if err != nil {
 							log.Warn("Failed to open private leg %s: %v", s.opts.localaddr, err)
 							return
