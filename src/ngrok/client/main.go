@@ -171,7 +171,7 @@ func control(s *State, ctl *ui.Controller) {
 
 	if regAck.Error != "" {
 		emsg := fmt.Sprintf("Server failed to allocate tunnel: %s", regAck.Error)
-		ctl.Cmds <- ui.Command{ui.QUIT, emsg}
+		ctl.Cmds <- ui.CmdQuit{emsg}
 		return
 	}
 
@@ -244,15 +244,14 @@ func Main() {
 		defer ctl.Wait.Done()
 		for {
 			select {
-			case cmd := <-ctl.Cmds:
-				switch cmd.Code {
-				case ui.QUIT:
-					quitMessage = cmd.Payload.(string)
+			case obj := <-ctl.Cmds:
+				switch cmd := obj.(type) {
+				case ui.CmdQuit:
+					quitMessage = cmd.Message
 					ctl.DoShutdown()
 					return
-				case ui.REPLAY:
+				case ui.CmdRequest:
 					go func() {
-						payload := cmd.Payload.([]byte)
 						var localConn conn.Conn
 						localConn, err := conn.Dial(s.opts.localaddr, "prv")
 						if err != nil {
@@ -261,7 +260,7 @@ func Main() {
 						}
 						//defer localConn.Close()
 						localConn = s.protocol.WrapConn(localConn)
-						localConn.Write(payload)
+						localConn.Write(cmd.Payload)
 						ioutil.ReadAll(localConn)
 					}()
 				}

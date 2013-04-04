@@ -1,11 +1,13 @@
 package ui
 
-type Command struct {
-	Code    int
-	Payload interface{}
+type Command interface{}
+
+type CmdQuit struct {
+    // display this message after quit
+    Message string
 }
 
-const (
-	QUIT = iota
-	REPLAY
-)
+type CmdRequest struct {
+    // the bytes of the request to issue
+    Payload []byte
+}

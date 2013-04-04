@@ -120,7 +120,7 @@ func (v *TermView) input() {
 			switch ev.Key {
 			case termbox.KeyCtrlC:
 				v.Info("Got quit command")
-				v.ctl.Cmds <- ui.Command{ui.QUIT, ""}
+				v.ctl.Cmds <- ui.CmdQuit{}
 			}
 
 		case termbox.EventResize:
