@@ -25,8 +25,8 @@ type tcpConn struct {
 }
 
 type Listener struct {
-        *net.TCPAddr
-        Conns chan Conn
+	*net.TCPAddr
+	Conns chan Conn
 }
 
 func wrapTcpConn(conn net.Conn, typ string) *tcpConn {
@@ -43,9 +43,9 @@ func Listen(addr *net.TCPAddr, typ string) (l *Listener, err error) {
 	}
 
 	l = &Listener{
-            TCPAddr: listener.Addr().(*net.TCPAddr),
-            Conns: make(chan Conn),
-        }
+		TCPAddr: listener.Addr().(*net.TCPAddr),
+		Conns:   make(chan Conn),
+	}
 
 	go func() {
 		for {
@@ -59,7 +59,7 @@ func Listen(addr *net.TCPAddr, typ string) (l *Listener, err error) {
 			l.Conns <- c
 		}
 	}()
-        return
+	return
 }
 
 func Wrap(conn net.Conn, typ string) *tcpConn {

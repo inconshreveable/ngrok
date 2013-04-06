@@ -22,10 +22,13 @@ release-server: server
 release-all: release-client release-server
 
 bindata:
-	echo $$GOPATH
 	go get github.com/inconshreveable/go-bindata
-	./bin/go-bindata -b release -i templates/page.html -o src/ngrok/client/views/web/static/page.html.go -m -p static -f PageHtml
-	./bin/go-bindata -b release -i templates/body.html -o src/ngrok/client/views/web/static/body.html.go -m -p static -f BodyHtml
+	./bin/go-bindata -b release -i assets/page.html -o src/ngrok/client/views/web/static/page.html.go -m -p static -f PageHtml
+	./bin/go-bindata -b release -i assets/body.html -o src/ngrok/client/views/web/static/body.html.go -m -p static -f BodyHtml
+	./bin/go-bindata -b release -i assets/highlight.min.css -o src/ngrok/client/views/web/static/highlight.css.go -m -p static -f HighlightCss
+	./bin/go-bindata -b release -i assets/highlight.min.js -o src/ngrok/client/views/web/static/highlight.js.go -m -p static -f HighlightJs
+	./bin/go-bindata -b release -i assets/bootstrap.min.css -o src/ngrok/client/views/web/static/bootstrap.css.go -m -p static -f BootstrapCss
+	./bin/go-bindata -b release -i assets/jquery-1.9.1.min.js -o src/ngrok/client/views/web/static/jquery-1.9.1.js.go -m -p static -f JqueryJs
 
 all: client server
 

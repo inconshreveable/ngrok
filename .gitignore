@@ -4,3 +4,5 @@ pkg/
 src/code.google.com
 src/github.com
 src/ngrok/client/views/web/static/*.html.go
+src/ngrok/client/views/web/static/*.css.go
+src/ngrok/client/views/web/static/*.js.go

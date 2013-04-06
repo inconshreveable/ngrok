@@ -59,13 +59,25 @@ func (c *Tee) WriteBuffer() *bufio.Reader {
 }
 
 func (c *Tee) Read(b []byte) (n int, err error) {
-	return c.rd.Read(b)
+	n, err = c.rd.Read(b)
+	if err != nil {
+		c.readPipe.wr.Close()
+	}
+	return
 }
 
 func (c *Tee) ReadFrom(r io.Reader) (n int64, err error) {
-	return io.Copy(c.wr, r)
+	n, err = io.Copy(c.wr, r)
+	if err != nil {
+		c.writePipe.wr.Close()
+	}
+	return
 }
 
 func (c *Tee) Write(b []byte) (n int, err error) {
-	return c.wr.Write(b)
+	n, err = c.wr.Write(b)
+	if err != nil {
+		c.writePipe.wr.Close()
+	}
+	return
 }
