@@ -1,7 +1,10 @@
 package proto
 
 import (
+	"bytes"
 	metrics "github.com/inconshreveable/go-metrics"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"ngrok/conn"
@@ -9,9 +12,19 @@ import (
 	"time"
 )
 
+type HttpRequest struct {
+	*http.Request
+	BodyBytes []byte
+}
+
+type HttpResponse struct {
+	*http.Response
+	BodyBytes []byte
+}
+
 type HttpTxn struct {
-	Req      *http.Request
-	Resp     *http.Response
+	Req      *HttpRequest
+	Resp     *HttpResponse
 	Start    time.Time
 	Duration time.Duration
 }
@@ -30,6 +43,12 @@ func NewHttp() *Http {
 		reqMeter: metrics.NewMeter(),
 		reqTimer: metrics.NewTimer(),
 	}
+}
+
+func extractBody(r io.Reader) ([]byte, io.ReadCloser, error) {
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(r)
+	return buf.Bytes(), ioutil.NopCloser(buf), err
 }
 
 func (h *Http) GetName() string { return "http" }
@@ -52,10 +71,17 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn) {
 
 		// make sure we read the body of the request so that
 		// we don't block the writer 
-		_, _ = httputil.DumpRequest(req, true)
+		_, err = httputil.DumpRequest(req, true)
 
 		h.reqMeter.Mark(1)
-		txn := &HttpTxn{Req: req, Start: time.Now()}
+		if err != nil {
+			tee.Warn("Failed to extract request body: %v", err)
+		}
+
+		txn := &HttpTxn{Start: time.Now()}
+		txn.Req = &HttpRequest{Request: req}
+		txn.Req.BodyBytes, txn.Req.Body, err = extractBody(req.Body)
+
 		lastTxn <- txn
 		h.Txns.In() <- txn
 	}
@@ -65,7 +91,7 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 	for {
 		var err error
 		txn := <-lastTxn
-		txn.Resp, err = http.ReadResponse(tee.ReadBuffer(), txn.Req)
+		resp, err := http.ReadResponse(tee.ReadBuffer(), txn.Req.Request)
 		txn.Duration = time.Since(txn.Start)
 		h.reqTimer.Update(txn.Duration)
 		if err != nil {
@@ -75,7 +101,13 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		}
 		// make sure we read the body of the response so that
 		// we don't block the reader 
-		_, _ = httputil.DumpResponse(txn.Resp, true)
+		_, _ = httputil.DumpResponse(resp, true)
+
+		txn.Resp = &HttpResponse{Response: resp}
+		txn.Resp.BodyBytes, txn.Resp.Body, err = extractBody(resp.Body)
+		if err != nil {
+			tee.Warn("Failed to extract response body: %v", err)
+		}
 
 		h.Txns.In() <- txn
 	}

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -16,16 +17,26 @@ import (
 	"strings"
 )
 
-func readBody(r *http.Request) ([]byte, error) {
+func isContentType(h http.Header, ctypes ...string) bool {
+	for _, ctype := range ctypes {
+		if strings.Contains(h.Get("Content-Type"), ctype) {
+			return true
+		}
+	}
+	return false
+}
+
+func readBody(r io.Reader) ([]byte, io.ReadCloser, error) {
 	buf := new(bytes.Buffer)
-	_, err := buf.ReadFrom(r.Body)
-	r.Body = ioutil.NopCloser(buf)
-	return buf.Bytes(), err
+	_, err := buf.ReadFrom(r)
+	return buf.Bytes(), ioutil.NopCloser(buf), err
 }
 
 type WebHttpTxn struct {
 	Id string
 	*proto.HttpTxn
+	reqBody  []byte
+	respBody []byte
 }
 
 type WebHttpView struct {
@@ -63,6 +74,7 @@ func (whv *WebHttpView) update() {
 
 			if htxn.Resp == nil {
 				whtxn := &WebHttpTxn{Id: util.RandId(), HttpTxn: htxn}
+
 				// XXX: unsafe map access from multiple go routines
 				whv.idToTxn[whtxn.Id] = whtxn
 				// XXX: use return value to delete from map so we don't leak memory
@@ -77,7 +89,7 @@ func (h *WebHttpView) register() {
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
 		if txn, ok := h.idToTxn[txnid]; ok {
-			bodyBytes, err := httputil.DumpRequestOut(txn.Req, true)
+			bodyBytes, err := httputil.DumpRequestOut(txn.Req.Request, true)
 			if err != nil {
 				panic(err)
 			}
@@ -104,53 +116,53 @@ func (h *WebHttpView) register() {
 				}
 				return ""
 			},
-			"dumpResponse": func(resp *http.Response) (interface{}, error) {
-				b, err := httputil.DumpResponse(resp, true)
+			"dumpResponse": func(resp *proto.HttpResponse) (interface{}, error) {
+				b, err := httputil.DumpResponse(resp.Response, true)
 				return string(b), err
 			},
-			"dumpRequest": func(req *http.Request) (interface{}, error) {
-				b, err := httputil.DumpRequestOut(req, true)
+			"dumpRequest": func(req *proto.HttpRequest) (interface{}, error) {
+				b, err := httputil.DumpRequestOut(req.Request, true)
 				return string(b), err
 			},
-			"handleForm": func(req *http.Request) (values interface{}, err error) {
-				if !strings.Contains(req.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
+			"handleForm": func(b []byte, h http.Header) (values interface{}, err error) {
+				if !isContentType(h, "application/x-www-form-urlencoded") {
 					return
 				}
 
-				b, err := readBody(req)
-				if err != nil {
-					return
+				if b != nil {
+					values, err = url.ParseQuery(string(b))
 				}
-
-				values, err = url.ParseQuery(string(b))
 				return
 			},
-			"handleJson": func(req *http.Request) interface{} {
-				if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
+			"handleJson": func(raw []byte, h http.Header) interface{} {
+				if !isContentType(h, "application/json") {
 					return nil
 				}
 
-				raw, err := readBody(req)
-				if err != nil {
-					panic(err)
+				var err error
+				pretty := new(bytes.Buffer)
+				out := raw
+				if raw != nil {
+					err = json.Indent(pretty, raw, "", "    ")
+					if err == nil {
+						out = pretty.Bytes()
+					}
 				}
 
-				pretty := new(bytes.Buffer)
-				err = json.Indent(pretty, raw, "", "    ")
-
-				retval := struct {
+				return struct {
 					Str string
 					Err error
 				}{
-					string(pretty.Bytes()),
+					string(out),
 					err,
 				}
-
-				if err != nil {
-					retval.Str = string(raw)
+			},
+			"handleOther": func(b []byte, h http.Header) interface{} {
+				if isContentType(h, "application/json", "application/x-www-form-urlencoded") {
+					return nil
 				}
 
-				return retval
+				return string(b)
 			},
 		}
 

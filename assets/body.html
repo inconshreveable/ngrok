@@ -1,13 +1,17 @@
 {{ define "body" }}
+<h6>
+    {{ with len .BodyBytes }} {{ . }} bytes, {{ end }}
+    {{ with .Header.Get "Content-Type" }}{{.}}{{end}}
+</h6>
 
-{{ with $json := handleJson . }}
+{{ with $json := handleJson .BodyBytes .Header }}
     <pre><code class="json">{{ $json.Str }}</code></pre>
     {{ with $json.Err }}
         <div class="alert">{{ $json.Err }}</div>
     {{ end }}
 {{ end }}
 
-{{ with $form := handleForm . }}
+{{ with $form := handleForm .BodyBytes .Header }}
     <h6>Form Params</h6>
     <table class="table params">
     {{ range $key, $values := $form }}
@@ -19,6 +23,11 @@
         {{ end }}
     {{ end }}
     </table>
+{{ end }}
+
+
+{{ with handleOther .BodyBytes .Header }}
+<pre><code>{{ .}}</code></pre>
 {{ end }}
 
 {{ end }}
