@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"html/template"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -24,12 +22,6 @@ func isContentType(h http.Header, ctypes ...string) bool {
 		}
 	}
 	return false
-}
-
-func readBody(r io.Reader) ([]byte, io.ReadCloser, error) {
-	buf := new(bytes.Buffer)
-	_, err := buf.ReadFrom(r)
-	return buf.Bytes(), ioutil.NopCloser(buf), err
 }
 
 type WebHttpTxn struct {
