@@ -21,7 +21,6 @@ type Options struct {
 /* GLOBALS */
 var (
 	hostRegex *regexp.Regexp
-	version   string = "0.1"
 	proxyAddr string
 	tunnels   *TunnelManager
 )

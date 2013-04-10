@@ -73,7 +73,14 @@ func (v *TermView) Render() {
 
 	// quit instructions
 	quitMsg := "(Ctrl+C to quit)"
-	v.Printf(v.x-len(quitMsg), 0, quitMsg)
+	v.Printf(v.w-len(quitMsg), 0, quitMsg)
+
+	// new version message
+	//newVersion := v.state.GetNewVersion()
+	//if newVersion != "" {
+	newVersionMsg := fmt.Sprintf("new version available")
+	v.APrintf(termbox.ColorYellow, 30, 0, newVersionMsg)
+	//}
 
 	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "ngrok")
 

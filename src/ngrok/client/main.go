@@ -2,9 +2,11 @@ package client
 
 import (
 	log "code.google.com/p/log4go"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net/http"
 	"ngrok/client/ui"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -13,14 +15,17 @@ import (
 	"ngrok/msg"
 	"ngrok/proto"
 	"ngrok/util"
+	"ngrok/version"
 	"runtime"
 	"sync/atomic"
 	"time"
 )
 
 const (
-	pingInterval   = 20 * time.Second
-	maxPongLatency = 15 * time.Second
+	pingInterval         = 20 * time.Second
+	maxPongLatency       = 15 * time.Second
+	versionCheckInterval = 6 * time.Hour
+	versionEndpoint      = "http://ngrok.com/dl/versions"
 )
 
 /**
@@ -71,8 +76,37 @@ func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	ctl.Update(s)
 }
 
+func versionCheck(s *State, ctl *ui.Controller) {
+	for {
+		resp, err := http.Get(versionEndpoint)
+		if err != nil {
+			log.Warn("Failed to get version info %s: %v", versionEndpoint, err)
+			continue
+		}
+
+		var payload struct {
+			client struct {
+				version string
+			}
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(payload)
+		if err != nil {
+			log.Warn("Failed to read version info: %v", err)
+			continue
+		}
+
+		if payload.client.version != version.MajorMinor() {
+			s.newVersion = payload.client.version
+			ctl.Update(s)
+		}
+
+		time.Sleep(versionCheckInterval)
+	}
+}
+
 /*
- * Hearbeating ensure our connection ngrokd is still live
+ * Hearbeating to ensure our connection ngrokd is still live
  */
 func heartbeat(lastPongAddr *int64, c conn.Conn) {
 	lastPing := time.Unix(atomic.LoadInt64(lastPongAddr)-1, 0)
@@ -156,7 +190,7 @@ func control(s *State, ctl *ui.Controller) {
 		Hostname:  s.opts.hostname,
 		Subdomain: s.opts.subdomain,
 		ClientId:  s.id,
-		Version:   msg.Version,
+		Version:   version.Proto,
 	})
 
 	if err != nil {
@@ -179,7 +213,7 @@ func control(s *State, ctl *ui.Controller) {
 	conn.Info("Tunnel established at %v", regAck.Url)
 	s.publicUrl = regAck.Url
 	s.status = "online"
-	s.serverVersion = regAck.Version
+	s.serverVersion = regAck.MmVersion
 	ctl.Update(s)
 
 	// start the heartbeat

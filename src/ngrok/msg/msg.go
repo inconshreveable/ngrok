@@ -7,10 +7,6 @@ import (
 
 var TypeMap map[string]reflect.Type
 
-const (
-	Version = "0.1"
-)
-
 func init() {
 	TypeMap = make(map[string]reflect.Type)
 
@@ -36,6 +32,7 @@ type Envelope struct {
 
 type RegMsg struct {
 	Version   string
+	MmVersion string
 	Protocol  string
 	Hostname  string
 	Subdomain string
@@ -49,6 +46,7 @@ type RegMsg struct {
 
 type RegAckMsg struct {
 	Version   string
+	MmVersion string
 	Url       string
 	ProxyAddr string
 	Error     string
@@ -71,7 +69,8 @@ type VersionMsg struct {
 }
 
 type VersionRespMsg struct {
-	Version string
+	Version   string
+	MmVersion string
 }
 
 type MetricsMsg struct {

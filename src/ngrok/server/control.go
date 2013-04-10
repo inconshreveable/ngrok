@@ -4,6 +4,7 @@ import (
 	"io"
 	"ngrok/conn"
 	"ngrok/msg"
+	"ngrok/version"
 	"runtime/debug"
 	"time"
 )
@@ -88,7 +89,10 @@ func (c *Control) managerThread() {
 				c.out <- &msg.PongMsg{}
 
 			case *msg.VersionMsg:
-				c.out <- &msg.VersionRespMsg{Version: version}
+				c.out <- &msg.VersionRespMsg{
+					Version:   version.Proto,
+					MmVersion: version.MajorMinor(),
+				}
 			}
 		}
 	}

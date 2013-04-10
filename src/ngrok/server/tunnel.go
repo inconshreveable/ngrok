@@ -8,6 +8,7 @@ import (
 	"ngrok/conn"
 	nlog "ngrok/log"
 	"ngrok/msg"
+	"ngrok/version"
 )
 
 /**
@@ -60,8 +61,8 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		return
 	}
 
-	if m.Version != msg.Version {
-		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprintf("Incompatible versions. Server %s, client %s.", msg.Version, m.Version)}
+	if m.Version != version.Proto {
+		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprintf("Incompatible versions. Server %s, client %s.", version.MajorMinor(), m.Version)}
 	}
 
 	// pre-encode the http basic auth for fast comparisons later
@@ -75,7 +76,8 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	t.ctl.out <- &msg.RegAckMsg{
 		Url:       t.url,
 		ProxyAddr: fmt.Sprintf("%s", proxyAddr),
-		Version:   msg.Version,
+		Version:   version.Proto,
+		MmVersion: version.MajorMinor(),
 	}
 
 	return

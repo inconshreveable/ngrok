@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"ngrok/version"
 	"os"
 	"strconv"
 )
@@ -120,7 +121,17 @@ func parseArgs() *Options {
 		4040,
 		"The port on which the web interface is served")
 
+	v := flag.Bool(
+		"version",
+		false,
+		"Print ngrok version and exit")
+
 	flag.Parse()
+
+	if *v {
+		fmt.Println(version.MajorMinor())
+		os.Exit(0)
+	}
 
 	return &Options{
 		server:    *server,
