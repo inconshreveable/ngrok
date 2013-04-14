@@ -154,7 +154,20 @@ func (h *WebHttpView) register() {
 					return nil
 				}
 
-				return string(b)
+				syntaxMap := map[string]string{
+					"text/xml":        "xml",
+					"application/xml": "xml",
+					"text/html":       "xml",
+				}
+
+				ctype := strings.Split(h.Get("Content-Type"), ";")[0]
+				return struct {
+					Body   string
+					Syntax string
+				}{
+					string(b),
+					syntaxMap[strings.TrimSpace(ctype)],
+				}
 			},
 		}
 

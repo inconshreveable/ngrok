@@ -27,7 +27,7 @@
 
 
 {{ with handleOther .BodyBytes .Header }}
-<pre><code>{{ .}}</code></pre>
+<pre><code class="{{.Syntax}}">{{.Body}}</code></pre>
 {{ end }}
 
 {{ end }}
