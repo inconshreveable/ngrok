@@ -1,10 +1,10 @@
 package server
 
 import (
-	log "code.google.com/p/log4go"
 	"fmt"
 	"net"
 	"ngrok/conn"
+	"ngrok/log"
 )
 
 const (

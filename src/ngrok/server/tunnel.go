@@ -1,12 +1,11 @@
 package server
 
 import (
-	log "code.google.com/p/log4go"
 	"encoding/base64"
 	"fmt"
 	"net"
 	"ngrok/conn"
-	nlog "ngrok/log"
+	log "ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
 )
@@ -31,7 +30,7 @@ type Tunnel struct {
 	proxies chan conn.Conn
 
 	// logger
-	nlog.Logger
+	log.Logger
 }
 
 func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
@@ -39,7 +38,7 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		regMsg:  m,
 		ctl:     ctl,
 		proxies: make(chan conn.Conn),
-		Logger:  nlog.NewPrefixLogger(),
+		Logger:  log.NewPrefixLogger(),
 	}
 
 	switch t.regMsg.Protocol {

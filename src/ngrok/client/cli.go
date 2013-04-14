@@ -24,6 +24,7 @@ type Options struct {
 	subdomain   string
 	historySize int
 	webport     int
+	logto       string
 }
 
 func fail(msg string, args ...interface{}) {
@@ -121,6 +122,11 @@ func parseArgs() *Options {
 		4040,
 		"The port on which the web interface is served")
 
+	logto := flag.String(
+		"log",
+		"none",
+		"Write log messages to this file. 'stdout' and 'none' have special meanings")
+
 	v := flag.Bool(
 		"version",
 		false,
@@ -141,5 +147,6 @@ func parseArgs() *Options {
 		localaddr: parseLocalAddr(),
 		protocol:  parseProtocol(*protocol),
 		webport:   *webport,
+		logto:     *logto,
 	}
 }

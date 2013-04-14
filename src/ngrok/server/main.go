@@ -1,12 +1,11 @@
 package server
 
 import (
-	log "code.google.com/p/log4go"
 	"flag"
 	"fmt"
 	"net"
 	"ngrok/conn"
-	nlog "ngrok/log"
+	log "ngrok/log"
 	"ngrok/msg"
 	"regexp"
 )
@@ -16,6 +15,7 @@ type Options struct {
 	proxyPort  int
 	tunnelPort int
 	domain     string
+	logto      string
 }
 
 /* GLOBALS */
@@ -34,6 +34,10 @@ func parseArgs() *Options {
 	tunnelPort := flag.Int("tunnelport", 2280, "Tunnel port")
 	proxyPort := flag.Int("proxyPort", 0, "Proxy port")
 	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
+	logto := flag.String(
+		"log",
+		"stdout",
+		"Write log messages to this file. 'stdout' and 'none' have special meanings")
 
 	flag.Parse()
 
@@ -42,6 +46,7 @@ func parseArgs() *Options {
 		tunnelPort: *tunnelPort,
 		proxyPort:  *proxyPort,
 		domain:     *domain,
+		logto:      *logto,
 	}
 }
 
@@ -103,10 +108,11 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 }
 
 func Main() {
-	nlog.LogToConsole()
-	done := make(chan int)
 	// parse options
 	opts := parseArgs()
+
+	// init logging
+	log.LogTo(opts.logto)
 
 	tunnels = NewTunnelManager(opts.domain)
 
@@ -114,5 +120,7 @@ func Main() {
 	go controlListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.tunnelPort}, opts.domain)
 	go httpListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.publicPort})
 
+	// wait forever
+	done := make(chan int)
 	<-done
 }

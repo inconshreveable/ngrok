@@ -1,7 +1,6 @@
 package client
 
 import (
-	log "code.google.com/p/log4go"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +10,7 @@ import (
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
 	"ngrok/conn"
-	nlog "ngrok/log"
+	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/proto"
 	"ngrok/util"
@@ -242,11 +241,11 @@ func control(s *State, ctl *ui.Controller) {
 }
 
 func Main() {
-	// XXX: should do this only if they ask us too
-	nlog.LogToFile()
-
 	// parse options
 	opts := parseArgs()
+
+	// set up logging
+	log.LogTo(opts.logto)
 
 	// init client state
 	s := &State{
@@ -271,8 +270,10 @@ func Main() {
 
 	// init ui
 	ctl := ui.NewController()
-	term.New(ctl, s)
 	web.NewWebView(ctl, s, opts.webport)
+	if opts.logto != "stdout" {
+		term.New(ctl, s)
+	}
 
 	go reconnectingControl(s, ctl)
 	go versionCheck(s, ctl)

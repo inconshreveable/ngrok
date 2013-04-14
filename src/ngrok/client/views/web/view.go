@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"ngrok/client/ui"
 	"ngrok/client/views/web/static"
+	"ngrok/log"
 	"ngrok/proto"
 	"strings"
 )
@@ -35,6 +36,7 @@ func NewWebView(ctl *ui.Controller, state ui.State, port int) *WebView {
 		w.Write(fn())
 	})
 
+	log.Info("Serving web interface on localhost:%d", port)
 	go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	return w
 }

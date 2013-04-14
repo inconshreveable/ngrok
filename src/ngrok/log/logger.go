@@ -5,22 +5,23 @@ import (
 	"fmt"
 )
 
-const (
-	logfile string = "ngrok.log"
-)
+var root log.Logger = make(log.Logger)
 
-func init() {
-	// log4go automatically sets the global logger to write to stdout
-	// and we don't want that by default
-	delete(log.Global, "stdout")
-}
+func LogTo(target string) {
+	var writer log.LogWriter = nil
 
-func LogToConsole() {
-	log.Global.AddFilter("log", log.DEBUG, log.NewConsoleLogWriter())
-}
+	switch target {
+	case "stdout":
+		writer = log.NewConsoleLogWriter()
+	case "none":
+		// no logging
+	default:
+		writer = log.NewFileLogWriter(target, true)
+	}
 
-func LogToFile() {
-	log.Global.AddFilter("log", log.DEBUG, log.NewFileLogWriter(logfile, true))
+	if writer != nil {
+		root.AddFilter("log", log.DEBUG, writer)
+	}
 }
 
 type Logger interface {
@@ -37,7 +38,7 @@ type PrefixLogger struct {
 }
 
 func NewPrefixLogger() Logger {
-	return &PrefixLogger{Logger: &log.Global}
+	return &PrefixLogger{Logger: &root}
 }
 
 func (pl *PrefixLogger) pfx(fmtstr string) interface{} {
@@ -66,4 +67,21 @@ func (pl *PrefixLogger) AddLogPrefix(prefix string) {
 	}
 
 	pl.prefix += "[" + prefix + "]"
+}
+
+// we should never really use these . . . always prefer logging through a prefix logger
+func Debug(arg0 string, args ...interface{}) {
+	root.Debug(arg0, args...)
+}
+
+func Info(arg0 string, args ...interface{}) {
+	root.Info(arg0, args...)
+}
+
+func Warn(arg0 string, args ...interface{}) error {
+	return root.Warn(arg0, args...)
+}
+
+func Error(arg0 string, args ...interface{}) error {
+	return root.Error(arg0, args...)
 }
