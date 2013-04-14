@@ -78,7 +78,7 @@ func (v *TermView) Render() {
 	// new version message
 	newVersion := v.state.GetNewVersion()
 	if newVersion != "" {
-		newVersionMsg := fmt.Sprintf("new version available")
+		newVersionMsg := fmt.Sprintf("new version available at http://ngrok.com")
 		v.APrintf(termbox.ColorYellow, 30, 0, newVersionMsg)
 	}
 

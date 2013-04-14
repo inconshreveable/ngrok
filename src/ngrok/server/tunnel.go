@@ -61,7 +61,7 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	}
 
 	if m.Version != version.Proto {
-		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprintf("Incompatible versions. Server %s, client %s.", version.MajorMinor(), m.Version)}
+		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprintf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), m.Version)}
 	}
 
 	// pre-encode the http basic auth for fast comparisons later
