@@ -154,6 +154,10 @@ func (h *WebHttpView) register() {
 					return nil
 				}
 
+                                if len(b) == 0 {
+                                        return nil
+                                }
+
 				syntaxMap := map[string]string{
 					"text/xml":        "xml",
 					"application/xml": "xml",
