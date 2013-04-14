@@ -77,31 +77,35 @@ func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 }
 
 func versionCheck(s *State, ctl *ui.Controller) {
-	for {
+	check := func() {
 		resp, err := http.Get(versionEndpoint)
 		if err != nil {
 			log.Warn("Failed to get version info %s: %v", versionEndpoint, err)
-			continue
+			return
 		}
 
 		var payload struct {
-			client struct {
-				version string
+			Client struct {
+				Version string
 			}
 		}
 
-		err = json.NewDecoder(resp.Body).Decode(payload)
+		err = json.NewDecoder(resp.Body).Decode(&payload)
 		if err != nil {
 			log.Warn("Failed to read version info: %v", err)
-			continue
+			return
 		}
 
-		if payload.client.version != version.MajorMinor() {
-			s.newVersion = payload.client.version
+		if payload.Client.Version != version.MajorMinor() {
+			s.newVersion = payload.Client.Version
 			ctl.Update(s)
 		}
+	}
 
-		time.Sleep(versionCheckInterval)
+	// check immediately and then at a set interval
+	check()
+	for _ = range time.Tick(versionCheckInterval) {
+		check()
 	}
 }
 
@@ -271,6 +275,7 @@ func Main() {
 	web.NewWebView(ctl, s, opts.webport)
 
 	go reconnectingControl(s, ctl)
+	go versionCheck(s, ctl)
 
 	quitMessage := ""
 	ctl.Wait.Add(1)
