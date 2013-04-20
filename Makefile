@@ -14,10 +14,10 @@ client: deps
 	go install -tags '$(BUILDTAGS)' main/ngrok
 
 release-client: BUILDTAGS=release
-release-client: bindata client
+release-client: clean bindata client
 
 release-server: BUILDTAGS=release
-release-server: server
+release-server: clean server
 
 release-all: release-client release-server
 
@@ -34,4 +34,5 @@ bindata:
 all: client server
 
 clean:
+	rm -rf ./pkg
 	go clean ngrok/...
