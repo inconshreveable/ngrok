@@ -29,7 +29,7 @@ bindata:
 	./bin/go-bindata -b release -i assets/highlight.min.js -o src/ngrok/client/views/web/static/highlight.js.go -m -p static -f HighlightJs
 	./bin/go-bindata -b release -i assets/bootstrap.min.css -o src/ngrok/client/views/web/static/bootstrap.css.go -m -p static -f BootstrapCss
 	./bin/go-bindata -b release -i assets/jquery-1.9.1.min.js -o src/ngrok/client/views/web/static/jquery-1.9.1.js.go -m -p static -f JqueryJs
-	./bin/go-bindata -b release -i assets/vkbeautify.0.99.js -o src/ngrok/client/views/web/static/vkbeautify.0.99.js.go -m -p static -f VkBeautifyJs
+	./bin/go-bindata -b release -i assets/vkbeautify.js -o src/ngrok/client/views/web/static/vkbeautify.js.go -m -p static -f VkBeautifyJs
 
 all: client server
 
