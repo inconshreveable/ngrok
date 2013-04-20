@@ -1,9 +1,10 @@
 <html>
     <head>
         <title>ngrok</title>
-        <link href="/static/bootstrap.min.css" rel="stylesheet">
         <link href="/static/highlight.min.css" rel="stylesheet">
+        <link href="/static/bootstrap.min.css" rel="stylesheet">
         <script src="/static/highlight.min.js"></script>
+        <script src="/static/vkbeautify.js"></script>
         <script src="/static/jquery-1.9.1.min.js"></script>
         <script>hljs.initHighlightingOnLoad();</script>
         <script type="text/javascript">
@@ -24,6 +25,10 @@
                     });
                     
                     return false;
+                });
+
+                $("code.xml").each(function() {
+                    $(this).text(vkbeautify.xml($(this).text()));
                 });
             });
         </script>

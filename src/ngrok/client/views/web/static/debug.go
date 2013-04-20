@@ -37,6 +37,7 @@ func init() {
 		HighlightCss,
 		BootstrapCss,
 		JqueryJs,
+		VkBeautifyJs,
 	}
 	for _, f := range fns {
 		f()
@@ -57,3 +58,4 @@ func HighlightJs() []byte  { return ReadFileOrPanic("highlight.min.js") }
 func HighlightCss() []byte { return ReadFileOrPanic("highlight.min.css") }
 func BootstrapCss() []byte { return ReadFileOrPanic("bootstrap.min.css") }
 func JqueryJs() []byte     { return ReadFileOrPanic("jquery-1.9.1.min.js") }
+func VkBeautifyJs() []byte { return ReadFileOrPanic("vkbeautify.js") }

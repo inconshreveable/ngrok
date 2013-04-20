@@ -154,14 +154,17 @@ func (h *WebHttpView) register() {
 					return nil
 				}
 
-                                if len(b) == 0 {
-                                        return nil
-                                }
+				if len(b) == 0 {
+					return nil
+				}
 
 				syntaxMap := map[string]string{
-					"text/xml":        "xml",
-					"application/xml": "xml",
-					"text/html":       "xml",
+					"text/xml":               "xml",
+					"application/xml":        "xml",
+					"text/html":              "xml",
+					"text/css":               "css",
+					"text/javascript":        "json",
+					"application/javascript": "javascript",
 				}
 
 				ctype := strings.Split(h.Get("Content-Type"), ";")[0]
