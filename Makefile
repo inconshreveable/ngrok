@@ -5,7 +5,7 @@ export GOPATH:=$(shell pwd)
 default: all
 
 deps:
-	go get -v ngrok/...
+	go get -d -v ngrok/...
 
 server: deps
 	go install -tags '$(BUILDTAGS)' main/ngrokd
@@ -14,10 +14,10 @@ client: deps
 	go install -tags '$(BUILDTAGS)' main/ngrok
 
 release-client: BUILDTAGS=release
-release-client: clean bindata client
+release-client: bindata client
 
 release-server: BUILDTAGS=release
-release-server: clean server
+release-server: server
 
 release-all: release-client release-server
 
@@ -34,5 +34,4 @@ bindata:
 all: client server
 
 clean:
-	rm -rf ./pkg
 	go clean ngrok/...
