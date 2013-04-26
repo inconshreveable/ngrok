@@ -11,7 +11,7 @@ import (
 var assetDir string
 
 func init() {
-	// find the directory with the assets. 
+	// find the directory with the assets.
 	// this doesn't work if you:
 	// 1. move the binary
 	// 2. put ngrok in your PATH

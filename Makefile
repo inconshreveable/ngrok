@@ -10,6 +10,9 @@ deps:
 server: deps
 	go install -tags '$(BUILDTAGS)' main/ngrokd
 
+fmt:
+	go fmt ngrok/...
+
 client: deps
 	go install -tags '$(BUILDTAGS)' main/ngrok
 
