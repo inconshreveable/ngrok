@@ -70,7 +70,7 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		}
 
 		// make sure we read the body of the request so that
-		// we don't block the writer 
+		// we don't block the writer
 		_, err = httputil.DumpRequest(req, true)
 
 		h.reqMeter.Mark(1)
@@ -100,7 +100,7 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 			break
 		}
 		// make sure we read the body of the response so that
-		// we don't block the reader 
+		// we don't block the reader
 		_, _ = httputil.DumpResponse(resp, true)
 
 		txn.Resp = &HttpResponse{Response: resp}
