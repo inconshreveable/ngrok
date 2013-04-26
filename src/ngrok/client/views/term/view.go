@@ -1,4 +1,4 @@
-/* 
+/*
    interactive terminal interface for local clients
 */
 package term
