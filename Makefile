@@ -34,7 +34,7 @@ bindata:
 	./bin/go-bindata -b release -i assets/jquery-1.9.1.min.js -o src/ngrok/client/views/web/static/jquery-1.9.1.js.go -m -p static -f JqueryJs
 	./bin/go-bindata -b release -i assets/vkbeautify.js -o src/ngrok/client/views/web/static/vkbeautify.js.go -m -p static -f VkBeautifyJs
 
-all: client server
+all: fmt client server
 
 clean:
 	go clean ngrok/...
