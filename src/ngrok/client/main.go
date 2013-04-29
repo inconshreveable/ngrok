@@ -194,6 +194,7 @@ func control(s *State, ctl *ui.Controller) {
 		Subdomain: s.opts.subdomain,
 		ClientId:  s.id,
 		Version:   version.Proto,
+		MmVersion: version.MajorMinor(),
 	})
 
 	if err != nil {

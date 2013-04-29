@@ -56,7 +56,6 @@ func (m *TunnelManager) Add(t *Tunnel) error {
 		if !assignTunnel(url) {
 			return t.Error("TCP at %s already registered!", url)
 		}
-		metrics.tcpTunnelMeter.Mark(1)
 
 	case "http":
 		if strings.TrimSpace(t.regMsg.Hostname) != "" {
@@ -104,19 +103,6 @@ func (m *TunnelManager) Add(t *Tunnel) error {
 	}
 
 	t.url = url
-	metrics.tunnelMeter.Mark(1)
-	//metrics.tunnelGauge.Update(int64(len(m.tunnels)))
-
-	switch t.regMsg.OS {
-	case "windows":
-		metrics.windowsCounter.Inc(1)
-	case "linux":
-		metrics.linuxCounter.Inc(1)
-	case "darwin":
-		metrics.osxCounter.Inc(1)
-	default:
-		metrics.otherCounter.Inc(1)
-	}
 
 	return nil
 }
