@@ -8,6 +8,7 @@ import (
 	log "ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
+	"time"
 )
 
 /**
@@ -16,6 +17,9 @@ import (
  */
 type Tunnel struct {
 	regMsg *msg.RegMsg
+
+	// time when the tunnel was opened
+	start time.Time
 
 	// public url
 	url string
@@ -36,6 +40,7 @@ type Tunnel struct {
 func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	t = &Tunnel{
 		regMsg:  m,
+		start:   time.Now(),
 		ctl:     ctl,
 		proxies: make(chan conn.Conn),
 		Logger:  log.NewPrefixLogger(),
@@ -79,6 +84,7 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		MmVersion: version.MajorMinor(),
 	}
 
+	metrics.OpenTunnel(t)
 	return
 }
 
@@ -93,10 +99,9 @@ func (t *Tunnel) shutdown() {
 	// remove ourselves from the tunnel registry
 	tunnels.Del(t.url)
 
-	// XXX: should we shut down all of the proxy connections?
+	// XXX: shut down all of the proxy connections?
 
-	// XXX: will this block if this is being called from Control's shutdown code?
-	t.ctl.stop <- nil
+	metrics.CloseTunnel(t)
 }
 
 func (t *Tunnel) Id() string {
@@ -137,18 +142,19 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 		}
 	}()
 
-	metrics.requestTimer.Time(func() {
-		metrics.requestMeter.Mark(1)
+	startTime := time.Now()
+	metrics.OpenConnection(t, publicConn)
 
-		t.Debug("Requesting new proxy connection")
-		t.ctl.out <- &msg.ReqProxyMsg{}
+	t.Debug("Requesting new proxy connection")
+	t.ctl.out <- &msg.ReqProxyMsg{}
 
-		proxyConn := <-t.proxies
-		t.Info("Returning proxy connection %s", proxyConn.Id())
+	proxyConn := <-t.proxies
+	t.Info("Returning proxy connection %s", proxyConn.Id())
 
-		defer proxyConn.Close()
-		conn.Join(publicConn, proxyConn)
-	})
+	defer proxyConn.Close()
+	bytesIn, bytesOut := conn.Join(publicConn, proxyConn)
+
+	metrics.CloseConnection(t, publicConn, startTime, bytesIn, bytesOut)
 }
 
 func (t *Tunnel) RegisterProxy(conn conn.Conn) {

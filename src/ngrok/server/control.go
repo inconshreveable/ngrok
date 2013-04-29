@@ -68,7 +68,6 @@ func (c *Control) managerThread() {
 		case <-reap.C:
 			if time.Since(c.lastPing) > pingTimeoutInterval {
 				c.conn.Info("Lost heartbeat")
-				metrics.lostHeartbeatMeter.Mark(1)
 				return
 			}
 
