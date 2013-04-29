@@ -102,11 +102,6 @@ func parseArgs() *Options {
 		"",
 		"username:password HTTP basic auth creds protecting the public tunnel endpoint")
 
-	hostname := flag.String(
-		"hostname",
-		"",
-		"A full DNS hostname to identify public tunnel endpoint. (Advanced, requires you CNAME your DNS)")
-
 	subdomain := flag.String(
 		"subdomain",
 		"",
@@ -142,7 +137,6 @@ func parseArgs() *Options {
 	return &Options{
 		server:    *server,
 		httpAuth:  *httpAuth,
-		hostname:  *hostname,
 		subdomain: *subdomain,
 		localaddr: parseLocalAddr(),
 		protocol:  parseProtocol(*protocol),
