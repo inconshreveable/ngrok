@@ -49,7 +49,7 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	switch t.regMsg.Protocol {
 	case "tcp":
 		var err error
-		t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{net.ParseIP("0.0.0.0"), 0})
+		t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 0})
 
 		if err != nil {
 			panic(err)

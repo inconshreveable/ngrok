@@ -116,9 +116,9 @@ func Main() {
 
 	tunnels = NewTunnelManager(opts.domain)
 
-	go proxyListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.proxyPort}, opts.domain)
-	go controlListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.tunnelPort}, opts.domain)
-	go httpListener(&net.TCPAddr{net.ParseIP("0.0.0.0"), opts.publicPort})
+	go proxyListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.proxyPort}, opts.domain)
+	go controlListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.tunnelPort}, opts.domain)
+	go httpListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.publicPort})
 
 	// wait forever
 	done := make(chan int)
