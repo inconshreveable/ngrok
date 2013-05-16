@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"ngrok/client/ui"
 	"ngrok/client/views/web/static"
+	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
 	"strings"
@@ -65,7 +66,13 @@ func (whv *WebHttpView) update() {
 			htxn.Req.URL.Scheme = "http"
 
 			if htxn.Resp == nil {
-				whtxn := &WebHttpTxn{Id: util.RandId(), HttpTxn: htxn}
+				id, err := util.RandId(8)
+				if err != nil {
+					log.Error("Failed to generate txn identifier for web storage: %v", err)
+					continue
+				}
+
+				whtxn := &WebHttpTxn{Id: id, HttpTxn: htxn}
 
 				// XXX: unsafe map access from multiple go routines
 				whv.idToTxn[whtxn.Id] = whtxn

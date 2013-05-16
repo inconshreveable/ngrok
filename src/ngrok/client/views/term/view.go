@@ -15,6 +15,7 @@ import (
 type TermView struct {
 	ctl      *ui.Controller
 	updates  chan interface{}
+	flush    chan int
 	subviews []ui.View
 	state    ui.State
 	log.Logger
@@ -33,6 +34,7 @@ func New(ctl *ui.Controller, state ui.State) *TermView {
 	v := &TermView{
 		ctl:      ctl,
 		updates:  ctl.Updates.Reg(),
+		flush:    make(chan int),
 		subviews: make([]ui.View, 0),
 		state:    state,
 		Logger:   log.NewPrefixLogger(),
@@ -44,7 +46,7 @@ func New(ctl *ui.Controller, state ui.State) *TermView {
 
 	switch p := state.GetProtocol().(type) {
 	case *proto.Http:
-		v.subviews = append(v.subviews, NewHttp(p, ctl.Shutdown, 0, 10))
+		v.subviews = append(v.subviews, NewHttp(p, v.flush, ctl.Shutdown, 0, 10))
 	default:
 	}
 
@@ -109,6 +111,9 @@ func (v *TermView) run() {
 	for {
 		v.Debug("Waiting for update")
 		select {
+		case <-v.flush:
+			termbox.Flush()
+
 		case obj := <-v.updates:
 			v.state = obj.(ui.State)
 			v.Render()

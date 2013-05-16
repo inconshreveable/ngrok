@@ -15,6 +15,7 @@ type HttpView struct {
 	httpProto    *proto.Http
 	HttpRequests *util.Ring
 	shutdown     chan int
+	flush        chan int
 	*area
 	log.Logger
 }
@@ -32,12 +33,13 @@ func colorFor(status string) termbox.Attribute {
 	return termbox.ColorWhite
 }
 
-func NewHttp(proto *proto.Http, shutdown chan int, x, y int) *HttpView {
+func NewHttp(proto *proto.Http, flush, shutdown chan int, x, y int) *HttpView {
 	v := &HttpView{
 		httpProto:    proto,
 		HttpRequests: util.NewRing(size),
 		area:         NewArea(x, y, 70, size+5),
 		shutdown:     shutdown,
+		flush:        flush,
 		Logger:       log.NewPrefixLogger(),
 	}
 	v.AddLogPrefix("view")
@@ -76,5 +78,5 @@ func (v *HttpView) Render() {
 			v.APrintf(colorFor(txn.Resp.Status), 30, 3+i, "%s", txn.Resp.Status)
 		}
 	}
-	termbox.Flush()
+	v.flush <- 1
 }

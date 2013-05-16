@@ -253,7 +253,7 @@ func Main() {
 		status: "connecting",
 
 		// unique client id
-		id: util.RandId(),
+		id: util.RandIdOrPanic(8),
 
 		// command-line options
 		opts: opts,
