@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"ngrok/conn"
-	log "ngrok/log"
+	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
 	"time"
@@ -52,7 +52,9 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 0})
 
 		if err != nil {
-			panic(err)
+			t.ctl.conn.Error("Failed to create tunnel. Error binding TCP listener: %v", err)
+
+			t.ctl.stop <- &msg.RegAckMsg{Error: "Internal server error"}
 		}
 
 		go t.listenTcp(t.listener)
@@ -123,7 +125,8 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 		tcpConn, err := listener.AcceptTCP()
 
 		if err != nil {
-			panic(err)
+			t.Error("Failed to accept new TCP connection: %v", err)
+			continue
 		}
 
 		conn := conn.Wrap(tcpConn, "pub")

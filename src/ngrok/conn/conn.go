@@ -51,7 +51,8 @@ func Listen(addr *net.TCPAddr, typ string) (l *Listener, err error) {
 		for {
 			tcpConn, err := listener.AcceptTCP()
 			if err != nil {
-				panic(err)
+				log.Error("Failed to accept new TCP connection of type %s: %v", typ, err)
+				continue
 			}
 
 			c := wrapTcpConn(tcpConn, typ)

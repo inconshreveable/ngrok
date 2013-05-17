@@ -20,6 +20,12 @@ Content-Length: %d
 
 Tunnel %s not found
 `
+
+	BadRequest = `HTTP/1.0 400 Bad Request
+Content-Length: 12
+
+Bad Request
+`
 )
 
 /**
@@ -49,14 +55,16 @@ func httpHandler(tcpConn net.Conn) {
 	defer func() {
 		// recover from failures
 		if r := recover(); r != nil {
-			conn.Warn("Failed with error %v", r)
+			conn.Warn("httpHandler failed with error %v", r)
 		}
 	}()
 
 	// read out the http request
 	req, err := conn.ReadRequest()
 	if err != nil {
-		panic(err)
+		conn.Warn("Failed to read valid http request: %v", err)
+		conn.Write([]byte(BadRequest))
+		return
 	}
 
 	// multiplex to find the right backend host
