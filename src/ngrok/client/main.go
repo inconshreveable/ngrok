@@ -82,6 +82,7 @@ func versionCheck(s *State, ctl *ui.Controller) {
 			log.Warn("Failed to get version info %s: %v", versionEndpoint, err)
 			return
 		}
+		defer resp.Body.Close()
 
 		var payload struct {
 			Client struct {
