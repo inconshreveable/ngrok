@@ -156,19 +156,34 @@ func (m *LocalMetrics) Report() {
 	}
 }
 
+type KeenIoRequest struct {
+	Path string
+	Body []byte
+}
+
 type KeenIoMetrics struct {
 	log.Logger
 	ApiKey       string
 	ProjectToken string
 	HttpClient   http.Client
+	Requests     chan *KeenIoRequest
 }
 
 func NewKeenIoMetrics() *KeenIoMetrics {
-	return &KeenIoMetrics{
+	k := &KeenIoMetrics{
 		Logger:       log.NewPrefixLogger(),
 		ApiKey:       os.Getenv("KEEN_API_KEY"),
 		ProjectToken: os.Getenv("KEEN_PROJECT_TOKEN"),
+		Requests:     make(chan *KeenIoRequest, 100),
 	}
+
+	go func() {
+		for req := range k.Requests {
+			k.AuthedRequest("POST", req.Path, bytes.NewReader(req.Body))
+		}
+	}()
+
+	return k
 }
 
 func (k *KeenIoMetrics) AuthedRequest(method, path string, body *bytes.Reader) (resp *http.Response, err error) {
@@ -189,9 +204,12 @@ func (k *KeenIoMetrics) AuthedRequest(method, path string, body *bytes.Reader) (
 
 	if err != nil {
 		k.Error("Failed to send metric event to keen.io %v", err)
-	} else if resp.StatusCode != 201 {
-		bytes, _ := ioutil.ReadAll(resp.Body)
-		k.Debug("Got %v response from keen.io: %s", resp.StatusCode, bytes)
+	} else {
+		defer resp.Body.Close()
+		if resp.StatusCode != 201 {
+			bytes, _ := ioutil.ReadAll(resp.Body)
+			k.Error("Got %v response from keen.io: %s", resp.StatusCode, bytes)
+		}
 	}
 
 	return
@@ -237,7 +255,7 @@ func (k *KeenIoMetrics) CloseConnection(t *Tunnel, c conn.Conn, start time.Time,
 	if err != nil {
 		k.Error("Error serializing metric %v", err)
 	} else {
-		k.AuthedRequest("POST", "/events/CloseConnection", bytes.NewReader(buf))
+		k.Requests <- &KeenIoRequest{Path: "/events/CloseConnection", Body: buf}
 	}
 }
 
@@ -280,7 +298,7 @@ func (k *KeenIoMetrics) CloseTunnel(t *Tunnel) {
 	if err != nil {
 		k.Error("Error serializing metric %v", err)
 		return
+	} else {
+		k.Requests <- &KeenIoRequest{Path: "/events/CloseTunnel", Body: buf}
 	}
-
-	k.AuthedRequest("POST", "/events/CloseTunnel", bytes.NewReader(buf))
 }
