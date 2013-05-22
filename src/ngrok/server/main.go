@@ -78,8 +78,8 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 	// set global proxy addr variable
 	proxyAddr = fmt.Sprintf("%s:%d", domain, listener.Port)
 	log.Info("Listening for proxy connection on %d", listener.Port)
-	for conn := range listener.Conns {
-		go func() {
+	for proxyConn := range listener.Conns {
+		go func(conn conn.Conn) {
 			// fail gracefully if the proxy connection dies
 			defer func() {
 				if r := recover(); r != nil {
@@ -103,7 +103,7 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 
 			// register the proxy connection with the tunnel
 			tunnel.RegisterProxy(conn)
-		}()
+		}(proxyConn)
 	}
 }
 
