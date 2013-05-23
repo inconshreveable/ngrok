@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"ngrok/conn"
 	"ngrok/util"
 	"time"
@@ -77,6 +78,12 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		if err != nil {
 			tee.Warn("Failed to extract request body: %v", err)
 		}
+
+		// net/http's ReadRequest doesn't properly create the req.URL
+		// structure, which is needed to properly DumpRequest() later
+		req.URL, err = url.Parse(req.RequestURI)
+		req.URL.Host = req.Host
+		req.URL.Scheme = "http"
 
 		txn := &HttpTxn{Start: time.Now()}
 		txn.Req = &HttpRequest{Request: req}

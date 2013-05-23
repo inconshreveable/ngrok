@@ -62,9 +62,6 @@ func (whv *WebHttpView) update() {
 			// to be accessing txn and txn.(req/resp) without synchronization
 			htxn := txn.(*proto.HttpTxn)
 
-			// XXX: golang, why do I have to do this to make DumpRequestOut work later?
-			htxn.Req.URL.Scheme = "http"
-
 			if htxn.Resp == nil {
 				id, err := util.RandId(8)
 				if err != nil {
