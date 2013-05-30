@@ -59,3 +59,5 @@ func HighlightCss() []byte { return ReadFileOrPanic("highlight.min.css") }
 func BootstrapCss() []byte { return ReadFileOrPanic("bootstrap.min.css") }
 func JqueryJs() []byte     { return ReadFileOrPanic("jquery-1.9.1.min.js") }
 func VkBeautifyJs() []byte { return ReadFileOrPanic("vkbeautify.js") }
+func AngularJs() []byte { return ReadFileOrPanic("angular.js") }
+func NgrokJs() []byte { return ReadFileOrPanic("ngrok.js") }

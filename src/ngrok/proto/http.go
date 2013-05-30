@@ -28,6 +28,7 @@ type HttpTxn struct {
 	Resp     *HttpResponse
 	Start    time.Time
 	Duration time.Duration
+	UserData interface{}
 }
 
 type Http struct {

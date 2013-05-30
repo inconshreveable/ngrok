@@ -6,4 +6,6 @@ var AssetMap = map[string]func() []byte{
 	"highlight.min.css":   HighlightCss,
 	"highlight.min.js":    HighlightJs,
 	"vkbeautify.js":       VkBeautifyJs,
+	"angular.js":       AngularJs,
+	"ngrok.js":       NgrokJs,
 }

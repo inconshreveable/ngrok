@@ -6,41 +6,20 @@
         <script src="/static/highlight.min.js"></script>
         <script src="/static/vkbeautify.js"></script>
         <script src="/static/jquery-1.9.1.min.js"></script>
+        <script src="/static/angular.js"></script>
         <script>hljs.initHighlightingOnLoad();</script>
+        <script src="/static/ngrok.js"></script>
         <script type="text/javascript">
-            $(function() {
-                $("ul.request.nav a").click(function() {
-                    $(this).closest("div").find(".raw, .headers, .summary").hide();
-                    $(this).closest("div").find("." + $(this).attr("target")).show();
-                    $(this).closest("ul").find("li.active").removeClass("active");
-                    $(this).parent().addClass("active");
-                    return false;
-                });
-
-                $(".replay").click(function() {
-                    $.ajax({
-                      type: "POST",
-                      url: "/http/in/replay",
-                      data: { txnid: $(this).closest(".txn").attr("txnid") }
-                    });
-                    
-                    return false;
-                });
-
-                $("code.xml").each(function() {
-                    $(this).text(vkbeautify.xml($(this).text()));
-                });
-            });
+            window.txns = JSON.parse({% . %});
         </script>
         <style type="text/css">
             body { margin-top: 50px; }
             ul.history > li { none; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #ccc; }
-            .headers, .raw { display: none; }
             table.params { font-family: Courier, monospace; }
         </style>
     </head>
 
-    <body>
+    <body ng-app="ngrok">
         <div class="container">
             <div class="navbar navbar-inverse navbar-fixed-top">
                 <div class="navbar-inner">
@@ -54,99 +33,49 @@
                     </div>
                 </div>
             </div>
-            <ul class="history unstyled">
-            {{ range .HttpRequests.Slice }}
-                <li class="txn" txnid="{{ .Id }}">
+            <ul class="history unstyled" ng-controller="HttpTxns">
+                <li ng-repeat="txn in txns">
                     <div class="row">
 
                         <!-- Request -->
-                        <div class="span6">
-                            {{ with .Req }}
-                                <h3>{{ .Method }} {{ .URL.Path }}</h3>
-                                <ul class="request nav nav-pills">
-                                    <li class="active"><a target="summary" href="#">Summary</a></li>
-                                    <li><a href="#" target="headers">Headers</a></li>
-                                    <li><a href="#" target="raw">Raw</a></li>
-                                    <li class="pull-right"><button class="replay btn btn-primary">Replay</button></li>
-                                </ul>
+                        <div class="span6" ng-controller="HttpRequest">
+                            <h3>{{ Req.MethodPath }}</h3>
+                            <div onbtnclick="replay()" btn="Replay" tabs="Summary,Headers,Raw">
+                            </div>
 
-                                <div class="raw">
-                                    {{ with $raw := dumpRequest . }}
-                                        <pre><code class="http">{{ $raw }}</code></pre>
-                                    {{ end }}
-                                </div>
+                            <div ng-show="isTab('Summary')">
+                                <keyval title="Query Params" tuples="Req.Params"></keyval>
+                                <div body="Req.Body"></div>
+                            </div>
 
-                                <div class="headers">
-                                    {{ with .Header }}
-                                        <h6>Headers</h6>
-                                        <table class="table params">
-                                        {{ range $key, $value := .}}
-                                            <tr>
-                                                <th> {{ $key }} </th>
-                                                <td> {{ $value }} </td>
-                                            </tr>
-                                        {{ end }}
-                                        </table>
-                                    {{ end }}
-                                </div>
+                            <div ng-show="isTab('Headers')">
+                                <keyval title="Headers" tuples="Req.Header"></keyval>
+                            </div>
 
-                                <div class="summary">
-                                    {{ with .URL.Query }}
-                                        <h6>Query Params</h6>
-                                        <table class="table params">
-                                        {{ range $key, $value := .}}
-                                            <tr>
-                                                <th> {{ $key }} </th>
-                                                <td> {{ $value }} </td>
-                                            </tr>
-                                        {{ end }}
-                                        </table>
-                                    {{ end }}
+                            <div ng-show="isTab('Raw')">
+                                <pre><code class="http">{{ Req.Raw }}</code></pre>
+                            </div>
 
-                                    {{ template "body" . }}
-                                </div>
-                            {{ end }}
                         </div>
 
-                        <!-- Response -->
-                        <div class="span6">
-                            {{ with .Resp }}
-                                <h3 class="{{ classForStatus .Status }}">{{ .Status }}</h3>
+                        <div class="span6" ng-controller="HttpResponse">
+                            <h3 ng-class="statusClass">{{ Resp.Status }}</h3>
 
-                                <ul class="request nav nav-pills">
-                                    <li class="active"><a target="summary" href="#">Summary</a></li>
-                                    <li><a href="#" target="headers">Headers</a></li>
-                                    <li><a href="#" target="raw">Raw</a></li>
-                                </ul>
+                            <div tabs="Summary,Headers,Raw"></div>
+                            <div ng-show="isTab('Summary')">
+                                <div body="Resp.Body"></div>
+                            </div>
 
-                                <div class="raw">
-                                    {{ with $raw := dumpResponse . }}
-                                        <pre><code class="http">{{ $raw }}</code></pre>
-                                    {{ end }}
-                                </div>
+                            <div ng-show="isTab('Headers')">
+                                <keyval title="Headers" tuples="Resp.Header"></keyval>
+                            </div>
 
-                                <div class="headers">
-                                    {{ with .Header }}
-                                        <h6>Headers</h6>
-                                        <table class="table params">
-                                        {{ range $key, $value := .}}
-                                            <tr>
-                                                <th> {{ $key }} </th>
-                                                <td> {{ $value }} </td>
-                                            </tr>
-                                        {{ end }}
-                                        </table>
-                                    {{ end }}
-                                </div>
-
-                                <div class="summary">
-                                    {{ template "body" . }}
-                                </div>
-                            {{ end }}
+                            <div ng-show="isTab('Raw')">
+                                <pre><code class="http">{{ Resp.Raw }}</code></pre>
+                            </div>
                         </div>
                     </div>
                 </li>
-            {{ end }}
             </ul>
         </div>
     </body>
