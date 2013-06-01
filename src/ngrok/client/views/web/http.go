@@ -30,7 +30,7 @@ type SerializedBody struct {
 	Length         int
 	Error          string
 	ErrorOffset    int
-        Form   url.Values
+	Form           url.Values
 }
 
 type SerializedRequest struct {
@@ -125,68 +125,65 @@ func (whv *WebHttpView) update() {
 	// open channels for incoming http state changes
 	// and broadbasts
 	txnUpdates := whv.httpProto.Txns.Reg()
-	for {
-		select {
-		case txn := <-txnUpdates:
-			// XXX: it's not safe for proto.Http and this code
-			// to be accessing txn and txn.(req/resp) without synchronization
-			htxn := txn.(*proto.HttpTxn)
+	for txn := range txnUpdates {
+		// XXX: it's not safe for proto.Http and this code
+		// to be accessing txn and txn.(req/resp) without synchronization
+		htxn := txn.(*proto.HttpTxn)
 
-                        // we haven't processed this transaction yet if we haven't set the
-                        // user data
-			if htxn.UserData == nil {
-				id, err := util.RandId(8)
-				if err != nil {
-					log.Error("Failed to generate txn identifier for web storage: %v", err)
-					continue
-				}
-
-				rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
-				if err != nil {
-					log.Error("Failed to dump request: %v", err)
-					continue
-				}
-
-				body := makeBody(htxn.Req.Header, htxn.Req.BodyBytes)
-				whtxn := &SerializedTxn{
-					Id:      id,
-					HttpTxn: htxn,
-					Req: SerializedRequest{
-						MethodPath: htxn.Req.Method + " " + htxn.Req.URL.Path,
-						Raw:        string(rawReq),
-						Params:     htxn.Req.URL.Query(),
-						Header:     htxn.Req.Header,
-						Body:       body,
-					},
-				}
-
-				htxn.UserData = whtxn
-				// XXX: unsafe map access from multiple go routines
-				whv.idToTxn[whtxn.Id] = whtxn
-				// XXX: use return value to delete from map so we don't leak memory
-				whv.HttpRequests.Add(whtxn)
-                        } else {
-				rawResp, err := httputil.DumpResponse(htxn.Resp.Response, true)
-				if err != nil {
-					log.Error("Failed to dump response: %v", err)
-					continue
-				}
-
-				txn := htxn.UserData.(*SerializedTxn)
-				body := makeBody(htxn.Resp.Header, htxn.Resp.BodyBytes)
-				txn.Resp = SerializedResponse{
-					Status: htxn.Resp.Status,
-					Raw:    string(rawResp),
-					Header: htxn.Resp.Header,
-					Body:   body,
-				}
-
-				payload, err := json.Marshal(txn)
-				if err != nil {
-					log.Error("Failed to serialized txn payload for websocket: %v", err)
-				}
-				whv.webview.wsMessages.In() <- payload
+		// we haven't processed this transaction yet if we haven't set the
+		// user data
+		if htxn.UserData == nil {
+			id, err := util.RandId(8)
+			if err != nil {
+				log.Error("Failed to generate txn identifier for web storage: %v", err)
+				continue
 			}
+
+			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
+			if err != nil {
+				log.Error("Failed to dump request: %v", err)
+				continue
+			}
+
+			body := makeBody(htxn.Req.Header, htxn.Req.BodyBytes)
+			whtxn := &SerializedTxn{
+				Id:      id,
+				HttpTxn: htxn,
+				Req: SerializedRequest{
+					MethodPath: htxn.Req.Method + " " + htxn.Req.URL.Path,
+					Raw:        string(rawReq),
+					Params:     htxn.Req.URL.Query(),
+					Header:     htxn.Req.Header,
+					Body:       body,
+				},
+			}
+
+			htxn.UserData = whtxn
+			// XXX: unsafe map access from multiple go routines
+			whv.idToTxn[whtxn.Id] = whtxn
+			// XXX: use return value to delete from map so we don't leak memory
+			whv.HttpRequests.Add(whtxn)
+		} else {
+			rawResp, err := httputil.DumpResponse(htxn.Resp.Response, true)
+			if err != nil {
+				log.Error("Failed to dump response: %v", err)
+				continue
+			}
+
+			txn := htxn.UserData.(*SerializedTxn)
+			body := makeBody(htxn.Resp.Header, htxn.Resp.BodyBytes)
+			txn.Resp = SerializedResponse{
+				Status: htxn.Resp.Status,
+				Raw:    string(rawResp),
+				Header: htxn.Resp.Header,
+				Body:   body,
+			}
+
+			payload, err := json.Marshal(txn)
+			if err != nil {
+				log.Error("Failed to serialized txn payload for websocket: %v", err)
+			}
+			whv.webview.wsMessages.In() <- payload
 		}
 	}
 }
@@ -209,18 +206,6 @@ func (h *WebHttpView) register() {
 	})
 
 	http.HandleFunc("/http/in", func(w http.ResponseWriter, r *http.Request) {
-		/*
-			funcMap := template.FuncMap{
-				"handleForm": func(b []byte, h http.Header) (values interface{}, err error) {
-
-					if b != nil {
-						values, err = url.ParseQuery(string(b))
-					}
-					return
-				},
-			}
-		*/
-
 		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(static.PageHtml())))
 
 		payload, err := json.Marshal(h.HttpRequests.Slice())

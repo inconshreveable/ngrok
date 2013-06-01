@@ -54,7 +54,7 @@ ngrok.directive({
         };
     },
 
-    "body": function() {
+    "body": function($timeout) {
         return {
             scope: {
                 "body": "="
@@ -104,6 +104,43 @@ ngrok.directive({
                 }
 
                 $scope.Body = body;
+            },
+
+            link: function($scope, $elem) {
+                $timeout(function() {
+                    $code = $elem.find("code").get(0);
+                    hljs.highlightBlock($code);
+
+                    if ($scope.Body.ErrorOffset > -1) {
+                        var offset = $scope.Body.ErrorOffset;
+
+                        function textNodes(node) {
+                            var textNodes = [];
+
+                            function getTextNodes(node) {
+                                if (node.nodeType == 3) {
+                                    textNodes.push(node);
+                                } else {
+                                    for (var i = 0, len = node.childNodes.length; i < len; ++i) {
+                                        getTextNodes(node.childNodes[i]);
+                                    }
+                                }
+                            }
+
+                            getTextNodes(node);
+                            return textNodes;
+                        }
+
+                        var tNodes = textNodes($elem.find("code").get(0));
+                        for (var i=0; i<tNodes.length; i++) {
+                            offset -= tNodes[i].nodeValue.length;
+                            if (offset < 0) {
+                                $(tNodes[i]).parent().css("background-color", "orange");
+                                break;
+                            }
+                        }
+                    }
+                });
             }
         };
     }
