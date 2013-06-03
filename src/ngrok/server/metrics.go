@@ -128,7 +128,7 @@ func (m *LocalMetrics) CloseConnection(t *Tunnel, c conn.Conn, start time.Time, 
 }
 
 func (m *LocalMetrics) Report() {
-	m.Info("Reporting every %d seconds", m.reportInterval.Seconds())
+	m.Info("Reporting every %d seconds", int(m.reportInterval.Seconds()))
 
 	for {
 		time.Sleep(m.reportInterval)
