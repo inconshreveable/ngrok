@@ -8,6 +8,7 @@ import (
 	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
+	"sync/atomic"
 	"time"
 )
 
@@ -35,6 +36,9 @@ type Tunnel struct {
 
 	// logger
 	log.Logger
+
+	// closing
+	closing int32
 }
 
 func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
@@ -93,6 +97,9 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 func (t *Tunnel) shutdown() {
 	t.Info("Shutting down")
 
+	// mark that we're shutting down
+	atomic.StoreInt32(&t.closing, 1)
+
 	// if we have a public listener (this is a raw TCP tunnel, shut it down
 	if t.listener != nil {
 		t.listener.Close()
@@ -125,6 +132,11 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 		tcpConn, err := listener.AcceptTCP()
 
 		if err != nil {
+			// not an error, we're shutting down this tunnel
+			if atomic.LoadInt32(&t.closing) == 1 {
+				return
+			}
+
 			t.Error("Failed to accept new TCP connection: %v", err)
 			continue
 		}
