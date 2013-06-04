@@ -7,6 +7,7 @@ import (
 	"ngrok/conn"
 	log "ngrok/log"
 	"ngrok/msg"
+	"ngrok/server/tls"
 	"regexp"
 )
 
@@ -31,7 +32,7 @@ func init() {
 
 func parseArgs() *Options {
 	publicPort := flag.Int("publicport", 80, "Public port")
-	tunnelPort := flag.Int("tunnelport", 2280, "Tunnel port")
+	tunnelPort := flag.Int("tunnelport", 4443, "Tunnel port")
 	proxyPort := flag.Int("proxyPort", 0, "Proxy port")
 	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
 	logto := flag.String(
@@ -55,7 +56,7 @@ func parseArgs() *Options {
  */
 func controlListener(addr *net.TCPAddr, domain string) {
 	// listen for incoming connections
-	listener, err := conn.Listen(addr, "ctl")
+	listener, err := conn.Listen(addr, "ctl", tls.Config)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +71,7 @@ func controlListener(addr *net.TCPAddr, domain string) {
  * Listens for new proxy connections from tunnel clients
  */
 func proxyListener(addr *net.TCPAddr, domain string) {
-	listener, err := conn.Listen(addr, "pxy")
+	listener, err := conn.Listen(addr, "pxy", tls.Config)
 	if err != nil {
 		panic(err)
 	}
