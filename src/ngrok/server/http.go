@@ -33,7 +33,7 @@ Bad Request
  */
 func httpListener(addr *net.TCPAddr) {
 	// bind/listen for incoming connections
-	listener, err := conn.Listen(addr, "pub")
+	listener, err := conn.Listen(addr, "pub", nil)
 	if err != nil {
 		panic(err)
 	}

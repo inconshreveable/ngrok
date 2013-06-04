@@ -160,12 +160,6 @@ ngrok.controller({
                 $scope.$apply(function() {
                     $scope.txns.unshift(JSON.parse(message.data));
                 });
-
-                /*
-                $("pre code").each(function(i, e) {
-                    hljs.highlightBlock(e)
-                });
-                */
             };
             
             ws.onerror = function(err) {

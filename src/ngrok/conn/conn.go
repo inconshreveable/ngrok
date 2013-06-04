@@ -3,6 +3,7 @@ package conn
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"math/rand"
@@ -35,7 +36,7 @@ func wrapTcpConn(conn net.Conn, typ string) *tcpConn {
 	return c
 }
 
-func Listen(addr *net.TCPAddr, typ string) (l *Listener, err error) {
+func Listen(addr *net.TCPAddr, typ string, tlsCfg *tls.Config) (l *Listener, err error) {
 	// listen for incoming connections
 	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
@@ -56,6 +57,9 @@ func Listen(addr *net.TCPAddr, typ string) (l *Listener, err error) {
 			}
 
 			c := wrapTcpConn(tcpConn, typ)
+			if tlsCfg != nil {
+				c.Conn = tls.Server(c.Conn, tlsCfg)
+			}
 			c.Info("New connection from %v", tcpConn.RemoteAddr())
 			l.Conns <- c
 		}
@@ -67,19 +71,22 @@ func Wrap(conn net.Conn, typ string) *tcpConn {
 	return wrapTcpConn(conn, typ)
 }
 
-func Dial(addr, typ string) (conn *tcpConn, err error) {
+func Dial(addr, typ string, tlsCfg *tls.Config) (conn *tcpConn, err error) {
 	var (
 		tcpAddr *net.TCPAddr
-		tcpConn *net.TCPConn
+		tcpConn net.Conn
 	)
 
 	if tcpAddr, err = net.ResolveTCPAddr("tcp", addr); err != nil {
 		return
 	}
 
-	//log.Debug("Dialing %v", addr)
 	if tcpConn, err = net.DialTCP("tcp", nil, tcpAddr); err != nil {
 		return
+	}
+
+	if tlsCfg != nil {
+		tcpConn = tls.Client(tcpConn, tlsCfg)
 	}
 
 	conn = wrapTcpConn(tcpConn, typ)

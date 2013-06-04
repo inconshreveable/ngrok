@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"ngrok/client/tls"
 	"ngrok/client/ui"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -32,7 +33,7 @@ const (
  */
 func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	start := time.Now()
-	remoteConn, err := conn.Dial(proxyAddr, "pxy")
+	remoteConn, err := conn.Dial(proxyAddr, "pxy", tls.Config)
 	if err != nil {
 		// XXX: What is the proper response here?
 		// display something to the user?
@@ -53,7 +54,7 @@ func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 		return
 	}
 
-	localConn, err := conn.Dial(s.opts.localaddr, "prv")
+	localConn, err := conn.Dial(s.opts.localaddr, "prv", nil)
 	if err != nil {
 		remoteConn.Warn("Failed to open private leg %s: %v", s.opts.localaddr, err)
 		return
@@ -180,7 +181,7 @@ func control(s *State, ctl *ui.Controller) {
 	}()
 
 	// establish control channel
-	conn, err := conn.Dial(s.opts.server, "ctl")
+	conn, err := conn.Dial(s.opts.server, "ctl", tls.Config)
 	if err != nil {
 		panic(err)
 	}
@@ -295,7 +296,7 @@ func Main() {
 				case ui.CmdRequest:
 					go func() {
 						var localConn conn.Conn
-						localConn, err := conn.Dial(s.opts.localaddr, "prv")
+						localConn, err := conn.Dial(s.opts.localaddr, "prv", nil)
 						if err != nil {
 							log.Warn("Failed to open private leg %s: %v", s.opts.localaddr, err)
 							return

@@ -17,14 +17,21 @@ client: deps
 	go install -tags '$(BUILDTAGS)' main/ngrok
 
 release-client: BUILDTAGS=release
-release-client: bindata client
+release-client: bindata-client client
 
 release-server: BUILDTAGS=release
 release-server: server
 
 release-all: release-client release-server
 
-bindata:
+certs:
+	go get github.com/inconshreveable/go-bindata
+	./bin/go-bindata -i assets/tls/snakeoil.crt -o src/ngrok/server/tls/snakeoil.crt.go -m -p tls -f snakeoilCrt
+	./bin/go-bindata -i assets/tls/snakeoil.key -o src/ngrok/server/tls/snakeoil.key.go -m -p tls -f snakeoilKey
+	./bin/go-bindata -i assets/tls/snakeoilca.crt -o src/ngrok/client/tls/snakeoilca.crt.go -m -p tls -f snakeoilCaCrt
+	./bin/go-bindata -i assets/tls/ngrokroot.crt -o src/ngrok/client/tls/ngrokroot.crt.go -m -p tls -f ngrokRootCrt
+
+bindata-client:
 	go get github.com/inconshreveable/go-bindata
 	./bin/go-bindata -b release -i assets/page.html -o src/ngrok/client/views/web/static/page.html.go -m -p static -f PageHtml
 	./bin/go-bindata -b release -i assets/highlight.min.css -o src/ngrok/client/views/web/static/highlight.css.go -m -p static -f HighlightCss
