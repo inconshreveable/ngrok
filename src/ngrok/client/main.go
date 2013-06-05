@@ -197,6 +197,7 @@ func control(s *State, ctl *ui.Controller) {
 		ClientId:  s.id,
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
+		User:      s.opts.user,
 	})
 
 	if err != nil {

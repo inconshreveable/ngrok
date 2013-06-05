@@ -25,6 +25,7 @@ type Options struct {
 	historySize int
 	webport     int
 	logto       string
+	user        string
 }
 
 func fail(msg string, args ...interface{}) {
@@ -92,6 +93,11 @@ func parseProtocol(proto string) string {
 }
 
 func parseArgs() *Options {
+	user := flag.String(
+		"email",
+		"",
+		"Email address of your premium ngrok.com account")
+
 	server := flag.String(
 		"server",
 		"ngrok.com:4443",
@@ -142,5 +148,6 @@ func parseArgs() *Options {
 		protocol:  parseProtocol(*protocol),
 		webport:   *webport,
 		logto:     *logto,
+		user:      *user,
 	}
 }
