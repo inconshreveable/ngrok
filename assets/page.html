@@ -10,7 +10,7 @@
         <script>hljs.initHighlightingOnLoad();</script>
         <script src="/static/ngrok.js"></script>
         <script type="text/javascript">
-            window.txns = JSON.parse({% . %});
+            window.data = JSON.parse({% . %});
         </script>
         <style type="text/css">
             body { margin-top: 50px; }
@@ -20,7 +20,7 @@
     </head>
 
     <body ng-app="ngrok">
-        <div class="container">
+        <div class="container" ng-controller="HttpTxns">
             <div class="navbar navbar-inverse navbar-fixed-top">
                 <div class="navbar-inner">
                     <div class="container">
@@ -33,7 +33,15 @@
                     </div>
                 </div>
             </div>
-            <ul class="history unstyled" ng-controller="HttpTxns">
+            <div ng-show="txns.length==0" class="row">
+                <div class="span6 offset3">
+                    <div class="well" style="padding: 20px 50px;">
+                        <h4>No requests to display yet</h4>
+                        <p class="lead">Make a request to <a target="_blank" href="{{ publicUrl }}">{{ publicUrl }}</a> to get started!</p>
+                    </div>
+                </div>
+            </div>
+            <ul class="history unstyled">
                 <li ng-repeat="txn in txns">
                     <div class="row">
 

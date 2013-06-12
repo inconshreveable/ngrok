@@ -52,8 +52,19 @@ type WebHttpView struct {
 	webview      *WebView
 	ctl          *ui.Controller
 	httpProto    *proto.Http
+	updates      chan interface{}
+	state        chan SerializedUiState
 	HttpRequests *util.Ring
 	idToTxn      map[string]*SerializedTxn
+}
+
+type SerializedUiState struct {
+	Url string
+}
+
+type SerializedPayload struct {
+	Txns    []interface{}
+	UiState SerializedUiState
 }
 
 func NewWebHttpView(wv *WebView, ctl *ui.Controller, proto *proto.Http) *WebHttpView {
@@ -62,9 +73,12 @@ func NewWebHttpView(wv *WebView, ctl *ui.Controller, proto *proto.Http) *WebHttp
 		ctl:          ctl,
 		httpProto:    proto,
 		idToTxn:      make(map[string]*SerializedTxn),
+		updates:      ctl.Updates.Reg(),
+		state:        make(chan SerializedUiState),
 		HttpRequests: util.NewRing(20),
 	}
-	go w.update()
+	go w.updateHttp()
+	go w.updateUiState()
 	w.register()
 	return w
 }
@@ -121,7 +135,7 @@ func makeBody(h http.Header, body []byte) SerializedBody {
 	return b
 }
 
-func (whv *WebHttpView) update() {
+func (whv *WebHttpView) updateHttp() {
 	// open channels for incoming http state changes
 	// and broadbasts
 	txnUpdates := whv.httpProto.Txns.Reg()
@@ -188,6 +202,18 @@ func (whv *WebHttpView) update() {
 	}
 }
 
+func (v *WebHttpView) updateUiState() {
+	var s SerializedUiState
+	for {
+		select {
+		case obj := <-v.updates:
+			uiState := obj.(ui.State)
+			s.Url = uiState.GetPublicUrl()
+		case v.state <- s:
+		}
+	}
+}
+
 func (h *WebHttpView) register() {
 	http.HandleFunc("/http/in/replay", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
@@ -208,7 +234,12 @@ func (h *WebHttpView) register() {
 	http.HandleFunc("/http/in", func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(static.PageHtml())))
 
-		payload, err := json.Marshal(h.HttpRequests.Slice())
+		payloadData := SerializedPayload{
+			Txns:    h.HttpRequests.Slice(),
+			UiState: <-h.state,
+		}
+
+		payload, err := json.Marshal(payloadData)
 		if err != nil {
 			panic(err)
 		}

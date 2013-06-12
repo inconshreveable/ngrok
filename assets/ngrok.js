@@ -98,7 +98,10 @@ ngrok.directive({
 
                 if (!$scope.hasError && !!transform) {
                     try {
-                    body.Text = vkbeautify[transform](body.Text);
+                        // vkbeautify does poorly at formatting html
+                        if (body.ContentType != "text/html") {
+                            body.Text = vkbeautify[transform](body.Text);
+                        }
                     } catch (e) {
                     }
                 }
@@ -148,7 +151,8 @@ ngrok.directive({
 
 ngrok.controller({
     "HttpTxns": function($scope) {
-        $scope.txns = window.txns;
+        $scope.publicUrl = window.data.UiState.Url;
+        $scope.txns = window.data.Txns;
 
         if (!!window.WebSocket) {
             var ws = new WebSocket("ws://localhost:4040/_ws");
