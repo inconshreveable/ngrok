@@ -197,7 +197,7 @@ func control(s *State, ctl *ui.Controller) {
 		ClientId:  s.id,
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
-		User:      s.opts.user,
+		User:      s.opts.authtoken,
 	})
 
 	if err != nil {
@@ -222,6 +222,8 @@ func control(s *State, ctl *ui.Controller) {
 	s.status = "online"
 	s.serverVersion = regAck.MmVersion
 	ctl.Update(s)
+
+	SaveAuthToken(s.opts.authtoken)
 
 	// start the heartbeat
 	lastPong := time.Now().UnixNano()

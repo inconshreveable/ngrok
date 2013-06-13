@@ -25,7 +25,7 @@ type Options struct {
 	historySize int
 	webport     int
 	logto       string
-	user        string
+	authtoken   string
 }
 
 func fail(msg string, args ...interface{}) {
@@ -92,11 +92,19 @@ func parseProtocol(proto string) string {
 	panic("unreachable")
 }
 
+func parseAuthToken(token string) string {
+	if token != "" {
+		return token
+	} else {
+		return LoadAuthToken()
+	}
+}
+
 func parseArgs() *Options {
-	user := flag.String(
-		"email",
+	authtoken := flag.String(
+		"authtoken",
 		"",
-		"Email address of your premium ngrok.com account")
+		"Authentication token for identifying a premium ngrok.com account")
 
 	server := flag.String(
 		"server",
@@ -148,6 +156,6 @@ func parseArgs() *Options {
 		protocol:  parseProtocol(*protocol),
 		webport:   *webport,
 		logto:     *logto,
-		user:      *user,
+		authtoken: parseAuthToken(*authtoken),
 	}
 }
