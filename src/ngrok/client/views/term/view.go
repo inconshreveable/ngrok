@@ -115,7 +115,9 @@ func (v *TermView) run() {
 			termbox.Flush()
 
 		case obj := <-v.updates:
-			v.state = obj.(ui.State)
+			if obj != nil {
+				v.state = obj.(ui.State)
+			}
 			v.Render()
 
 		case <-v.ctl.Shutdown:
@@ -137,7 +139,8 @@ func (v *TermView) input() {
 
 		case termbox.EventResize:
 			v.Info("Resize event, redrawing")
-			v.Render()
+			// send nil to update channel to force re-rendering
+			v.updates <- nil
 			for _, sv := range v.subviews {
 				sv.Render()
 			}

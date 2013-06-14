@@ -2,6 +2,7 @@
 package web
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"html/template"
@@ -14,6 +15,7 @@ import (
 	"ngrok/proto"
 	"ngrok/util"
 	"strings"
+	"unicode/utf8"
 )
 
 type SerializedTxn struct {
@@ -39,6 +41,7 @@ type SerializedRequest struct {
 	Params     url.Values
 	Header     http.Header
 	Body       SerializedBody
+	Binary     bool
 }
 
 type SerializedResponse struct {
@@ -46,6 +49,7 @@ type SerializedResponse struct {
 	Status string
 	Header http.Header
 	Body   SerializedBody
+	Binary bool
 }
 
 type WebHttpView struct {
@@ -90,7 +94,7 @@ type XMLDoc struct {
 func makeBody(h http.Header, body []byte) SerializedBody {
 	b := SerializedBody{
 		Length:      len(body),
-		Text:        string(body),
+		Text:        base64.StdEncoding.EncodeToString(body),
 		ErrorOffset: -1,
 	}
 
@@ -165,10 +169,11 @@ func (whv *WebHttpView) updateHttp() {
 				HttpTxn: htxn,
 				Req: SerializedRequest{
 					MethodPath: htxn.Req.Method + " " + htxn.Req.URL.Path,
-					Raw:        string(rawReq),
+					Raw:        base64.StdEncoding.EncodeToString(rawReq),
 					Params:     htxn.Req.URL.Query(),
 					Header:     htxn.Req.Header,
 					Body:       body,
+					Binary:     !utf8.Valid(rawReq),
 				},
 			}
 
@@ -188,9 +193,10 @@ func (whv *WebHttpView) updateHttp() {
 			body := makeBody(htxn.Resp.Header, htxn.Resp.BodyBytes)
 			txn.Resp = SerializedResponse{
 				Status: htxn.Resp.Status,
-				Raw:    string(rawResp),
+				Raw:    base64.StdEncoding.EncodeToString(rawResp),
 				Header: htxn.Resp.Header,
 				Body:   body,
+				Binary: !utf8.Valid(rawResp),
 			}
 
 			payload, err := json.Marshal(txn)

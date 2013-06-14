@@ -8,6 +8,7 @@
         <script src="/static/jquery-1.9.1.min.js"></script>
         <script src="/static/angular.js"></script>
         <script>hljs.initHighlightingOnLoad();</script>
+        <script src="/static/base64.js"></script>
         <script src="/static/ngrok.js"></script>
         <script type="text/javascript">
             window.data = JSON.parse({% . %});
@@ -48,12 +49,12 @@
                         <!-- Request -->
                         <div class="span6" ng-controller="HttpRequest">
                             <h3>{{ Req.MethodPath }}</h3>
-                            <div onbtnclick="replay()" btn="Replay" tabs="Summary,Headers,Raw">
+                            <div onbtnclick="replay()" btn="Replay" tabs="Summary,Headers,Raw,Binary">
                             </div>
 
                             <div ng-show="isTab('Summary')">
                                 <keyval title="Query Params" tuples="Req.Params"></keyval>
-                                <div body="Req.Body"></div>
+                                <div body="Req.Body" binary="Req.Binary"></div>
                             </div>
 
                             <div ng-show="isTab('Headers')">
@@ -61,7 +62,11 @@
                             </div>
 
                             <div ng-show="isTab('Raw')">
-                                <pre><code class="http">{{ Req.Raw }}</code></pre>
+                                <pre><code class="http">{{ Req.RawText }}</code></pre>
+                            </div>
+
+                            <div ng-show="isTab('Binary')">
+                                <pre><code class="http">{{ Req.RawBytes }}</code></pre>
                             </div>
 
                         </div>
@@ -69,9 +74,9 @@
                         <div class="span6" ng-controller="HttpResponse">
                             <h3 ng-class="statusClass">{{ Resp.Status }}</h3>
 
-                            <div tabs="Summary,Headers,Raw"></div>
+                            <div tabs="Summary,Headers,Raw,Binary"></div>
                             <div ng-show="isTab('Summary')">
-                                <div body="Resp.Body"></div>
+                                <div body="Resp.Body" binary="Resp.Binary"></div>
                             </div>
 
                             <div ng-show="isTab('Headers')">
@@ -79,7 +84,11 @@
                             </div>
 
                             <div ng-show="isTab('Raw')">
-                                <pre><code class="http">{{ Resp.Raw }}</code></pre>
+                                <pre><code class="http">{{ Resp.RawText }}</code></pre>
+                            </div>
+
+                            <div ng-show="isTab('Binary')">
+                                <pre><code class="http">{{ Resp.RawBytes }}</code></pre>
                             </div>
                         </div>
                     </div>

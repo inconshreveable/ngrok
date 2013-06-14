@@ -1,5 +1,45 @@
 var ngrok = angular.module("ngrok", []);
 
+var hexRepr = function(bytes) {
+    var buf = [];
+    var ascii = [];
+    for (var i=0; i<bytes.length; ++i) {
+        var b = bytes[i];
+
+        if (!(i%8) && i!=0) {
+            buf.push("\t");
+            buf.push.apply(buf, ascii)
+            buf.push('\n');
+            ascii = [];
+        }
+
+        if (b < 16) {
+            buf.push("0");
+        }
+
+        if (b < 0x20 || b > 0x7e) {
+            ascii.push('.');
+        } else {
+            ascii.push(String.fromCharCode(b));
+        }
+
+        buf.push(b.toString(16));
+        buf.push(" ");
+        ascii.push(" ");
+    }
+
+    if (ascii.length > 0) {
+        var charsLeft = 8 - (ascii.length / 2);
+        for (i=0; i<charsLeft; ++i) {
+            buf.push("   ");
+        }
+        buf.push("\t");
+        buf.push.apply(buf, ascii);
+    }
+
+    return buf.join("");
+}
+
 ngrok.directive({
     "keyval": function() {
         return {
@@ -37,7 +77,7 @@ ngrok.directive({
             template: '' + 
             '<ul class="nav nav-pills">' +
                 '<li ng-repeat="tab in tabNames" ng-class="{\'active\': isTab(tab)}">' +
-                    '<a ng-click="setTab(tab)" href="#">{{tab}}</a>' +
+                    '<a href="" ng-click="setTab(tab)">{{tab}}</a>' +
                 '</li>' +
                 '<li ng-show="!!btn" class="pull-right"> <button class="btn btn-primary" ng-click="onbtnclick()">{{btn}}</button></li>' +
             '</ul>',
@@ -57,7 +97,8 @@ ngrok.directive({
     "body": function($timeout) {
         return {
             scope: {
-                "body": "="
+                "body": "=",
+                "binary": "="
             },
             template: '' +
             '<h6 ng-show="hasBody">' +
@@ -65,7 +106,7 @@ ngrok.directive({
                 '{{ Body.RawContentType }}' +
             '</h6>' +
 '' +
-            '<div ng-show="!isForm">' +
+            '<div ng-show="!isForm && !binary">' +
                 '<pre ng-show="hasBody"><code ng-class="syntaxClass">{{ Body.Text }}</code></pre>' +
             '</div>' +
 '' +
@@ -78,6 +119,11 @@ ngrok.directive({
 
             controller: function($scope) {
                 var body = $scope.body;
+                if ($scope.binary) {
+                    body.Text = "";
+                } else {
+                    body.Text = Base64.decode(body.Text).text;
+                }
                 $scope.isForm = (body.ContentType == "application/x-www-form-urlencoded");
                 $scope.hasBody = (body.Length > 0);
                 $scope.hasError = !!body.Error;
@@ -185,6 +231,13 @@ ngrok.controller({
                 data: { txnid: $scope.txn.Id }
             });
         }
+
+        var decoded = Base64.decode($scope.Req.Raw);
+        $scope.Req.RawBytes = hexRepr(decoded.bytes);
+
+        if (!$scope.Req.Binary) {
+            $scope.Req.RawText = decoded.text;
+        }
     },
 
     "HttpResponse": function($scope) {
@@ -195,5 +248,12 @@ ngrok.controller({
             '4': "text-warning",
             '5': "text-error"
         }[$scope.Resp.Status[0]];
+
+        var decoded = Base64.decode($scope.Resp.Raw);
+        $scope.Resp.RawBytes = hexRepr(decoded.bytes);
+
+        if (!$scope.Resp.Binary) {
+            $scope.Resp.RawText = decoded.text;
+        }
     }
 });

@@ -41,6 +41,7 @@ bindata-client:
 	./bin/go-bindata -b release -i assets/vkbeautify.js -o src/ngrok/client/views/web/static/vkbeautify.js.go -m -p static -f VkBeautifyJs
 	./bin/go-bindata -b release -i assets/angular.js -o src/ngrok/client/views/web/static/angular.js.go -m -p static -f AngularJs
 	./bin/go-bindata -b release -i assets/ngrok.js -o src/ngrok/client/views/web/static/ngrok.js.go -m -p static -f NgrokJs
+	./bin/go-bindata -b release -i assets/base64.js -o src/ngrok/client/views/web/static/base64.js.go -m -p static -f Base64Js
 
 all: fmt client server
 

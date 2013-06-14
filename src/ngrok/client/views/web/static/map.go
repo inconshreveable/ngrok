@@ -8,4 +8,5 @@ var AssetMap = map[string]func() []byte{
 	"vkbeautify.js":       VkBeautifyJs,
 	"angular.js":          AngularJs,
 	"ngrok.js":            NgrokJs,
+	"base64.js":           Base64Js,
 }

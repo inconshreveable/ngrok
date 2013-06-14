@@ -39,6 +39,7 @@ func init() {
 		VkBeautifyJs,
 		AngularJs,
 		NgrokJs,
+		Base64Js,
 	}
 	for _, f := range fns {
 		f()
@@ -61,3 +62,4 @@ func JqueryJs() []byte     { return ReadFileOrPanic("jquery-1.9.1.min.js") }
 func VkBeautifyJs() []byte { return ReadFileOrPanic("vkbeautify.js") }
 func AngularJs() []byte    { return ReadFileOrPanic("angular.js") }
 func NgrokJs() []byte      { return ReadFileOrPanic("ngrok.js") }
+func Base64Js() []byte     { return ReadFileOrPanic("base64.js") }
