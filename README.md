@@ -1,8 +1,7 @@
 # ngrok ([https://ngrok.com](https://ngrok.com))
-
-## What is ngrok?
 ![](https://ngrok.com/static/img/overview.png)
 
+## What is ngrok?
 ngrok is a tool that makes it easier to develop networked services (HTTP/TCP)
 It is a man-in-the-middle proxy server that you run locally on your development box. It allows you to do the following things:
 
