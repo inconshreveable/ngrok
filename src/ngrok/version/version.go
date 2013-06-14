@@ -7,7 +7,7 @@ import (
 const (
 	Proto = "1"
 	Major = "0"
-	Minor = "8"
+	Minor = "9"
 )
 
 func MajorMinor() string {
