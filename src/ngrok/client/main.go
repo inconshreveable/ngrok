@@ -26,6 +26,12 @@ const (
 	maxPongLatency       = 15 * time.Second
 	versionCheckInterval = 6 * time.Hour
 	versionEndpoint      = "http://ngrok.com/dl/versions"
+	BadGateway           = `<html>
+<body style="background-color: #97a8b9">
+    <div style="margin:auto; width:400px;padding: 20px 60px; background-color: #D3D3D3; border: 5px solid maroon;">
+        <h2>Tunnel %s unavailable</h2>
+        <p>Unable to initiate connection to <strong>%s</strong>. A web server must be running on port <strong>%s</strong> to complete the tunnel.</p>
+`
 )
 
 /**
@@ -57,6 +63,12 @@ func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	localConn, err := conn.Dial(s.opts.localaddr, "prv", nil)
 	if err != nil {
 		remoteConn.Warn("Failed to open private leg %s: %v", s.opts.localaddr, err)
+		badGatewayBody := fmt.Sprintf(BadGateway, s.publicUrl, s.opts.localaddr, s.opts.localaddr)
+		remoteConn.Write([]byte(fmt.Sprintf(`HTTP/1.0 502 Bad Gateway
+Content-Type: text/html
+Content-Length: %d
+
+%s`, len(badGatewayBody), badGatewayBody)))
 		return
 	}
 	defer localConn.Close()

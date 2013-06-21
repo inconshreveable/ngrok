@@ -40,6 +40,146 @@ var hexRepr = function(bytes) {
     return buf.join("");
 }
 
+ngrok.factory("txnSvc", function() {
+    var processBody = function(body, binary) {
+        body.binary = binary;
+        body.isForm = body.ContentType == "application/x-www-form-urlencoded";
+        body.exists = body.Length > 0;
+        body.hasError = !!body.Error;
+
+        body.syntaxClass = function() {
+            return {
+                "text/xml":               "xml",
+                "application/xml":        "xml",
+                "text/html":              "xml",
+                "text/css":               "css",
+                "application/json":       "json",
+                "text/javascript":        "javascript",
+                "application/javascript": "javascript",
+            }[body.ContentType];
+        }
+
+        // decode body
+        if (binary) {
+            body.Text = "";
+        } else {
+            body.Text = Base64.decode(body.Text).text;
+        }
+        
+        // prettify
+        var transform = {
+            "xml": "xml",
+            "json": "json"
+        }[body.syntaxClass];
+
+        if (!body.hasError && !!transform) {
+            try {
+                // vkbeautify does poorly at formatting html
+                if (body.ContentType != "text/html") {
+                    body.Text = vkbeautify[transform](body.Text);
+                }
+            } catch (e) {
+            }
+        }
+    };
+
+    var processReq = function(req) {
+        if (!req.RawBytes) {
+            var decoded = Base64.decode(req.Raw);
+            req.RawBytes = hexRepr(decoded.bytes);
+
+            if (!req.Binary) {
+                req.RawText = decoded.text;
+            }
+        }
+
+        processBody(req.Body, req.Binary);
+    };
+
+    var processResp = function(resp) {
+        resp.statusClass = {
+            '2': "text-info",
+            '3': "muted",
+            '4': "text-warning",
+            '5': "text-error"
+        }[resp.Status[0]];
+
+        if (!resp.RawBytes) {
+            var decoded = Base64.decode(resp.Raw);
+            resp.RawBytes = hexRepr(decoded.bytes);
+
+            if (!resp.Binary) {
+                resp.RawText = decoded.text;
+            }
+        }
+
+        processBody(resp.Body, resp.Binary);
+    };
+
+    var processTxn = function(txn) {
+        processReq(txn.Req);
+        processResp(txn.Resp);
+    };
+
+    var preprocessTxn = function(txn) {
+        var toFixed = function(value, precision) {
+            var power = Math.pow(10, precision || 0);
+            return String(Math.round(value * power) / power);
+        }
+        // parse nanosecond count
+        var ns = txn.Duration;
+        var ms = ns / (1000 * 1000);
+        txn.Duration = ms;
+        if (ms > 1000) {
+            txn.Duration = toFixed(ms / 1000, 2) + "s";
+        } else {
+            txn.Duration = toFixed(ms, 2) + "ms";
+        }
+    };
+
+
+    var active;
+    var txns = window.data.Txns;
+    txns.forEach(function(t) {
+        preprocessTxn(t);
+    });
+
+    var activate = function(txn) {
+        if (!txn.processed) {
+            processTxn(txn);
+            txn.processed = true;
+        }
+        active = txn;
+    }
+
+    if (txns.length > 0) {
+        activate(txns[0]);
+    }
+
+    return {
+        add: function(txnData) {
+            txns.unshift(JSON.parse(txnData));
+            preprocessTxn(txns[0]);
+            if (!active) {
+                activate(txns[0]);
+            }
+        },
+        all: function() {
+            return txns;
+        },
+        active: function(txn) {
+            if (!txn) {
+                return active;
+            } else {
+                activate(txn);
+            }
+        },
+        isActive: function(txn) {
+            return !!active && txn.Id == active.Id;
+        }
+    };
+});
+
 ngrok.directive({
     "keyval": function() {
         return {
@@ -50,7 +190,7 @@ ngrok.directive({
             replace: true,
             restrict: "E",
             template: "" +
-            '<div ng-show="hasKeys">' +
+            '<div ng-show="hasKeys()">' +
                 '<h6>{{title}}</h6>' +
                 '<table class="table params">' +
                     '<tr ng-repeat="(key, value) in tuples">' +
@@ -60,8 +200,10 @@ ngrok.directive({
                 '</table>' +
             '</div>',
             link: function($scope) {
-                $scope.hasKeys = false;
-                for (key in $scope.tuples) { $scope.hasKeys = true; break; }
+                $scope.hasKeys = function() {
+                    for (key in $scope.tuples) { return true; }
+                    return false;
+                };
             }
         };
     },
@@ -101,67 +243,29 @@ ngrok.directive({
                 "binary": "="
             },
             template: '' +
-            '<h6 ng-show="hasBody">' +
-                '{{ Body.Length }} bytes ' +
-                '{{ Body.RawContentType }}' +
+            '<h6 ng-show="body.exists">' +
+                '{{ body.Length }} bytes ' +
+                '{{ body.RawContentType }}' +
             '</h6>' +
 '' +
-            '<div ng-show="!isForm && !binary">' +
-                '<pre ng-show="hasBody"><code ng-class="syntaxClass">{{ Body.Text }}</code></pre>' +
+            '<div ng-show="!body.isForm && !body.binary">' +
+                '<pre ng-show="body.exists"><code ng-class="body.syntaxClass">{{ body.Text }}</code></pre>' +
             '</div>' +
 '' +
-            '<div ng-show="isForm">' +
-                '<keyval title="Form Params" tuples="Body.Form">' +
+            '<div ng-show="body.isForm">' +
+                '<keyval title="Form Params" tuples="body.Form">' +
             '</div>' +
-            '<div ng-show="hasError" class="alert">' +
-                '{{ Body.Error }}' +
+            '<div ng-show="body.hasError" class="alert">' +
+                '{{ body.Error }}' +
             '</div>',
-
-            controller: function($scope) {
-                var body = $scope.body;
-                if ($scope.binary) {
-                    body.Text = "";
-                } else {
-                    body.Text = Base64.decode(body.Text).text;
-                }
-                $scope.isForm = (body.ContentType == "application/x-www-form-urlencoded");
-                $scope.hasBody = (body.Length > 0);
-                $scope.hasError = !!body.Error;
-                $scope.syntaxClass = {
-                    "text/xml":               "xml",
-                    "application/xml":        "xml",
-                    "text/html":              "xml",
-                    "text/css":               "css",
-                    "application/json":       "json",
-                    "text/javascript":        "javascript",
-                    "application/javascript": "javascript",
-                }[body.ContentType];
-
-                var transform = {
-                    "xml": "xml",
-                    "json": "json"
-                }[$scope.syntaxClass];
-
-                if (!$scope.hasError && !!transform) {
-                    try {
-                        // vkbeautify does poorly at formatting html
-                        if (body.ContentType != "text/html") {
-                            body.Text = vkbeautify[transform](body.Text);
-                        }
-                    } catch (e) {
-                    }
-                }
-
-                $scope.Body = body;
-            },
 
             link: function($scope, $elem) {
                 $timeout(function() {
                     $code = $elem.find("code").get(0);
                     hljs.highlightBlock($code);
 
-                    if ($scope.Body.ErrorOffset > -1) {
-                        var offset = $scope.Body.ErrorOffset;
+                    if ($scope.body.ErrorOffset > -1) {
+                        var offset = $scope.body.ErrorOffset;
 
                         function textNodes(node) {
                             var textNodes = [];
@@ -196,9 +300,9 @@ ngrok.directive({
 });
 
 ngrok.controller({
-    "HttpTxns": function($scope) {
+    "HttpTxns": function($scope, txnSvc) {
         $scope.publicUrl = window.data.UiState.Url;
-        $scope.txns = window.data.Txns;
+        $scope.txns = txnSvc.all();
 
         if (!!window.WebSocket) {
             var ws = new WebSocket("ws://localhost:4040/_ws");
@@ -208,7 +312,7 @@ ngrok.controller({
 
             ws.onmessage = function(message) {
                 $scope.$apply(function() {
-                    $scope.txns.unshift(JSON.parse(message.data));
+                    txnSvc.add(message.data);
                 });
             };
             
@@ -222,38 +326,33 @@ ngrok.controller({
         }
     },
 
-    "HttpRequest": function($scope) {
-        $scope.Req = $scope.txn.Req;
+    "HttpRequest": function($scope, txnSvc) {
         $scope.replay = function() {
             $.ajax({
                 type: "POST",
                 url: "/http/in/replay",
-                data: { txnid: $scope.txn.Id }
+                data: { txnid: txnSvc.active().Id }
             });
         }
-
-        var decoded = Base64.decode($scope.Req.Raw);
-        $scope.Req.RawBytes = hexRepr(decoded.bytes);
-
-        if (!$scope.Req.Binary) {
-            $scope.Req.RawText = decoded.text;
-        }
+        var setReq = function() {
+            $scope.Req = txnSvc.active().Req;
+        };
+        setReq();
+        $scope.$watch(function() { return txnSvc.active().Id }, setReq);
     },
 
-    "HttpResponse": function($scope) {
-        $scope.Resp = $scope.txn.Resp;
-        $scope.statusClass = {
-            '2': "text-info",
-            '3': "muted",
-            '4': "text-warning",
-            '5': "text-error"
-        }[$scope.Resp.Status[0]];
+    "HttpResponse": function($scope, txnSvc) {
+        var setResp = function() {
+            $scope.Resp = txnSvc.active().Resp;
+        };
+        setResp();
+        $scope.$watch(function() { return txnSvc.active().Id }, setResp);
+    },
 
-        var decoded = Base64.decode($scope.Resp.Raw);
-        $scope.Resp.RawBytes = hexRepr(decoded.bytes);
-
-        if (!$scope.Resp.Binary) {
-            $scope.Resp.RawText = decoded.text;
-        }
-    }
+    "TxnNavItem": function($scope, txnSvc) {
+        $scope.isActive = function() { return txnSvc.isActive($scope.txn); }
+        $scope.makeActive = function() {
+            txnSvc.active($scope.txn);
+        };
+    },
 });

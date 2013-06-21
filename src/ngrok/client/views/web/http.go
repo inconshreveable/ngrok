@@ -15,11 +15,13 @@ import (
 	"ngrok/proto"
 	"ngrok/util"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
 type SerializedTxn struct {
 	Id             string
+	Duration       time.Duration
 	*proto.HttpTxn `json:"-"`
 	Req            SerializedRequest
 	Resp           SerializedResponse
@@ -191,6 +193,7 @@ func (whv *WebHttpView) updateHttp() {
 
 			txn := htxn.UserData.(*SerializedTxn)
 			body := makeBody(htxn.Resp.Header, htxn.Resp.BodyBytes)
+			txn.Duration = htxn.Duration.Nanoseconds()
 			txn.Resp = SerializedResponse{
 				Status: htxn.Resp.Status,
 				Raw:    base64.StdEncoding.EncodeToString(rawResp),
