@@ -7,7 +7,6 @@
         <script src="/static/vkbeautify.js"></script>
         <script src="/static/jquery-1.9.1.min.js"></script>
         <script src="/static/angular.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>
         <script src="/static/base64.js"></script>
         <script src="/static/ngrok.js"></script>
         <script type="text/javascript">
@@ -51,7 +50,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div ng-show="txns.length>0" class="row">
                 <div class="span6">
                     <h4>All Requests</h4>
                     <table class="table txn-selector">
@@ -63,7 +62,7 @@
                     </table>
                 </div>
                 <div class="span6">
-                    <div ng-controller="HttpRequest">
+                    <div ng-show="!!Req" ng-controller="HttpRequest">
                         <h3>{{ Req.MethodPath }}</h3>
                         <div onbtnclick="replay()" btn="Replay" tabs="Summary,Headers,Raw,Binary">
                         </div>
@@ -82,14 +81,14 @@
                         </div>
 
                         <div ng-show="isTab('Binary')">
-                            <pre><code class="http">{{ Req.RawBytes }}</code></pre>
+                            <pre><code>{{ Req.RawBytes }}</code></pre>
                         </div>
 
                     </div>
 
                     <hr style="margin: 40px 0 20px" />
 
-                    <div ng-controller="HttpResponse">
+                    <div ng-show="!!Resp" ng-controller="HttpResponse">
                         <h3 ng-class="Resp.statusClass">{{ Resp.Status }}</h3>
 
                         <div tabs="Summary,Headers,Raw,Binary"></div>
@@ -106,7 +105,7 @@
                         </div>
 
                         <div ng-show="isTab('Binary')">
-                            <pre><code class="http">{{ Resp.RawBytes }}</code></pre>
+                            <pre><code>{{ Resp.RawBytes }}</code></pre>
                         </div>
                     </div>
                 </div>

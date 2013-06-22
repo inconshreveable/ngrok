@@ -47,17 +47,15 @@ ngrok.factory("txnSvc", function() {
         body.exists = body.Length > 0;
         body.hasError = !!body.Error;
 
-        body.syntaxClass = function() {
-            return {
-                "text/xml":               "xml",
-                "application/xml":        "xml",
-                "text/html":              "xml",
-                "text/css":               "css",
-                "application/json":       "json",
-                "text/javascript":        "javascript",
-                "application/javascript": "javascript",
-            }[body.ContentType];
-        }
+        body.syntaxClass = {
+            "text/xml":               "xml",
+            "application/xml":        "xml",
+            "text/html":              "xml",
+            "text/css":               "css",
+            "application/json":       "json",
+            "text/javascript":        "javascript",
+            "application/javascript": "javascript",
+        }[body.ContentType];
 
         // decode body
         if (binary) {
@@ -236,7 +234,7 @@ ngrok.directive({
         };
     },
 
-    "body": function($timeout) {
+    "body": function() {
         return {
             scope: {
                 "body": "=",
@@ -260,11 +258,15 @@ ngrok.directive({
             '</div>',
 
             link: function($scope, $elem) {
-                $timeout(function() {
-                    $code = $elem.find("code").get(0);
-                    hljs.highlightBlock($code);
+                $scope.$watch(function() { return $scope.body; }, function() {
+                    $code = $elem.find("code");
+                    // if we highlight when the code is empty, hljs manipulates the dom in a
+                    // a bad way that causes angular to fail
+                    if (!!$code.text()) {
+                        hljs.highlightBlock($code.get(0));
+                    }
 
-                    if ($scope.body.ErrorOffset > -1) {
+                    if ($scope.body && $scope.body.ErrorOffset > -1) {
                         var offset = $scope.body.ErrorOffset;
 
                         function textNodes(node) {
@@ -335,18 +337,26 @@ ngrok.controller({
             });
         }
         var setReq = function() {
-            $scope.Req = txnSvc.active().Req;
+            var txn = txnSvc.active();
+            if (!!txn && txn.Req) {
+                $scope.Req = txnSvc.active().Req;
+            } else {
+                $scope.Req = null;
+            }
         };
-        setReq();
-        $scope.$watch(function() { return txnSvc.active().Id }, setReq);
+        $scope.$watch(function() { return txnSvc.active() }, setReq);
     },
 
-    "HttpResponse": function($scope, txnSvc) {
+    "HttpResponse": function($scope, $element, $timeout, txnSvc) {
         var setResp = function() {
-            $scope.Resp = txnSvc.active().Resp;
+            var txn = txnSvc.active();
+            if (!!txn && txn.Resp) {
+                $scope.Resp = txnSvc.active().Resp;
+            } else {
+                $scope.Resp = null;
+            }
         };
-        setResp();
-        $scope.$watch(function() { return txnSvc.active().Id }, setResp);
+        $scope.$watch(function() { return txnSvc.active() }, setResp);
     },
 
     "TxnNavItem": function($scope, txnSvc) {
