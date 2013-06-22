@@ -15,13 +15,12 @@ import (
 	"ngrok/proto"
 	"ngrok/util"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
 type SerializedTxn struct {
 	Id             string
-	Duration       time.Duration
+	Duration       int64
 	*proto.HttpTxn `json:"-"`
 	Req            SerializedRequest
 	Resp           SerializedResponse
