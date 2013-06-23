@@ -25,7 +25,7 @@ const (
 	pingInterval         = 20 * time.Second
 	maxPongLatency       = 15 * time.Second
 	versionCheckInterval = 6 * time.Hour
-	versionEndpoint      = "http://ngrok.com/dl/versions"
+	versionEndpoint      = "http://dl.ngrok.com/versions"
 	BadGateway           = `<html>
 <body style="background-color: #97a8b9">
     <div style="margin:auto; width:400px;padding: 20px 60px; background-color: #D3D3D3; border: 5px solid maroon;">
