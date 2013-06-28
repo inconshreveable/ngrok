@@ -8,13 +8,13 @@ deps:
 	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
 
 server: deps
-	go install -tags '$(BUILDTAGS)' ngrok/server/main
+	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
 
 fmt:
 	go fmt ngrok/...
 
 client: deps
-	go install -tags '$(BUILDTAGS)' ngrok/client/main
+	go install -tags '$(BUILDTAGS)' ngrok/main/ngrokd
 
 release-client: BUILDTAGS=release
 release-client: client
