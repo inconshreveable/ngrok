@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
-	"ngrok/client/tls"
 	"ngrok/client/ui"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -39,7 +38,7 @@ const (
  */
 func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
 	start := time.Now()
-	remoteConn, err := conn.Dial(proxyAddr, "pxy", tls.Config)
+	remoteConn, err := conn.Dial(proxyAddr, "pxy", tlsConfig)
 	if err != nil {
 		// XXX: What is the proper response here?
 		// display something to the user?
@@ -193,7 +192,7 @@ func control(s *State, ctl *ui.Controller) {
 	}()
 
 	// establish control channel
-	conn, err := conn.Dial(s.opts.server, "ctl", tls.Config)
+	conn, err := conn.Dial(s.opts.server, "ctl", tlsConfig)
 	if err != nil {
 		panic(err)
 	}

@@ -1,18 +1,30 @@
-package tls
+package client
 
 import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"ngrok/assets"
 )
 
 var (
-	Config *tls.Config
+	tlsConfig *tls.Config
 )
 
 func init() {
 	pool := x509.NewCertPool()
-	for _, b := range [][]byte{ngrokRootCrt(), snakeoilCaCrt()} {
+
+	ngrokRootCrt, err := assets.ReadAsset("assets/client/tls/ngrokroot.crt")
+	if err != nil {
+		panic(err)
+	}
+
+	snakeoilCaCrt, err := assets.ReadAsset("assets/client/tls/snakeoilca.crt")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, b := range [][]byte{ngrokRootCrt, snakeoilCaCrt} {
 		pemBlock, _ := pem.Decode(b)
 		if pemBlock == nil {
 			panic("Bad PEM data")
@@ -26,7 +38,7 @@ func init() {
 		pool.AddCert(certs[0])
 	}
 
-	Config = &tls.Config{
+	tlsConfig = &tls.Config{
 		RootCAs:    pool,
 		ServerName: "tls.ngrok.com",
 	}

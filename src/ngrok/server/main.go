@@ -7,7 +7,6 @@ import (
 	"ngrok/conn"
 	log "ngrok/log"
 	"ngrok/msg"
-	"ngrok/server/tls"
 	"regexp"
 )
 
@@ -56,7 +55,7 @@ func parseArgs() *Options {
  */
 func controlListener(addr *net.TCPAddr, domain string) {
 	// listen for incoming connections
-	listener, err := conn.Listen(addr, "ctl", tls.Config)
+	listener, err := conn.Listen(addr, "ctl", tlsConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +70,7 @@ func controlListener(addr *net.TCPAddr, domain string) {
  * Listens for new proxy connections from tunnel clients
  */
 func proxyListener(addr *net.TCPAddr, domain string) {
-	listener, err := conn.Listen(addr, "pxy", tls.Config)
+	listener, err := conn.Listen(addr, "pxy", tlsConfig)
 	if err != nil {
 		panic(err)
 	}

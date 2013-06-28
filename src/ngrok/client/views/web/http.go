@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"ngrok/assets"
 	"ngrok/client/ui"
-	"ngrok/client/views/web/static"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
@@ -240,7 +240,12 @@ func (h *WebHttpView) register() {
 	})
 
 	http.HandleFunc("/http/in", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(static.PageHtml())))
+		pageTmpl, err := assets.ReadAsset("assets/client/page.html")
+		if err != nil {
+			panic(err)
+		}
+
+		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(pageTmpl)))
 
 		payloadData := SerializedPayload{
 			Txns:    h.HttpRequests.Slice(),

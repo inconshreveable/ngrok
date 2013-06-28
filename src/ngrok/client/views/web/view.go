@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/garyburd/go-websocket/websocket"
 	"net/http"
+	"ngrok/assets"
 	"ngrok/client/ui"
-	"ngrok/client/views/web/static"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
-	"strings"
+	"path"
 )
 
 type WebView struct {
@@ -52,14 +52,13 @@ func NewWebView(ctl *ui.Controller, state ui.State, port int) *WebView {
 	})
 
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
-		parts := strings.Split(r.URL.Path, "/")
-		name := parts[len(parts)-1]
-		fn, ok := static.AssetMap[name]
-		if !ok {
+		buf, err := assets.ReadAsset(path.Join("assets", "client", r.URL.Path[1:]))
+		if err != nil {
+			log.Warn("Error serving static file: %s", err.Error())
 			http.NotFound(w, r)
 			return
 		}
-		w.Write(fn())
+		w.Write(buf)
 	})
 
 	log.Info("Serving web interface on localhost:%d", port)
