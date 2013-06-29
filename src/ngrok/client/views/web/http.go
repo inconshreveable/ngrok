@@ -158,7 +158,7 @@ func (whv *WebHttpView) updateHttp() {
 				continue
 			}
 
-			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
+			rawReq, err := httputil.DumpRequest(htxn.Req.Request, true)
 			if err != nil {
 				log.Error("Failed to dump request: %v", err)
 				continue
