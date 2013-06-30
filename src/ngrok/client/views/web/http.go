@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"ngrok/assets"
+	"ngrok/client/assets"
 	"ngrok/client/ui"
 	"ngrok/log"
 	"ngrok/proto"

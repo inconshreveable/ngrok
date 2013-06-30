@@ -3,7 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"io/ioutil"
-	"ngrok/assets"
+	"ngrok/server/assets"
 	"os"
 )
 

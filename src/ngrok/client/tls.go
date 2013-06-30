@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"ngrok/assets"
+	"ngrok/client/assets"
 )
 
 var (

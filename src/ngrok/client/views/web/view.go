@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/garyburd/go-websocket/websocket"
 	"net/http"
-	"ngrok/assets"
+	"ngrok/client/assets"
 	"ngrok/client/ui"
 	"ngrok/log"
 	"ngrok/proto"

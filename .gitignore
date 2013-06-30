@@ -4,6 +4,5 @@ pkg/
 src/code.google.com
 src/github.com
 src/bitbucket.org
-src/ngrok/client/views/web/static/*.html.go
-src/ngrok/client/views/web/static/*.css.go
-src/ngrok/client/views/web/static/*.js.go
+src/ngrok/client/assets/assets_release.go
+src/ngrok/server/assets/assets_release.go

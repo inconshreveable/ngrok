@@ -1,4 +1,4 @@
-.PHONY: default server client deps fmt clean all release-client release-server release-all
+.PHONY: default server client deps fmt clean all release-client release-server release-all client-assets server-assets
 BUILDTAGS=
 export GOPATH:=$(shell pwd)
 
@@ -16,13 +16,19 @@ fmt:
 client: deps
 	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
 
+client-assets:
+	go get github.com/inconshreveable/go-bindata
+	bin/go-bindata -o src/ngrok/client/assets assets/client
+
+server-assets:
+	go get github.com/inconshreveable/go-bindata
+	bin/go-bindata -o src/ngrok/server/assets assets/server
+
 release-client: BUILDTAGS=release
-release-client: client
-	./nrsc ./bin/ngrok ./assets/client
+release-client: client-assets client
 
 release-server: BUILDTAGS=release
-release-server: server
-	./nrsc ./bin/ngrokd ./assets/server
+release-server: server-assets server
 
 release-all: release-client release-server
 
