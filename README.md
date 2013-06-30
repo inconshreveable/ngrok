@@ -37,3 +37,5 @@ are only available by creating an account on ngrok.com. If you need them, [creat
     cd ngrok && make
     bin/ngrok [LOCAL PORT]
 
+### Further Reading
+[ngrok developer's guide](docs/DEVELOPMENT.md)
