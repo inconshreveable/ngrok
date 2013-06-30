@@ -33,18 +33,18 @@ There are Makefile targets for compiling the client and server for releases:
 ## Developing locally
 The strategy I use for developing on ngrok is to do the following:
 
-1. Add the following lines to /etc/hosts:
+Add the following lines to /etc/hosts:
 
     127.0.0.1 ngrok.me
     127.0.0.1 tunnel.ngrok.me
 
-1. Run ngrokd with the following options:
+Run ngrokd with the following options:
 
     ./bin/ngrokd -domain ngrok.me
 
-1. Run ngrok with the following options
+Run ngrok with the following options
 
-    ./bin/ngrok -server=ngrok.me:4443 -subdomain tunnel -log ngrok.log 8080
+    ./bin/ngrok -server=ngrok.me:4443 -subdomain=tunnel -log=ngrok.log 8080
 
 This will get you setup with an ngrok client talking to an ngrok server all locally under your control. Happy hacking!
 
@@ -78,10 +78,10 @@ Messages are sent over the wire as netstrings of the form:
 The message length is sent as a 64-bit little endian integer.
 
 ### Code
-The network protocol lives under _src/ngrok/msg_
+The definitions and shared protocol routines lives under _src/ngrok/msg_
 
 #### src/ngrok/msg/msg.go
-All of the different message types (Reg, PxyReq, Ping, etc) are defined here. This is a good place to go to understand exact what messages are sent between the client and server.
+All of the different message types (Reg, PxyReq, Ping, etc) are defined here. This is a good place to go to understand exactly what messages are sent between the client and server.
     
 ## ngrokd - the server
 ### Code
