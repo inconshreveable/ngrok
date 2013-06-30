@@ -19,8 +19,6 @@ func init() {
 	TypeMap["PongMsg"] = t((*PongMsg)(nil))
 	TypeMap["VerisonMsg"] = t((*VersionMsg)(nil))
 	TypeMap["VersionRespMsg"] = t((*VersionRespMsg)(nil))
-	TypeMap["MetricsMsg"] = t((*MetricsMsg)(nil))
-	TypeMap["MetricsRespMsg"] = t((*MetricsRespMsg)(nil))
 }
 
 type Message interface{}
@@ -71,11 +69,4 @@ type VersionMsg struct {
 type VersionRespMsg struct {
 	Version   string
 	MmVersion string
-}
-
-type MetricsMsg struct {
-}
-
-type MetricsRespMsg struct {
-	Metrics string
 }
