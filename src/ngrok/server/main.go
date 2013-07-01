@@ -7,7 +7,7 @@ import (
 	"ngrok/conn"
 	log "ngrok/log"
 	"ngrok/msg"
-	"regexp"
+	"os"
 )
 
 type Options struct {
@@ -20,14 +20,11 @@ type Options struct {
 
 /* GLOBALS */
 var (
-	hostRegex *regexp.Regexp
-	proxyAddr string
-	tunnels   *TunnelManager
+	proxyAddr         string
+	tunnels           *TunnelRegistry
+	registryCacheSize uint64 = 1024 * 1024 // 1 MB
+	domain            string
 )
-
-func init() {
-	hostRegex = regexp.MustCompile("[H|h]ost: ([^\\(\\);:,<>]+)\n")
-}
 
 func parseArgs() *Options {
 	publicPort := flag.Int("publicport", 80, "Public port")
@@ -110,11 +107,14 @@ func proxyListener(addr *net.TCPAddr, domain string) {
 func Main() {
 	// parse options
 	opts := parseArgs()
+	domain = opts.domain
 
 	// init logging
 	log.LogTo(opts.logto)
 
-	tunnels = NewTunnelManager(opts.domain)
+	// init tunnel registry
+	registryCacheFile := os.Getenv("REGISTRY_CACHE_FILE")
+	tunnels = NewTunnelRegistry(registryCacheSize, registryCacheFile)
 
 	go proxyListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.proxyPort}, opts.domain)
 	go controlListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.tunnelPort}, opts.domain)

@@ -3,11 +3,13 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"net"
 	"ngrok/conn"
 	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -50,6 +52,10 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		Logger:  log.NewPrefixLogger(),
 	}
 
+	failReg := func(err error) {
+		t.ctl.stop <- &msg.RegAckMsg{Error: err.Error()}
+	}
+
 	switch t.regMsg.Protocol {
 	case "tcp":
 		var err error
@@ -61,18 +67,42 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 			t.ctl.stop <- &msg.RegAckMsg{Error: "Internal server error"}
 		}
 
+		addr := t.listener.Addr().(*net.TCPAddr)
+		t.url = fmt.Sprintf("tcp://%s:%d", domain, addr.Port)
+
+		if err = tunnels.Register(t.url, t); err != nil {
+			// This should never be possible because the OS will only assign
+			// available ports to us.
+			t.Error("TCP listener bound, but failed to register: %s", err.Error())
+			t.listener.Close()
+			failReg(err)
+			return
+		}
+
 		go t.listenTcp(t.listener)
 
-	default:
-	}
+	case "http":
+		if strings.TrimSpace(t.regMsg.Hostname) != "" {
+			t.url = fmt.Sprintf("http://%s", t.regMsg.Hostname)
+		} else if strings.TrimSpace(t.regMsg.Subdomain) != "" {
+			t.url = fmt.Sprintf("http://%s.%s", t.regMsg.Subdomain, domain)
+		}
 
-	if err := tunnels.Add(t); err != nil {
-		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprint(err)}
-		return
+		if t.url != "" {
+			if err := tunnels.Register(t.url, t); err != nil {
+				failReg(err)
+				return
+			}
+		} else {
+			t.url = tunnels.RegisterRepeat(func() string {
+				return fmt.Sprintf("http://%x.%s", rand.Int31(), domain)
+			}, t)
+		}
 	}
 
 	if m.Version != version.Proto {
-		t.ctl.stop <- &msg.RegAckMsg{Error: fmt.Sprintf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), m.Version)}
+		failReg(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), m.Version))
+		return
 	}
 
 	// pre-encode the http basic auth for fast comparisons later
