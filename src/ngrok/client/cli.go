@@ -15,17 +15,16 @@ var (
 )
 
 type Options struct {
-	server      string
-	httpAuth    string
-	hostname    string
-	localaddr   string
-	protocol    string
-	url         string
-	subdomain   string
-	historySize int
-	webport     int
-	logto       string
-	authtoken   string
+	server    string
+	httpAuth  string
+	hostname  string
+	localaddr string
+	protocol  string
+	url       string
+	subdomain string
+	webport   int
+	logto     string
+	authtoken string
 }
 
 func fail(msg string, args ...interface{}) {
@@ -121,6 +120,11 @@ func parseArgs() *Options {
 		"",
 		"Request a custom subdomain from the ngrok server. (HTTP mode only)")
 
+	hostname := flag.String(
+		"hostname",
+		"",
+		"Request a custom hostname from the ngrok server. (HTTP only) (requires CNAME of your DNS)")
+
 	protocol := flag.String(
 		"proto",
 		"http",
@@ -157,5 +161,6 @@ func parseArgs() *Options {
 		webport:   *webport,
 		logto:     *logto,
 		authtoken: parseAuthToken(*authtoken),
+		hostname:  *hostname,
 	}
 }
