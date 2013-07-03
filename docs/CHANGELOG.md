@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14 - 07/03/2013
+- BUGFIX Fix an issue where ngrok could never save/load the authtoken file on linux
+- BUGFIX Fix an issue where ngrok wouldn't emit log messages while loading authtokens
+
 ## 0.13 - 07/02/2013
 - FEATURE -hostname switch on client allows you to run tunnels over custom domains (requires you CNAME your DNS)
 - IMPROVEMENT ngrok client UI now shows the client IP address for a request
