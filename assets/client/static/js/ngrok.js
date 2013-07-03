@@ -347,7 +347,7 @@ ngrok.controller({
         $scope.$watch(function() { return txnSvc.active() }, setReq);
     },
 
-    "HttpResponse": function($scope, $element, $timeout, txnSvc) {
+    "HttpResponse": function($scope, $element, txnSvc) {
         var setResp = function() {
             var txn = txnSvc.active();
             if (!!txn && txn.Resp) {
@@ -364,5 +364,28 @@ ngrok.controller({
         $scope.makeActive = function() {
             txnSvc.active($scope.txn);
         };
+    },
+
+    "HttpTxn": function($scope, txnSvc, $timeout) {
+        var setTxn = function() {
+            $scope.Txn = txnSvc.active();
+        };
+
+        $scope.ISO8601 = function(ts) {
+            if (!!ts) {
+                return new Date(ts * 1000).toISOString();
+            }
+        };
+
+        $scope.TimeFormat = function(ts) {
+            if (!!ts) {
+                return $.timeago($scope.ISO8601(ts));
+            }
+        };
+
+        $scope.$watch(function() { return txnSvc.active() }, setTxn);
+
+        // this causes angular to update the timestamps
+        setInterval(function() { $scope.$apply(function() {}); }, 30000);
     },
 });

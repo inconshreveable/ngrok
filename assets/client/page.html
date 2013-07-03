@@ -6,6 +6,7 @@
         <script src="/static/js/highlight.min.js"></script>
         <script src="/static/js/vkbeautify.js"></script>
         <script src="/static/js/jquery-1.9.1.min.js"></script>
+        <script src="/static/js/jquery.timeago.js"></script>
         <script src="/static/js/angular.js"></script>
         <script src="/static/js/base64.js"></script>
         <script src="/static/js/ngrok.js"></script>
@@ -61,7 +62,23 @@
                         </tr>
                     </table>
                 </div>
-                <div class="span6">
+                <div class="span6" ng-controller="HttpTxn" ng-show="!!Txn">
+                    <div class="row-fluid">
+                        <div class="span4">
+                            <span title="{{ISO8601(Txn.Start)}}" class="muted">
+                                {{TimeFormat(Txn.Start)}}
+                            </span>
+                        </div>
+                        <div class="span4">
+                            <i class="icon-time"></i> Duration 
+                            <span style="margin-left: 8px;" class="muted">{{Txn.Duration}}</span>
+                        </div>
+                        <div  class="span4">
+                            <i class="icon-user"></i> IP 
+                            <span style="margin-left: 8px;" class="muted">{{Txn.Req.Header['X-Real-Ip'][0]}}</span>
+                        </div>
+                    </div>
+                    <hr />
                     <div ng-show="!!Req" ng-controller="HttpRequest">
                         <h3>{{ Req.MethodPath }}</h3>
                         <div onbtnclick="replay()" btn="Replay" tabs="Summary,Headers,Raw,Binary">

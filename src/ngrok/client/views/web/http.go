@@ -21,6 +21,7 @@ import (
 type SerializedTxn struct {
 	Id             string
 	Duration       int64
+	Start          int64
 	*proto.HttpTxn `json:"-"`
 	Req            SerializedRequest
 	Resp           SerializedResponse
@@ -176,6 +177,7 @@ func (whv *WebHttpView) updateHttp() {
 					Body:       body,
 					Binary:     !utf8.Valid(rawReq),
 				},
+				Start: htxn.Start.Unix(),
 			}
 
 			htxn.UserData = whtxn
