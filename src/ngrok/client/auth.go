@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"sync"
 )
 
 /*
@@ -13,27 +14,42 @@ import (
    home directory.
 */
 var (
+	once             sync.Once
 	currentAuthToken string
 	authTokenFile    string
 )
 
-func init() {
+func Init() {
 	user, err := user.Current()
+
+	// os.Getenv("HOME") hack is here to support osx -> linux cross-compilation
+	// because user.Current() only cross compiles correctly from osx -> windows
+	homeDir := os.Getenv("HOME")
 	if err != nil {
 		log.Warn("Failed to get user's home directory: %s", err.Error())
-		return
+	} else {
+		homeDir = user.HomeDir
 	}
 
-	authTokenFile = path.Join(user.HomeDir, ".ngrok")
+	authTokenFile = path.Join(homeDir, ".ngrok")
+
+	log.Debug("Reading auth token from file %s", authTokenFile)
 	tokenBytes, err := ioutil.ReadFile(authTokenFile)
 
 	if err == nil {
 		currentAuthToken = string(tokenBytes)
+	} else {
+		log.Warn("Failed to read ~/.ngrok for auth token: %s", err.Error())
 	}
 }
 
+func LoadAuthToken() string {
+	once.Do(func() { Init() })
+	return currentAuthToken
+}
+
 func SaveAuthToken(token string) {
-	if token == "" || token == currentAuthToken || authTokenFile == "" {
+	if token == "" || token == LoadAuthToken() || authTokenFile == "" {
 		return
 	}
 
@@ -42,8 +58,4 @@ func SaveAuthToken(token string) {
 	if err != nil {
 		log.Warn("Failed to write auth token to file %s: %v", authTokenFile, err.Error())
 	}
-}
-
-func LoadAuthToken() string {
-	return currentAuthToken
 }

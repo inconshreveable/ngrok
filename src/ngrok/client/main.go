@@ -264,6 +264,11 @@ func Main() {
 	// set up logging
 	log.LogTo(opts.logto)
 
+	// set up auth token
+	if opts.authtoken == "" {
+		opts.authtoken = LoadAuthToken()
+	}
+
 	// init client state
 	s := &State{
 		status: "connecting",

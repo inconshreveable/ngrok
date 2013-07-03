@@ -91,14 +91,6 @@ func parseProtocol(proto string) string {
 	panic("unreachable")
 }
 
-func parseAuthToken(token string) string {
-	if token != "" {
-		return token
-	} else {
-		return LoadAuthToken()
-	}
-}
-
 func parseArgs() *Options {
 	authtoken := flag.String(
 		"authtoken",
@@ -160,7 +152,7 @@ func parseArgs() *Options {
 		protocol:  parseProtocol(*protocol),
 		webport:   *webport,
 		logto:     *logto,
-		authtoken: parseAuthToken(*authtoken),
+		authtoken: *authtoken,
 		hostname:  *hostname,
 	}
 }
