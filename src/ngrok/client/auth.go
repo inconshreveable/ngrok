@@ -1,5 +1,10 @@
 package client
 
+/*
+   Functions for reading and writing the auth token from the user's
+   home directory.
+*/
+
 import (
 	"io/ioutil"
 	"ngrok/log"
@@ -9,21 +14,17 @@ import (
 	"sync"
 )
 
-/*
-   Functions for reading and writing the auth token from the user's
-   home directory.
-*/
 var (
 	once             sync.Once
 	currentAuthToken string
 	authTokenFile    string
 )
 
-func Init() {
+func initAuth() {
 	user, err := user.Current()
 
-	// os.Getenv("HOME") hack is here to support osx -> linux cross-compilation
-	// because user.Current() only cross compiles correctly from osx -> windows
+	// user.Current() does not work on linux when cross compilling because
+	// it requires CGO; use os.Getenv("HOME") hack until we compile natively
 	homeDir := os.Getenv("HOME")
 	if err != nil {
 		log.Warn("Failed to get user's home directory: %s", err.Error())
@@ -43,11 +44,13 @@ func Init() {
 	}
 }
 
+// Load the auth token from file
 func LoadAuthToken() string {
-	once.Do(func() { Init() })
+	once.Do(initAuth)
 	return currentAuthToken
 }
 
+// Save the auth token to file
 func SaveAuthToken(token string) {
 	if token == "" || token == LoadAuthToken() || authTokenFile == "" {
 		return
