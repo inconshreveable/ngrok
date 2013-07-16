@@ -1,15 +1,15 @@
 --- 
-branches: 
-  only: master travis osx
-script: make release-all
 env: 
   global: 
-    secure: b8xoW5wpWrcSO+iaRycVEcrWrGCcPaEZau4MQW1FBnMxjE6opw0FUGDXccP+NNlPmCDC92QiffeSgWI4Ynt+v/2WR/k0/MoYe8psbjtNUXEo8h9pJa152zJN31avBwgBaHT35nSIILoUeDr2W8sTIUT1HKdVDWjl2tTNM2YCE7g=
+    secure: e+NeNgWG4nNMdv/X0mcQizNtg6R3ZuZ8+NvVgC4fMDQhzyi8urP6FJuiad5WCDHKkiUuiK6KPO8sVx+i9Tkw0VNGl2PSfJtUEsD1UBS2qTpEHZ4k6125QAVbUTu6jZlyiVazH9OUFcURkQ2CsR1xWVT4gh3550sTQ93I/mH9260=
   matrix: 
   - GOOS=linux GOARCH=386
   - GOOS=linux GOARCH=arm
   - GOOS=windows GOARCH=386
-install: true
-after_success: "NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UPLOAD"
+after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UPLOAD
 go: 
 - 1.1
+script: make release-all
+branches: 
+  only: master travis osx
+install: true
