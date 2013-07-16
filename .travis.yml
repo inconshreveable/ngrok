@@ -6,7 +6,4 @@ after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UP
 go: 
   - 1.1
 script: make release-all
-branches: 
-  only: 
-    -travis
 install: true
