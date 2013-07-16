@@ -1,20 +1,21 @@
 --- 
-env: 
-  global: 
-  - secure: J7ckMBJIlvTDWPEiYvBT5pEMrGJPqyiiorkxIh+8mOy1qW+TfJyK6GEiW+Qf7Fwaoj/7p35ehNpaChDmCcXz7DGpiSSikDtPsdbNgwmMQwxbkzZznpRc7oH/4HhuYQRBCAn4Lol0VYNGeG3jKoPntNQkYPYGjsXyAGTzkvRruUg=
-  matrix: 
-  - GOOS=linux GOARCH=arm
-  - GOOS=linux GOARCH=386
-  - GOOS=windows GOARCH=386
-after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UPLOAD
-go: 
-- 1.1
 before_script: 
 - pushd /home/travis/.gvm/gos/go1.1.1/src
 - ./make.bash
 - popd
+env: 
+  matrix: 
+  - GOOS=linux GOARCH=arm
+  - GOOS=linux GOARCH=386
+  - GOOS=windows GOARCH=386
+  global: 
+  - secure: BXOe26ZiiSY4fQthsSQ6UOhAzgxf5p0fk6ullroz8Hxn4p4h6UpVCpB0qC5kyClgj57WDQ5QqPsq8iLcLCtVmHrBxxqYUk1zunWKXJYSYUpXqWih53Cwcjrz6S9awpuXL5CGrcaJAu3hENkPqwH8OKwvEbD5EHjFryaivJQXvOo=
+  - secure: HHpFqTIiursQQXMdKDA/0nYldVJPGligW2YbjhsJhU0I8MvPX+/ro1lME+E44IxVAjzy1diOKxSxBkf3Lxqh+xPwSLLqd3o9wzh2e46nESp5R4zUuNjoOfxb6Zux/KSs9Z/enxO4wwdq+BnGZ2INZeudlRpbcyfVaRpQJZL38dw=
 before_install: 
 - sudo apt-get update -qq
 - sudo apt-get install -qq sshpass
-script: make release-all
+go: 
+- 1.1
 install: true
+script: make release-all
+after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd sshpass -p $PW scp $NGROK $NGROKD $HOST
