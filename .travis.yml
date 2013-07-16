@@ -18,4 +18,7 @@ go:
 - 1.1
 install: true
 script: make release-all
-after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd sshpass -p $PW scp $NGROK $NGROKD $HOST
+after_success:
+  - NGROK=bin/$GOOS_$GOARCH/ngrok
+  - NGROKD=bin/$GOOS_$GOARCH/ngrokd
+  - sshpass -p $PW scp $NGROK $NGROKD $HOST
