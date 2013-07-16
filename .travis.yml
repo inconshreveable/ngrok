@@ -1,18 +1,17 @@
 --- 
-before_script:
+script: make release-all
+before_script: 
   - pushd /home/travis/.gvm/gos/go1.1.1/src
   - ./make.bash
   - popd
+go: 
+  - 1.1
+after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UPLOAD
 env: 
-  global: 
-    secure: e+NeNgWG4nNMdv/X0mcQizNtg6R3ZuZ8+NvVgC4fMDQhzyi8urP6FJuiad5WCDHKkiUuiK6KPO8sVx+i9Tkw0VNGl2PSfJtUEsD1UBS2qTpEHZ4k6125QAVbUTu6jZlyiVazH9OUFcURkQ2CsR1xWVT4gh3550sTQ93I/mH9260=
-  matrix:
+  matrix: 
     - GOOS=linux GOARCH=arm
     - GOOS=linux GOARCH=386
     - GOOS=windows GOARCH=386
-
-after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UPLOAD
-go: 
-  - 1.1
-script: make release-all
+  global: 
+    secure: V/hOxdpBks7y1RKcXzEWnnXss5VLDhNe0a6tdiBT9V+WUH8wd3dXKpDQeKGBESUiypnq3zTz1sq8sFPxgJYaYGyto+naWL5Hz3ZFNvgnIVKBlmdwoyxL2kIBHIAeqdTiOfjPEiNPC0a0URyuyXX3T/sGrRrIkthyca9jR3FWpz8=
 install: true
