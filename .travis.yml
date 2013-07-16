@@ -1,10 +1,17 @@
 branches:
   only:
+    master
     travis
+    osx
 
 go:
   - 1.1
 
 script: make release-all
+
+env:
+  - GOOS=linux GOARCH=386
+  - GOOS=linux GOARCH=arm
+  - GOOS=windows GOARCH=386
 
 install: true
