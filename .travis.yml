@@ -2,13 +2,9 @@
 env: 
   global: 
     secure: e+NeNgWG4nNMdv/X0mcQizNtg6R3ZuZ8+NvVgC4fMDQhzyi8urP6FJuiad5WCDHKkiUuiK6KPO8sVx+i9Tkw0VNGl2PSfJtUEsD1UBS2qTpEHZ4k6125QAVbUTu6jZlyiVazH9OUFcURkQ2CsR1xWVT4gh3550sTQ93I/mH9260=
-  matrix: 
-  - GOOS=linux GOARCH=386
-  - GOOS=linux GOARCH=arm
-  - GOOS=windows GOARCH=386
 after_success: NGROK=bin/$GOOS_$GOARCH/ngrok NGROKD=bin/$GOOS_$GOARCH/ngrokd $UPLOAD
 go: 
-- 1.1
+  - 1.1
 script: make release-all
 branches: 
   only: 
