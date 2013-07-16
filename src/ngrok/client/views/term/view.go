@@ -78,10 +78,36 @@ func (v *TermView) Render() {
 	v.Printf(v.w-len(quitMsg), 0, quitMsg)
 
 	// new version message
-	newVersion := v.state.GetNewVersion()
-	if newVersion != "" {
-		newVersionMsg := fmt.Sprintf("new version available at http://ngrok.com")
-		v.APrintf(termbox.ColorYellow, 30, 0, newVersionMsg)
+	updateStatus := v.state.GetUpdate()
+	var updateMsg string
+	switch updateStatus {
+	case ui.UpdateNone:
+		updateMsg = ""
+	case ui.UpdateInstalling:
+		updateMsg = "ngrok is updating"
+	case ui.UpdateReady:
+		updateMsg = "ngrok has updated: restart ngrok for the new version"
+	case ui.UpdateError:
+		updateMsg = "new version available at http://ngrok.com"
+	default:
+		pct := float64(updateStatus) / 100.0
+		const barLength = 25
+		full := int(barLength * pct)
+		bar := make([]byte, barLength+2)
+		bar[0] = '['
+		bar[barLength+1] = ']'
+		for i := 0; i < 25; i++ {
+			if i <= full {
+				bar[i+1] = '#'
+			} else {
+				bar[i+1] = ' '
+			}
+		}
+		updateMsg = "Downloading update: " + string(bar)
+	}
+
+	if updateMsg != "" {
+		v.APrintf(termbox.ColorYellow, 30, 0, updateMsg)
 	}
 
 	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "ngrok")

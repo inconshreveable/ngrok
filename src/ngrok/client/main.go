@@ -1,11 +1,9 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
-	"net/http"
 	"ngrok/client/ui"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -21,11 +19,12 @@ import (
 )
 
 const (
-	pingInterval         = 20 * time.Second
-	maxPongLatency       = 15 * time.Second
-	versionCheckInterval = 6 * time.Hour
-	versionEndpoint      = "http://dl.ngrok.com/versions"
-	BadGateway           = `<html>
+	pingInterval        = 20 * time.Second
+	maxPongLatency      = 15 * time.Second
+	updateCheckInterval = 6 * time.Hour
+	//updateEndpoint      = "http://dl.ngrok.com/update"
+	updateEndpoint = "http://dl.ngrok.me:8080/update"
+	BadGateway     = `<html>
 <body style="background-color: #97a8b9">
     <div style="margin:auto; width:400px;padding: 20px 60px; background-color: #D3D3D3; border: 5px solid maroon;">
         <h2>Tunnel %s unavailable</h2>
@@ -85,40 +84,6 @@ Content-Length: %d
 		m.bytesOutCount.Inc(bytesOut)
 	})
 	ctl.Update(s)
-}
-
-func versionCheck(s *State, ctl *ui.Controller) {
-	check := func() {
-		resp, err := http.Get(versionEndpoint)
-		if err != nil {
-			log.Warn("Failed to get version info %s: %v", versionEndpoint, err)
-			return
-		}
-		defer resp.Body.Close()
-
-		var payload struct {
-			Client struct {
-				Version string
-			}
-		}
-
-		err = json.NewDecoder(resp.Body).Decode(&payload)
-		if err != nil {
-			log.Warn("Failed to read version info: %v", err)
-			return
-		}
-
-		if payload.Client.Version != version.MajorMinor() {
-			s.newVersion = payload.Client.Version
-			ctl.Update(s)
-		}
-	}
-
-	// check immediately and then at a set interval
-	check()
-	for _ = range time.Tick(versionCheckInterval) {
-		check()
-	}
 }
 
 /*
@@ -298,7 +263,7 @@ func Main() {
 	}
 
 	go reconnectingControl(s, ctl)
-	go versionCheck(s, ctl)
+	go autoUpdate(s, ctl)
 
 	quitMessage := ""
 	ctl.Wait.Add(1)
