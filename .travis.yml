@@ -1,21 +1,24 @@
 --- 
 script: make release-all
+install: true
 before_install: 
 - sudo apt-get update -qq
 - sudo apt-get install -qq sshpass
 after_success: 
 - NGROK=bin/$GOOS_$GOARCH/ngrok
 - NGROKD=bin/$GOOS_$GOARCH/ngrokd
-- sshpass -p $PW scp $NGROK $NGROKD $HOST
+- VERSION=$(GOPATH=$(pwd) go run build/version.go)
+- sudo pip install boto
+- python build/travis.py
 before_script: 
 - pushd /home/travis/.gvm/gos/go1.1.1/src
 - ./make.bash
 - popd
-install: true
 env: 
   global: 
-  - secure: QPD65GxH6nx7mzgi9pBiQHWEX79K5i76fNuCNTePtrybZ7Ypx5ZnQbfXX253sgpq1cLwldzWg6klhLwpsFlxENz4be+ckiuNiVRaYnu7VYLIXcSxgat9v4XvbQWJAZVLZ+bi2VYDoV0yFsGIuJj5nxj6F1EZv2pzFAgah3OKEqU=
-  - secure: Tvb9SVDh0Ej+1sRain7t66snqcPH5ViXMaI0q0pxdDu9K7Gc3bjPaeSvQVOec+hLXXc/8a469ty/3n57Cz0mh7R+64dWhrroEZ8fdsWmo7Svnkp5KOvhZaAGIIHP1U12HM3WsCBaxFE1NX7H9p56/oDQNl61IORMN/wyACxEOYk=
+  - secure: Fd5zHi58jx8lsPDv4tkRFzXSY0KnPJZuZ+LvnRcpX4+3xJsuZU6moOfrOcGqDOm7/SqZRVZRKZapE772+8sXNKPmwSXHRsZEsUgqxdehFzlVP4PQN5efOdI/quO2ibwVpZ6Idze5pelZburALd7/VbfHCTB/0P0WDMNvfHuFPQg=
+  - secure: Yg+y996B4S7zHXO8j6JrRbgMf6yilHGWv6I+7oZf02d8IHYtAb6A9DveX/q+v24O8Q9WzXRU4ZIaG5nJksVwb19qcy4vpaUbvx00COi8tg0l9hdKIotrzAs+i8q5h0xUifE1iuqYJw39vYU/9vC/727GTvOfRpBCr+edcpc9uy0=
+  - secure: CMF8ZfcoZK8AhFrmo6ljwP4ulYOSI9Pftp02rfNcM7LYPzU5HxFmcR7M4+3Qt0HAWxYrReozNQZYrV0s5jqIO0H4LZeHxgi7EHTam1BelhmHxL6VBMoR1mTi53bErWNhpoc0qyCnWMpnzNMObwtBVm9vjacm4NJMWqQjte/0Kdw=
   matrix: 
   - GOOS=linux GOARCH=arm
   - GOOS=linux GOARCH=386
