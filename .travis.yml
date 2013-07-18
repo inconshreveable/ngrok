@@ -1,6 +1,7 @@
 script: make release-all
 install: true
 before_install: 
+- easy_install boto
 - brew install go --cross-compile-common
 after_success: 
 - sudo pip install boto
