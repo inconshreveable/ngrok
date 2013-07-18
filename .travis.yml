@@ -1,10 +1,9 @@
 script: make release-all
 install: true
 before_install: 
-- easy_install boto
 - brew install go --cross-compile-common
 after_success: 
-- sudo pip install boto
+- sudo easy_install boto
 - NGROK="bin/${GOOS}_${GOARCH}/ngrok" NGROKD="bin/${GOOS}_${GOARCH}/ngrokd" VERSION=$(GOOS="" GOARCH="" GOPATH=$(pwd) go run build/version.go) python build/travis.py
 env: 
   global: 
