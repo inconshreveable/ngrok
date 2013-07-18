@@ -1,4 +1,3 @@
---- 
 script: make release-all
 install: true
 before_install: 
