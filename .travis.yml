@@ -6,8 +6,7 @@ after_success:
 - sudo pip install boto
 - NGROK="bin/${GOOS}_${GOARCH}/ngrok" NGROKD="bin/${GOOS}_${GOARCH}/ngrokd" VERSION=$(GOOS="" GOARCH="" GOPATH=$(pwd) go run build/version.go) python build/travis.py
 before_script: 
-- find /usr/local/Cellar -name src
-- pushd /usr/local/Cellar/go/1.1.1/src
+- pushd /usr/local/Cellar/go/1.1/src
 - ./make.bash
 - popd
 env: 
