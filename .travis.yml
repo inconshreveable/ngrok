@@ -5,11 +5,8 @@ before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -qq sshpass
 after_success: 
-- NGROK="bin/$GOOS_$GOARCH/ngrok"
-- NGROKD="bin/$GOOS_$GOARCH/ngrokd"
-- VERSION=$(GOPATH=$(pwd) go run build/version.go)
 - sudo pip install boto
-- python build/travis.py
+- NGROK="bin/$GOOS_$GOARCH/ngrok" NGROKD="bin/$GOOS_$GOARCH/ngrokd" VERSION=$(GOPATH=$(pwd) go run build/version.go) python build/travis.py
 before_script: 
 - pushd /home/travis/.gvm/gos/go1.1.1/src
 - ./make.bash
