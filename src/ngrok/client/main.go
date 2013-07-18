@@ -22,9 +22,7 @@ const (
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
-	//updateEndpoint      = "http://dl.ngrok.com/update"
-	updateEndpoint = "http://dl.ngrok.me:8080/update"
-	BadGateway     = `<html>
+	BadGateway          = `<html>
 <body style="background-color: #97a8b9">
     <div style="margin:auto; width:400px;padding: 20px 60px; background-color: #D3D3D3; border: 5px solid maroon;">
         <h2>Tunnel %s unavailable</h2>

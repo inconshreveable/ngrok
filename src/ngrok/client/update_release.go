@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+const (
+	//updateEndpoint      = "http://dl.ngrok.com/update"
+	updateEndpoint = "http://dl.ngrok.me:8080/update"
+)
+
 func autoUpdate(s *State, ctl *ui.Controller) {
 	update := func() bool {
 		params := make(url.Values)
@@ -24,22 +29,28 @@ func autoUpdate(s *State, ctl *ui.Controller) {
 		go func() {
 			for {
 				select {
-				case progress := <-download.Progress:
-					if progress < 100 {
-						s.update = ui.UpdateStatus(progress)
-					} else {
+				case progress, ok := <-download.Progress:
+					if !ok {
+						close(downloadComplete)
+						return
+					} else if progress == 100 {
 						s.update = ui.UpdateInstalling
+						ctl.Update(s)
+						close(downloadComplete)
+						return
+					} else {
+						if (progress % 25 == 0) {
+							log.Info("Downloading update %d%% complete", progress)
+						}
+						s.update = ui.UpdateStatus(progress)
+						ctl.Update(s)
 					}
-					ctl.Update(s)
-				case <-downloadComplete:
-					close(downloadComplete)
-					return
 				}
 			}
 		}()
 
+		log.Info("Checking for update")
 		err := download.UpdateFromUrl(updateEndpoint + "?" + params.Encode())
-		downloadComplete <- 1
 		<-downloadComplete
 		if err != nil {
 			if err != update.UpdateUnavailable {
