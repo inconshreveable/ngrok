@@ -1,8 +1,5 @@
 script: make release-all
 install: true
-before_install: 
-- sudo apt-get update -qq
-- sudo apt-get install -qq sshpass
 after_success: 
 - sudo pip install boto
 - ls -lr bin/*
