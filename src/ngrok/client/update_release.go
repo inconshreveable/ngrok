@@ -3,7 +3,6 @@
 package client
 
 import (
-	"fmt"
 	update "github.com/inconshreveable/go-update"
 	"net/url"
 	"ngrok/client/ui"
@@ -14,14 +13,15 @@ import (
 )
 
 const (
-	updateEndpoint = "http://dl.ngrok.com/update"
+	updateEndpoint = "https://dl.ngrok.com/update"
 )
 
 func autoUpdate(s *State, ctl *ui.Controller) {
 	update := func() bool {
 		params := make(url.Values)
 		params.Add("version", version.MajorMinor())
-		params.Add("platform", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH))
+		params.Add("os", runtime.GOOS)
+		params.Add("arch", runtime.GOARCH)
 
 		download := update.NewDownload()
 		downloadComplete := make(chan int)
