@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	//updateEndpoint      = "http://dl.ngrok.com/update"
-	updateEndpoint = "http://dl.ngrok.me:8080/update"
+	updateEndpoint = "http://dl.ngrok.com/update"
 )
 
 func autoUpdate(s *State, ctl *ui.Controller) {
@@ -39,7 +38,7 @@ func autoUpdate(s *State, ctl *ui.Controller) {
 						close(downloadComplete)
 						return
 					} else {
-						if (progress % 25 == 0) {
+						if progress%25 == 0 {
 							log.Info("Downloading update %d%% complete", progress)
 						}
 						s.update = ui.UpdateStatus(progress)
