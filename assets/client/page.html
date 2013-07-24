@@ -8,6 +8,7 @@
         <script src="/static/js/jquery-1.9.1.min.js"></script>
         <script src="/static/js/jquery.timeago.js"></script>
         <script src="/static/js/angular.js"></script>
+        <script src="/static/js/angular-sanitize.min.js"></script>
         <script src="/static/js/base64.js"></script>
         <script src="/static/js/ngrok.js"></script>
         <script type="text/javascript">
@@ -18,8 +19,8 @@
             table.params { font-size: 12px; font-family: Courier, monospace; }
             .txn-selector tr { cursor: pointer; }
             .txn-selector tr:hover { background-color: #ddd; }
-            tr.selected, tr.selected:hover { 
-                background-color: #ff9999; 
+            tr.selected, tr.selected:hover {
+                background-color: #ff9999;
                 background-color: #000000;
                 color:white;
 
@@ -70,11 +71,11 @@
                             </span>
                         </div>
                         <div class="span4">
-                            <i class="icon-time"></i> Duration 
+                            <i class="icon-time"></i> Duration
                             <span style="margin-left: 8px;" class="muted">{{Txn.Duration}}</span>
                         </div>
                         <div  class="span4">
-                            <i class="icon-user"></i> IP 
+                            <i class="icon-user"></i> IP
                             <span style="margin-left: 8px;" class="muted">{{Txn.Req.Header['X-Real-Ip'][0]}}</span>
                         </div>
                     </div>
