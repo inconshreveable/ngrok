@@ -112,8 +112,7 @@ func makeBody(h http.Header, body []byte) SerializedBody {
 	if b.RawContentType != "" {
 		b.ContentType = strings.TrimSpace(strings.Split(b.RawContentType, ";")[0])
 		switch b.ContentType {
-		case "application/xml":
-		case "text/xml":
+		case "application/xml", "text/xml":
 			err = xml.Unmarshal(body, new(XMLDoc))
 			if err != nil {
 				if syntaxError, ok := err.(*xml.SyntaxError); ok {
