@@ -112,21 +112,22 @@ func makeBody(h http.Header, body []byte) SerializedBody {
 	if b.RawContentType != "" {
 		b.ContentType = strings.TrimSpace(strings.Split(b.RawContentType, ";")[0])
 		switch b.ContentType {
-		case "application/xml":
-		case "text/xml":
+		case "application/xml", "text/xml":
 			err = xml.Unmarshal(body, new(XMLDoc))
 			if err != nil {
-				syntaxError := err.(*xml.SyntaxError)
-				// xml syntax errors only give us a line number, so we
-				// count to find an offset
-				b.ErrorOffset = offsetForLine(syntaxError.Line)
+				if syntaxError, ok := err.(*xml.SyntaxError); ok {
+					// xml syntax errors only give us a line number, so we
+					// count to find an offset
+					b.ErrorOffset = offsetForLine(syntaxError.Line)
+				}
 			}
 
 		case "application/json":
 			err = json.Unmarshal(body, new(json.RawMessage))
 			if err != nil {
-				syntaxError := err.(*json.SyntaxError)
-				b.ErrorOffset = int(syntaxError.Offset)
+				if syntaxError, ok := err.(*json.SyntaxError); ok {
+					b.ErrorOffset = int(syntaxError.Offset)
+				}
 			}
 
 		case "application/x-www-form-urlencoded":
