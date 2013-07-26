@@ -1,4 +1,4 @@
-var ngrok = angular.module("ngrok", []);
+var ngrok = angular.module("ngrok", ["ngSanitize"]);
 
 var hexRepr = function(bytes) {
     var buf = [];
@@ -47,7 +47,7 @@ ngrok.factory("txnSvc", function() {
         body.exists = body.Length > 0;
         body.hasError = !!body.Error;
 
-        body.syntaxClass = {
+        var syntaxClass = {
             "text/xml":               "xml",
             "application/xml":        "xml",
             "text/html":              "xml",
@@ -63,12 +63,12 @@ ngrok.factory("txnSvc", function() {
         } else {
             body.Text = Base64.decode(body.Text).text;
         }
-        
+
         // prettify
         var transform = {
             "xml": "xml",
             "json": "json"
-        }[body.syntaxClass];
+        }[syntaxClass];
 
         if (!body.hasError && !!transform) {
             try {
@@ -78,6 +78,13 @@ ngrok.factory("txnSvc", function() {
                 }
             } catch (e) {
             }
+        }
+
+        if (!!syntaxClass) {
+            body.Text = hljs.highlight(syntaxClass, body.Text).value;
+        } else {
+            // highlight.js doesn't have a 'plaintext' syntax, so we'll just copy its escaping function.
+            body.Text = body.Text.replace(/&/gm, '&amp;').replace(/</gm, '&lt;').replace(/>/gm, '&gt;');
         }
     };
 
@@ -214,7 +221,7 @@ ngrok.directive({
                 "onbtnclick": "&"
             },
             replace: true,
-            template: '' + 
+            template: '' +
             '<ul class="nav nav-pills">' +
                 '<li ng-repeat="tab in tabNames" ng-class="{\'active\': isTab(tab)}">' +
                     '<a href="" ng-click="setTab(tab)">{{tab}}</a>' +
@@ -247,7 +254,7 @@ ngrok.directive({
             '</h6>' +
 '' +
             '<div ng-show="!body.isForm && !body.binary">' +
-                '<pre ng-show="body.exists"><code ng-class="body.syntaxClass">{{ body.Text }}</code></pre>' +
+                '<pre ng-show="body.exists"><code ng-bind-html="body.Text"></code></pre>' +
             '</div>' +
 '' +
             '<div ng-show="body.isForm">' +
@@ -259,13 +266,6 @@ ngrok.directive({
 
             link: function($scope, $elem) {
                 $scope.$watch(function() { return $scope.body; }, function() {
-                    $code = $elem.find("code");
-                    // if we highlight when the code is empty, hljs manipulates the dom in a
-                    // a bad way that causes angular to fail
-                    if (!!$code.text()) {
-                        hljs.highlightBlock($code.get(0));
-                    }
-
                     if ($scope.body && $scope.body.ErrorOffset > -1) {
                         var offset = $scope.body.ErrorOffset;
 
@@ -317,7 +317,7 @@ ngrok.controller({
                     txnSvc.add(message.data);
                 });
             };
-            
+
             ws.onerror = function(err) {
                 console.log("Web socket error:" + err);
             };
