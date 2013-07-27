@@ -1,7 +1,11 @@
 script: make release-all
 install: true
 before_install: 
-- brew install go --cross-compile-common
+- wget https://code.google.com/p/go/downloads/detail?name=go1.1.1.src.tar.gz
+- tar xzf go1.1.1.src.tar.gz
+- pushd go1.1.1.src/src
+- ./make.bash
+- popd
 after_success: 
 - sudo easy_install boto
 - NGROK="bin/${GOOS}_${GOARCH}/ngrok" NGROKD="bin/${GOOS}_${GOARCH}/ngrokd" VERSION=$(GOOS="" GOARCH="" GOPATH=$(pwd) go run build/version.go) python build/travis.py
