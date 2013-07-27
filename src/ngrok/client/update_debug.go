@@ -7,5 +7,5 @@ import (
 )
 
 // no auto-updating in debug mode
-func autoUpdate(s *State, ctl *ui.Controller) {
+func autoUpdate(s *State, ctl *ui.Controller, token string) {
 }

@@ -261,7 +261,7 @@ func Main() {
 	}
 
 	go reconnectingControl(s, ctl)
-	go autoUpdate(s, ctl)
+	go autoUpdate(s, ctl, opts.authtoken)
 
 	quitMessage := ""
 	ctl.Wait.Add(1)
