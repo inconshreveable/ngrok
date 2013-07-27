@@ -2,6 +2,7 @@ package client
 
 import (
 	metrics "github.com/inconshreveable/go-metrics"
+	"ngrok/client/ui"
 	"ngrok/proto"
 	"ngrok/version"
 )
@@ -11,7 +12,7 @@ type State struct {
 	id            string
 	publicUrl     string
 	serverVersion string
-	newVersion    string
+	update        ui.UpdateStatus
 	protocol      proto.Protocol
 	opts          *Options
 	metrics       *ClientMetrics
@@ -28,7 +29,7 @@ func (s State) GetLocalAddr() string        { return s.opts.localaddr }
 func (s State) GetWebPort() int             { return s.opts.webport }
 func (s State) GetStatus() string           { return s.status }
 func (s State) GetProtocol() proto.Protocol { return s.protocol }
-func (s State) GetNewVersion() string       { return s.newVersion }
+func (s State) GetUpdate() ui.UpdateStatus  { return s.update }
 
 func (s State) GetConnectionMetrics() (metrics.Meter, metrics.Timer) {
 	return s.metrics.connMeter, s.metrics.connTimer
