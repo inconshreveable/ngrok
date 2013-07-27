@@ -5,10 +5,19 @@ import (
 	"ngrok/proto"
 )
 
+type UpdateStatus int
+
+const (
+	UpdateNone = -1 * iota
+	UpdateInstalling
+	UpdateReady
+	UpdateError
+)
+
 type State interface {
 	GetClientVersion() string
 	GetServerVersion() string
-	GetNewVersion() string
+	GetUpdate() UpdateStatus
 	GetPublicUrl() string
 	GetLocalAddr() string
 	GetStatus() string
