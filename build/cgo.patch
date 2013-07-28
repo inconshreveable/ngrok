@@ -1,0 +1,14 @@
+--- cmd/go/build.go
++++ cmd/go/build.go
+@@ -1768,9 +1768,11 @@
+ )
+ 
+ func (b *builder) cgo(p *Package, cgoExe, obj string, gccfiles []string) (outGo, outObj []string, err error) {
++	/*
+ 	if goos != toolGOOS {
+ 		return nil, nil, errors.New("cannot use cgo when compiling for a different operating system")
+ 	}
++	*/
+ 
+ 	cgoCFLAGS := stringList(envList("CGO_CFLAGS"), p.CgoCFLAGS)
+ 	cgoLDFLAGS := stringList(envList("CGO_LDFLAGS"), p.CgoLDFLAGS)
