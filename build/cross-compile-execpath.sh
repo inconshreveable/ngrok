@@ -1,5 +1,4 @@
 WORK=/var/folders/57/w68pgnks7txfk_r8g124dpmm0000gt/T/go-build594182218
-
 mkdir -p $WORK/github.com/inconshreveable/
 
 mkdir -p $WORK/github.com/inconshreveable/go-execpath/_obj/
