@@ -4,7 +4,7 @@ export GOPATH:=$(shell pwd)
 default: all
 
 deps:
-	go get -x -tags '$(BUILDTAGS)' -d -v ngrok/...
+	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
 
 server: deps
 	go install -tags '$(BUILDTAGS)' ngrok/main/ngrokd
