@@ -4,7 +4,7 @@ export GOPATH:=$(shell pwd)
 default: all
 
 deps:
-	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
+	go get -x -tags '$(BUILDTAGS)' -d -v ngrok/...
 
 server: deps
 	go install -tags '$(BUILDTAGS)' ngrok/main/ngrokd
@@ -13,7 +13,7 @@ fmt:
 	go fmt ngrok/...
 
 client: deps
-	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
+	go install -x -tags '$(BUILDTAGS)' ngrok/main/ngrok
 
 client-assets:
 	go get github.com/inconshreveable/go-bindata
