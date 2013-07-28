@@ -4,6 +4,7 @@ before_install:
 - wget https://go.googlecode.com/files/go1.1.1.src.tar.gz
 - tar xzf go1.1.1.src.tar.gz
 - pushd go/src
+- GOOS="" GOARCH="" ./make.bash
 - ./make.bash
 - popd
 - export GOROOT=./go
