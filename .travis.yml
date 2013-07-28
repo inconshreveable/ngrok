@@ -1,5 +1,5 @@
 script:
-- make deps
+- BUILDTAGS=release make deps
 - sh ./build/cross-compile-execpath.sh
 - make release-all
 install: true
