@@ -6,6 +6,7 @@ before_install:
 - pushd go/src
 - ./make.bash
 - popd
+- export GOROOT=./go
 after_success: 
 - sudo easy_install boto
 - NGROK="bin/${GOOS}_${GOARCH}/ngrok" NGROKD="bin/${GOOS}_${GOARCH}/ngrokd" VERSION=$(GOOS="" GOARCH="" GOPATH=$(pwd) go run build/version.go) python build/travis.py
