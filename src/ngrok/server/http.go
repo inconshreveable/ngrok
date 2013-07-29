@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"strings"
 	"ngrok/conn"
 	"ngrok/log"
 )
@@ -68,11 +69,12 @@ func httpHandler(tcpConn net.Conn) {
 	}
 
 	// multiplex to find the right backend host
-	conn.Debug("Found hostname %s in request", req.Host)
-	tunnel := tunnels.Get("http://" + req.Host)
+	host := strings.Split(req.Host, ":")[0]
+	conn.Debug("Found hostname %s in request", host)
+	tunnel := tunnels.Get("http://" + host)
 	if tunnel == nil {
-		conn.Info("No tunnel found for hostname %s", req.Host)
-		conn.Write([]byte(fmt.Sprintf(NotFound, len(req.Host)+18, req.Host)))
+		conn.Info("No tunnel found for hostname %s", host)
+		conn.Write([]byte(fmt.Sprintf(NotFound, len(host)+18, host)))
 		return
 	}
 
