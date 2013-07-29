@@ -1,6 +1,14 @@
 --- cmd/go/build.go
 +++ cmd/go/build.go
-@@ -1768,9 +1768,11 @@
+@@ -1737,6 +1737,7 @@
+ 	// See http://golang.org/issue/3253.
+ 	if goos == "darwin" {
+ 		a = append(a, "-fno-common")
++		a = append(a, "-mmacosx-version-min=10.4")
+ 	}
+ 
+ 	return a
+@@ -1768,9 +1769,11 @@
  )
  
  func (b *builder) cgo(p *Package, cgoExe, obj string, gccfiles []string) (outGo, outObj []string, err error) {
