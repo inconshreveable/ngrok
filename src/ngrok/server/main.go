@@ -24,6 +24,7 @@ var (
 	tunnels           *TunnelRegistry
 	registryCacheSize uint64 = 1024 * 1024 // 1 MB
 	domain            string
+	publicPort        int
 )
 
 func parseArgs() *Options {
@@ -108,6 +109,7 @@ func Main() {
 	// parse options
 	opts := parseArgs()
 	domain = opts.domain
+	publicPort = opts.publicPort
 
 	// init logging
 	log.LogTo(opts.logto)
