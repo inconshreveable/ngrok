@@ -115,6 +115,7 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 	t.Info("Registered new tunnel")
 	t.ctl.out <- &msg.RegAckMsg{
 		Url:       t.url,
+		Port:      publicPort,
 		ProxyAddr: fmt.Sprintf("%s", proxyAddr),
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
