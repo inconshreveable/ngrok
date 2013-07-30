@@ -95,13 +95,9 @@ func (r *TunnelRegistry) cacheKeys(t *Tunnel) (ip string, id string) {
 	clientIp := t.ctl.conn.RemoteAddr().(*net.TCPAddr).IP.String()
 	clientId := t.regMsg.ClientId
 
-<<<<<<< HEAD
-	return fmt.Sprintf("client-ip:%s", clientIp), fmt.Sprintf("client-id:%s", clientId)
-=======
 	ipKey := fmt.Sprintf("client-ip-%s:%s", t.regMsg.Protocol, clientIp)
 	idKey := fmt.Sprintf("client-id-%s:%s", t.regMsg.Protocol, clientId)
 	return ipKey, idKey
->>>>>>> master
 }
 
 func (r *TunnelRegistry) GetCachedRegistration(t *Tunnel) (url string) {
