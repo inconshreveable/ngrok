@@ -37,8 +37,14 @@ type PrefixLogger struct {
 	prefix string
 }
 
-func NewPrefixLogger() Logger {
-	return &PrefixLogger{Logger: &root}
+func NewPrefixLogger(prefixes ...string) Logger {
+	logger := &PrefixLogger{Logger: &root}
+
+	for _, p := range prefixes {
+		logger.AddLogPrefix(p)
+	}
+
+	return logger
 }
 
 func (pl *PrefixLogger) pfx(fmtstr string) interface{} {

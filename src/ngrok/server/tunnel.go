@@ -9,6 +9,7 @@ import (
 	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -56,26 +57,50 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		t.ctl.stop <- &msg.RegAckMsg{Error: err.Error()}
 	}
 
+	var err error
+
 	switch t.regMsg.Protocol {
 	case "tcp":
-		var err error
-		t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 0})
+		var port int = 0
 
-		if err != nil {
-			t.ctl.conn.Error("Failed to create tunnel. Error binding TCP listener: %v", err)
-
-			t.ctl.stop <- &msg.RegAckMsg{Error: "Internal server error"}
+		// try to return to you the same port you had before
+		cachedUrl := tunnels.GetCachedRegistration(t)
+		if cachedUrl != "" {
+			parts := strings.Split(cachedUrl, ":")
+			portPart := parts[len(parts)-1]
+			port, err = strconv.Atoi(portPart)
+			if err != nil {
+				t.ctl.conn.Error("Failed to parse cached url port as integer: %s", portPart)
+				// continue with zero
+				port = 0
+			}
 		}
 
+		// Bind for TCP connections
+		t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: port})
+
+		// If we failed with a custom port, try with a random one
+		if err != nil && port != 0 {
+			t.ctl.conn.Warn("Failed to get custom port %d: %v, trying a random one", port, err)
+			t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 0})
+		}
+
+		// we tried to bind with a random port and failed (no more ports available?)
+		if err != nil {
+			failReg(t.ctl.conn.Error("Error binding TCP listener: %v", err))
+			return
+		}
+
+		// create the url
 		addr := t.listener.Addr().(*net.TCPAddr)
 		t.url = fmt.Sprintf("tcp://%s:%d", domain, addr.Port)
 
-		if err = tunnels.Register(t.url, t); err != nil {
-			// This should never be possible because the OS will only assign
-			// available ports to us.
-			t.Error("TCP listener bound, but failed to register: %s", err.Error())
+		// register it
+		if err = tunnels.RegisterAndCache(t.url, t); err != nil {
+			// This should never be possible because the OS will
+			// only assign available ports to us.
 			t.listener.Close()
-			failReg(err)
+			failReg(fmt.Errorf("TCP listener bound, but failed to register %s", t.url))
 			return
 		}
 
@@ -94,9 +119,14 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 				return
 			}
 		} else {
-			t.url = tunnels.RegisterRepeat(func() string {
+			t.url, err = tunnels.RegisterRepeat(func() string {
 				return fmt.Sprintf("http://%x.%s", rand.Int31(), domain)
 			}, t)
+
+			if err != nil {
+				failReg(err)
+				return
+			}
 		}
 	}
 
