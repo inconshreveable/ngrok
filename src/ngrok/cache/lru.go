@@ -167,17 +167,12 @@ func (lru *LRUCache) Items() []Item {
 
 func (lru *LRUCache) SaveItems(w io.Writer) error {
 	items := lru.Items()
-
-	for _, v := range items {
-		gob.Register(v)
-	}
-
 	encoder := gob.NewEncoder(w)
 	return encoder.Encode(items)
 }
 
 func (lru *LRUCache) SaveItemsToFile(path string) error {
-	if wr, err := os.Open(path); err != nil {
+	if wr, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err != nil {
 		return err
 	} else {
 		defer wr.Close()
@@ -188,7 +183,7 @@ func (lru *LRUCache) SaveItemsToFile(path string) error {
 func (lru *LRUCache) LoadItems(r io.Reader) error {
 	items := make([]Item, 0)
 	decoder := gob.NewDecoder(r)
-	if err := decoder.Decode(items); err != nil {
+	if err := decoder.Decode(&items); err != nil {
 		return err
 	}
 
