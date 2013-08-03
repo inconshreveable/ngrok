@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	metrics "github.com/inconshreveable/go-metrics"
 	"ngrok/client/ui"
 	"ngrok/proto"
@@ -12,7 +11,6 @@ import (
 type State struct {
 	id            string
 	publicUrl     string
-	publicPort    int
 	serverVersion string
 	update        ui.UpdateStatus
 	protocol      proto.Protocol
@@ -31,14 +29,7 @@ func (s State) GetWebPort() int             { return s.opts.webport }
 func (s State) GetStatus() string           { return s.status }
 func (s State) GetProtocol() proto.Protocol { return s.protocol }
 func (s State) GetUpdate() ui.UpdateStatus  { return s.update }
-
-func (s State) GetPublicUrl() string {
-	publicUrl := s.publicUrl
-	if s.publicPort != 80 && s.publicPort != 443 {
-		publicUrl += fmt.Sprintf(":%d", s.publicPort)
-	}
-	return publicUrl
-}
+func (s State) GetPublicUrl() string        { return s.publicUrl }
 
 func (s State) GetConnectionMetrics() (metrics.Meter, metrics.Timer) {
 	return s.metrics.connMeter, s.metrics.connTimer

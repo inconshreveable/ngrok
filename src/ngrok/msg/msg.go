@@ -46,7 +46,6 @@ type RegAckMsg struct {
 	Version   string
 	MmVersion string
 	Url       string
-	Port      int
 	ProxyAddr string
 	Error     string
 }

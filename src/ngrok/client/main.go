@@ -192,7 +192,6 @@ func control(s *State, ctl *ui.Controller) {
 
 	// update UI state
 	s.publicUrl = regAck.Url
-	s.publicPort = regAck.Port
 	conn.Info("Tunnel established at %v", s.GetPublicUrl())
 	s.status = "online"
 	s.serverVersion = regAck.MmVersion
