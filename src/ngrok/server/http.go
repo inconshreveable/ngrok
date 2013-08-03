@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"ngrok/conn"
@@ -28,26 +29,27 @@ Bad Request
 `
 )
 
-/**
- * Listens for new http connections from the public internet
- */
-func httpListener(addr *net.TCPAddr) {
+// Listens for new http(s) connections from the public internet
+func httpListener(addr *net.TCPAddr, tlsCfg *tls.Config) {
 	// bind/listen for incoming connections
-	listener, err := conn.Listen(addr, "pub", nil)
+	listener, err := conn.Listen(addr, "pub", tlsCfg)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info("Listening for public http connections on %v", listener.Port)
+	proto := "http"
+	if tlsCfg != nil {
+		proto = "https"
+	}
+
+	log.Info("Listening for public %s connections on %v", proto, listener.Port)
 	for conn := range listener.Conns {
-		go httpHandler(conn)
+		go httpHandler(conn, proto)
 	}
 }
 
-/**
- * Handles a new http connection from the public internet
- */
-func httpHandler(tcpConn net.Conn) {
+// Handles a new http connection from the public internet
+func httpHandler(tcpConn net.Conn, proto string) {
 	// wrap up the connection for logging
 	conn := conn.NewHttp(tcpConn, "pub")
 
@@ -62,7 +64,7 @@ func httpHandler(tcpConn net.Conn) {
 	// read out the http request
 	req, err := conn.ReadRequest()
 	if err != nil {
-		conn.Warn("Failed to read valid http request: %v", err)
+		conn.Warn("Failed to read valid %s request: %v", proto, err)
 		conn.Write([]byte(BadRequest))
 		return
 	}
@@ -72,7 +74,7 @@ func httpHandler(tcpConn net.Conn) {
 	conn.Debug("Found hostname %s in request", host)
 
 	// multiplex to find the right backend host
-	tunnel := tunnels.Get("http://" + host)
+	tunnel := tunnels.Get(fmt.Sprintf("%s://%s", proto, host))
 	if tunnel == nil {
 		conn.Info("No tunnel found for hostname %s", host)
 		conn.Write([]byte(fmt.Sprintf(NotFound, len(host)+18, host)))

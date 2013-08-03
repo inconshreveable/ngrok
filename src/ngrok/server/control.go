@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"ngrok/conn"
 	"ngrok/msg"
@@ -18,29 +19,81 @@ type Control struct {
 	// actual connection
 	conn conn.Conn
 
-	// channels for communicating messages over the connection
-	out  chan (interface{})
-	in   chan (msg.Message)
+	// put a message in this channel to send it over
+	// conn to the client
+	out chan (msg.Message)
+
+	// read from this channel to get the next message sent
+	// to us over conn by the client
+	in chan (msg.Message)
+
+	// put a message in this channel to send it over
+	// conn to the client and then terminate this
+	// control connection and all of its tunnels
 	stop chan (msg.Message)
 
-	// heartbeat
+	// the last time we received a ping from the client - for heartbeats
 	lastPing time.Time
 
-	// tunnel
-	tun *Tunnel
+	// all of the tunnels this control connection handles
+	tunnels []*Tunnel
 }
 
-func NewControl(conn conn.Conn) {
+func NewControl(conn conn.Conn, regMsg *msg.RegMsg) {
+	// create the object
+	// channels are buffered because we read and write to them
+	// from the same goroutine in managerThread()
 	c := &Control{
 		conn:     conn,
-		out:      make(chan (interface{}), 1),
-		in:       make(chan (msg.Message), 1),
-		stop:     make(chan (msg.Message), 1),
+		out:      make(chan msg.Message, 5),
+		in:       make(chan msg.Message, 5),
+		stop:     make(chan msg.Message, 5),
 		lastPing: time.Now(),
 	}
 
+	// register the first tunnel
+	c.in <- regMsg
+
+	// manage the connection
 	go c.managerThread()
 	go c.readThread()
+}
+
+// Register a new tunnel on this control connection
+func (c *Control) registerTunnel(regMsg *msg.RegMsg) {
+	c.conn.Debug("Registering new tunnel")
+	t, err := NewTunnel(regMsg, c)
+	if err != nil {
+		ack := &msg.RegAckMsg{Error: err.Error()}
+		if len(c.tunnels) == 0 {
+			// you can't fail your first tunnel registration
+			// terminate the control connection
+			c.stop <- ack
+		} else {
+			// inform client of failure
+			c.out <- ack
+		}
+
+		// we're done
+		return
+	}
+
+	// add it to the list of tunnels
+	c.tunnels = append(c.tunnels, t)
+
+	// acknowledge success
+	c.out <- &msg.RegAckMsg{
+		Url:       t.url,
+		ProxyAddr: fmt.Sprintf("%s:%d", opts.domain, opts.tunnelPort),
+		Version:   version.Proto,
+		MmVersion: version.MajorMinor(),
+	}
+
+	if regMsg.Protocol == "http" {
+		httpsRegMsg := *regMsg
+		httpsRegMsg.Protocol = "https"
+		c.in <- &httpsRegMsg
+	}
 }
 
 func (c *Control) managerThread() {
@@ -51,12 +104,13 @@ func (c *Control) managerThread() {
 		if err := recover(); err != nil {
 			c.conn.Info("Control::managerThread failed with error %v: %s", err, debug.Stack())
 		}
+
 		reap.Stop()
 		c.conn.Close()
 
-		// shutdown the tunnel if it's open
-		if c.tun != nil {
-			c.tun.shutdown()
+		// shutdown all of the tunnels
+		for _, t := range c.tunnels {
+			t.shutdown()
 		}
 	}()
 
@@ -65,23 +119,22 @@ func (c *Control) managerThread() {
 		case m := <-c.out:
 			msg.WriteMsg(c.conn, m)
 
-		case <-reap.C:
-			if time.Since(c.lastPing) > pingTimeoutInterval {
-				c.conn.Info("Lost heartbeat")
-				return
-			}
-
 		case m := <-c.stop:
 			if m != nil {
 				msg.WriteMsg(c.conn, m)
 			}
 			return
 
+		case <-reap.C:
+			if time.Since(c.lastPing) > pingTimeoutInterval {
+				c.conn.Info("Lost heartbeat")
+				return
+			}
+
 		case mRaw := <-c.in:
 			switch m := mRaw.(type) {
 			case *msg.RegMsg:
-				c.conn.Info("Registering new tunnel")
-				c.tun = newTunnel(m, c)
+				c.registerTunnel(m)
 
 			case *msg.PingMsg:
 				c.lastPing = time.Now()

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"flag"
 	"fmt"
 	"net"
 	"ngrok/conn"
@@ -10,106 +9,75 @@ import (
 	"os"
 )
 
-type Options struct {
-	publicPort int
-	proxyPort  int
-	tunnelPort int
-	domain     string
-	logto      string
-}
-
-/* GLOBALS */
+// GLOBALS
 var (
-	proxyAddr         string
+	opts              *Options
 	tunnels           *TunnelRegistry
 	registryCacheSize uint64 = 1024 * 1024 // 1 MB
 	domain            string
 	publicPort        int
 )
 
-func parseArgs() *Options {
-	publicPort := flag.Int("publicport", 80, "Public port")
-	tunnelPort := flag.Int("tunnelport", 4443, "Tunnel port")
-	proxyPort := flag.Int("proxyPort", 0, "Proxy port")
-	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
-	logto := flag.String(
-		"log",
-		"stdout",
-		"Write log messages to this file. 'stdout' and 'none' have special meanings")
+func NewProxy(pxyConn conn.Conn, regPxy *msg.RegProxyMsg) {
+	// fail gracefully if the proxy connection fails to register
+	defer func() {
+		if r := recover(); r != nil {
+			pxyConn.Warn("Failed with error: %v", r)
+			pxyConn.Close()
+		}
+	}()
 
-	flag.Parse()
+	// add log prefix
+	pxyConn.AddLogPrefix("pxy")
 
-	return &Options{
-		publicPort: *publicPort,
-		tunnelPort: *tunnelPort,
-		proxyPort:  *proxyPort,
-		domain:     *domain,
-		logto:      *logto,
+	// look up the tunnel for this proxy
+	pxyConn.Info("Registering new proxy for %s", regPxy.Url)
+	tunnel := tunnels.Get(regPxy.Url)
+	if tunnel == nil {
+		panic("No tunnel found for: " + regPxy.Url)
 	}
+
+	if regPxy.ClientId != tunnel.regMsg.ClientId {
+		panic(fmt.Sprintf("Client identifier %s does not match tunnel's %s", regPxy.ClientId, tunnel.regMsg.ClientId))
+	}
+
+	// register the proxy connection with the tunnel
+	tunnel.RegisterProxy(pxyConn)
 }
 
-/**
- * Listens for new control connections from tunnel clients
- */
-func controlListener(addr *net.TCPAddr, domain string) {
+// Listen for incoming control and proxy connections
+// We listen for incoming control and proxy connections on the same port
+// for ease of deployment. The hope is that by running on port 443, using
+// TLS and running all connections over the same port, we can bust through
+// restrictive firewalls.
+func tunnelListener(addr *net.TCPAddr, domain string) {
 	// listen for incoming connections
 	listener, err := conn.Listen(addr, "ctl", tlsConfig)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Info("Listening for control connections on %d", listener.Port)
+	log.Info("Listening for control and proxy connections on %d", listener.Port)
 	for c := range listener.Conns {
-		NewControl(c)
-	}
-}
+		var rawMsg msg.Message
+		if rawMsg, err = msg.ReadMsg(c); err != nil {
+			c.Error("Failed to read message: %v", err)
+			c.Close()
+		}
 
-/**
- * Listens for new proxy connections from tunnel clients
- */
-func proxyListener(addr *net.TCPAddr, domain string) {
-	listener, err := conn.Listen(addr, "pxy", tlsConfig)
-	if err != nil {
-		panic(err)
-	}
+		switch m := rawMsg.(type) {
+		case *msg.RegMsg:
+			go NewControl(c, m)
 
-	// set global proxy addr variable
-	proxyAddr = fmt.Sprintf("%s:%d", domain, listener.Port)
-	log.Info("Listening for proxy connection on %d", listener.Port)
-	for proxyConn := range listener.Conns {
-		go func(conn conn.Conn) {
-			// fail gracefully if the proxy connection dies
-			defer func() {
-				if r := recover(); r != nil {
-					conn.Warn("Failed with error: %v", r)
-					conn.Close()
-				}
-			}()
-
-			// read the proxy register message
-			var regPxy msg.RegProxyMsg
-			if err = msg.ReadMsgInto(conn, &regPxy); err != nil {
-				panic(err)
-			}
-
-			// look up the tunnel for this proxy
-			conn.Info("Registering new proxy for %s", regPxy.Url)
-			tunnel := tunnels.Get(regPxy.Url)
-			if tunnel == nil {
-				panic("No tunnel found for: " + regPxy.Url)
-			}
-
-			// register the proxy connection with the tunnel
-			tunnel.RegisterProxy(conn)
-		}(proxyConn)
+		case *msg.RegProxyMsg:
+			go NewProxy(c, m)
+		}
 	}
 }
 
 func Main() {
 	// parse options
-	opts := parseArgs()
-	domain = opts.domain
-	publicPort = opts.publicPort
+	opts = parseArgs()
 
 	// init logging
 	log.LogTo(opts.logto)
@@ -118,9 +86,18 @@ func Main() {
 	registryCacheFile := os.Getenv("REGISTRY_CACHE_FILE")
 	tunnels = NewTunnelRegistry(registryCacheSize, registryCacheFile)
 
-	go proxyListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.proxyPort}, opts.domain)
-	go controlListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.tunnelPort}, opts.domain)
-	go httpListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.publicPort})
+	// ngrok clients
+	go tunnelListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.tunnelPort}, opts.domain)
+
+	// listen for http
+	if opts.httpPort != -1 {
+		go httpListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.httpPort}, nil)
+	}
+
+	// listen for https
+	if opts.httpsPort != -1 {
+		go httpListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.httpsPort}, tlsConfig)
+	}
 
 	// wait forever
 	done := make(chan int)

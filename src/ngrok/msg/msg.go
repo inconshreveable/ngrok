@@ -51,10 +51,12 @@ type RegAckMsg struct {
 }
 
 type RegProxyMsg struct {
-	Url string
+	Url      string
+	ClientId string
 }
 
 type ReqProxyMsg struct {
+	Url string
 }
 
 type PingMsg struct {

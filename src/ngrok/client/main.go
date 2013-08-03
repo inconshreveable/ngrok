@@ -33,25 +33,17 @@ const (
 /**
  * Establishes and manages a tunnel proxy connection with the server
  */
-func proxy(proxyAddr string, s *State, ctl *ui.Controller) {
+func proxy(proxyAddr string, url string, s *State, ctl *ui.Controller) {
 	start := time.Now()
 	remoteConn, err := conn.Dial(proxyAddr, "pxy", tlsConfig)
 	if err != nil {
-		// XXX: What is the proper response here?
-		// display something to the user?
-		// retry?
-		// reset control connection?
 		log.Error("Failed to establish proxy connection: %v", err)
 		return
 	}
 
 	defer remoteConn.Close()
-	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{Url: s.publicUrl})
+	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{Url: url, ClientId: s.id})
 	if err != nil {
-		// XXX: What is the proper response here?
-		// display something to the user?
-		// retry?
-		// reset control connection?
 		log.Error("Failed to write RegProxyMsg: %v", err)
 		return
 	}
@@ -205,17 +197,19 @@ func control(s *State, ctl *ui.Controller) {
 
 	// main control loop
 	for {
-		var m msg.Message
-		if m, err = msg.ReadMsg(conn); err != nil {
+		var rawMsg msg.Message
+		if rawMsg, err = msg.ReadMsg(conn); err != nil {
 			panic(err)
 		}
 
-		switch m.(type) {
+		switch m := rawMsg.(type) {
 		case *msg.ReqProxyMsg:
-			go proxy(regAck.ProxyAddr, s, ctl)
+			go proxy(regAck.ProxyAddr, m.Url, s, ctl)
 
 		case *msg.PongMsg:
 			atomic.StoreInt64(&lastPong, time.Now().UnixNano())
+		default:
+			conn.Warn("Ignoring unknown control message %v ", m)
 		}
 	}
 }

@@ -42,14 +42,13 @@ func NewTunnelRegistry(cacheSize uint64, cacheFile string) *TunnelRegistry {
 	var urlobj cacheUrl
 	gob.Register(urlobj)
 
+	// try to load and then periodically save the affinity cache to file, if specified
 	if cacheFile != "" {
-		// load cache entries from file
 		err := registry.affinity.LoadItemsFromFile(cacheFile)
 		if err != nil {
 			registry.Error("Failed to load affinity cache %s: %v", cacheFile, err)
 		}
 
-		// save cache periodically to file
 		registry.SaveCacheThread(cacheFile, cacheSaveInterval)
 	} else {
 		registry.Info("No affinity cache specified")
