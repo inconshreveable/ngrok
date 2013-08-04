@@ -93,7 +93,7 @@ There is a stub at _src/ngrok/main/ngrokd/ngrokd.go_ for the purposes of creatin
 
 ## ngrok - the client
 ### Code
-Code for the server lives under src/ngrok/client
+Code for the client lives under src/ngrok/client
 
 ### Entry point
 The ngrok entry point is in _src/ngrok/client/main.go_.
