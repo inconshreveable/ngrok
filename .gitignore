@@ -3,6 +3,7 @@ bin/
 pkg/
 src/code.google.com
 src/github.com
+!src/github.com/inconshreveable/ngrok
 src/bitbucket.org
 src/ngrok/client/assets/assets_release.go
 src/ngrok/server/assets/assets_release.go
