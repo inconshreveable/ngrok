@@ -1,14 +1,10 @@
 script:
-- export CGO_ENABLED=1
 - make release-all
-- bin/${GOOS}_${GOARCH}/ngrok -help
 install: true
 before_install: 
 - wget https://go.googlecode.com/files/go1.1.1.src.tar.gz
 - tar xzf go1.1.1.src.tar.gz
 - pushd go/src
-- patch -p0 < ../../build/cgo.patch
-- GOOS="" GOARCH="" ./make.bash
 - ./make.bash
 - popd
 - export GOPATH=./go
@@ -22,5 +18,5 @@ env:
   - secure: Yg+y996B4S7zHXO8j6JrRbgMf6yilHGWv6I+7oZf02d8IHYtAb6A9DveX/q+v24O8Q9WzXRU4ZIaG5nJksVwb19qcy4vpaUbvx00COi8tg0l9hdKIotrzAs+i8q5h0xUifE1iuqYJw39vYU/9vC/727GTvOfRpBCr+edcpc9uy0=
   - secure: CMF8ZfcoZK8AhFrmo6ljwP4ulYOSI9Pftp02rfNcM7LYPzU5HxFmcR7M4+3Qt0HAWxYrReozNQZYrV0s5jqIO0H4LZeHxgi7EHTam1BelhmHxL6VBMoR1mTi53bErWNhpoc0qyCnWMpnzNMObwtBVm9vjacm4NJMWqQjte/0Kdw=
   matrix: 
-  - GOOS=darwin GOARCH=386
+  - GOOS=darwin GOARCH=amd64
 language: objective-c
