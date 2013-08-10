@@ -22,4 +22,5 @@ env:
   - secure: CMF8ZfcoZK8AhFrmo6ljwP4ulYOSI9Pftp02rfNcM7LYPzU5HxFmcR7M4+3Qt0HAWxYrReozNQZYrV0s5jqIO0H4LZeHxgi7EHTam1BelhmHxL6VBMoR1mTi53bErWNhpoc0qyCnWMpnzNMObwtBVm9vjacm4NJMWqQjte/0Kdw=
   matrix: 
   - GOOS=darwin GOARCH=386
+  - GOOS=darwin GOARCH=amd64
 language: objective-c

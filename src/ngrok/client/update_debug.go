@@ -1,4 +1,4 @@
-// +build !release,!autoupdate
+// +build release,!autoupdate
 
 package client
 
