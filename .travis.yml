@@ -1,6 +1,7 @@
 script:
 - export CGO_ENABLED=1
 - make release-all
+- bin/${GOOS}_${GOARCH}/ngrok -help
 install: true
 before_install: 
 - wget https://go.googlecode.com/files/go1.1.1.src.tar.gz
