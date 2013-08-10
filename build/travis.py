@@ -13,7 +13,7 @@ bucket = s3.get_bucket(bucket)
 for envpath in ["NGROK", "NGROKD"]:
 	file_path = os.getenv(envpath)
 	dir_path, name = os.path.split(file_path)
-	_, platform = os.path.split(dir_path)
+	platform = "%s_%s" % (os.getenv("GOOS"), os.getenv("GOARCH"))
 	key_name = "%s/%s/%s" % (platform, version, name)
 	key = bucket.new_key(key_name)
 	key.set_contents_from_filename(file_path)
