@@ -11,7 +11,7 @@ before_install:
 - export PATH=$PATH:$GOPATH/bin
 after_success: 
 - sudo easy_install boto
-- NGROK="bin/${GOOS}_${GOARCH}/ngrok" NGROKD="bin/${GOOS}_${GOARCH}/ngrokd" VERSION=$(GOOS="" GOARCH="" GOPATH=$(pwd) go run build/version.go) python build/travis.py
+- NGROK="bin/ngrok" NGROKD="bin/ngrokd" VERSION=$(GOOS="" GOARCH="" GOPATH=$(pwd) go run build/version.go) python build/travis.py
 env: 
   global: 
   - secure: Fd5zHi58jx8lsPDv4tkRFzXSY0KnPJZuZ+LvnRcpX4+3xJsuZU6moOfrOcGqDOm7/SqZRVZRKZapE772+8sXNKPmwSXHRsZEsUgqxdehFzlVP4PQN5efOdI/quO2ibwVpZ6Idze5pelZburALd7/VbfHCTB/0P0WDMNvfHuFPQg=
