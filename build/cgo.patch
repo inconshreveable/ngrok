@@ -4,7 +4,7 @@
  	// See http://golang.org/issue/3253.
  	if goos == "darwin" {
  		a = append(a, "-fno-common")
-+		a = append(a, "-mmacosx-version-min=10.6")
++		a = append(a, "-arch i386 -mmacosx-version-min=10.6")
  	}
  
  	return a
