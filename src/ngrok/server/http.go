@@ -5,6 +5,7 @@ import (
 	"net"
 	"ngrok/conn"
 	"ngrok/log"
+	"strings"
 )
 
 const (
@@ -68,7 +69,7 @@ func httpHandler(tcpConn net.Conn) {
 	}
 
 	// read out the Host header from the request
-	host := req.Host
+	host := strings.ToLower(req.Host)
 	conn.Debug("Found hostname %s in request", host)
 
 	// multiplex to find the right backend host

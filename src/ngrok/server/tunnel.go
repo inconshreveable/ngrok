@@ -124,6 +124,9 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 			t.url = fmt.Sprintf("http://%s.%s", t.regMsg.Subdomain, vhost)
 		}
 
+		vhost = strings.ToLower(vhost)
+		t.url = strings.ToLower(t.url)
+
 		if t.url != "" {
 			if err := tunnels.Register(t.url, t); err != nil {
 				failReg(err)
