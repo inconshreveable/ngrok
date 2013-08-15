@@ -230,7 +230,7 @@ func (h *WebHttpView) register() {
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
 		if txn, ok := h.idToTxn[txnid]; ok {
-			bodyBytes, err := httputil.DumpRequestOut(txn.HttpTxn.Req.Request, true)
+			bodyBytes, err := httputil.DumpRequest(txn.HttpTxn.Req.Request, true)
 			if err != nil {
 				panic(err)
 			}

@@ -87,7 +87,7 @@ func (v *TermView) Render() {
 		updateMsg = "ngrok is updating"
 	case ui.UpdateReady:
 		updateMsg = "ngrok has updated: restart ngrok for the new version"
-	case ui.UpdateError:
+	case ui.UpdateAvailable:
 		updateMsg = "new version available at https://ngrok.com"
 	default:
 		pct := float64(updateStatus) / 100.0
