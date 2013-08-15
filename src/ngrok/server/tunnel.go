@@ -9,6 +9,7 @@ import (
 	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/version"
+	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -107,11 +108,24 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		go t.listenTcp(t.listener)
 
 	case "http":
+		vhost := os.Getenv("VHOST")
+		if vhost == "" {
+			vhost = fmt.Sprintf("%s:%d", domain, publicPort)
+		}
+
+		// Canonicalize virtual host on default port 80
+		if strings.HasSuffix(vhost, ":80") {
+			vhost = vhost[0 : len(vhost)-3]
+		}
+
 		if strings.TrimSpace(t.regMsg.Hostname) != "" {
 			t.url = fmt.Sprintf("http://%s", t.regMsg.Hostname)
 		} else if strings.TrimSpace(t.regMsg.Subdomain) != "" {
-			t.url = fmt.Sprintf("http://%s.%s", t.regMsg.Subdomain, domain)
+			t.url = fmt.Sprintf("http://%s.%s", t.regMsg.Subdomain, vhost)
 		}
+
+		vhost = strings.ToLower(vhost)
+		t.url = strings.ToLower(t.url)
 
 		if t.url != "" {
 			if err := tunnels.Register(t.url, t); err != nil {
@@ -120,7 +134,7 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 			}
 		} else {
 			t.url, err = tunnels.RegisterRepeat(func() string {
-				return fmt.Sprintf("http://%x.%s", rand.Int31(), domain)
+				return fmt.Sprintf("http://%x.%s", rand.Int31(), vhost)
 			}, t)
 
 			if err != nil {

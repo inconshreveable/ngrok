@@ -191,8 +191,8 @@ func control(s *State, ctl *ui.Controller) {
 	}
 
 	// update UI state
-	conn.Info("Tunnel established at %v", regAck.Url)
 	s.publicUrl = regAck.Url
+	conn.Info("Tunnel established at %v", s.GetPublicUrl())
 	s.status = "online"
 	s.serverVersion = regAck.MmVersion
 	ctl.Update(s)

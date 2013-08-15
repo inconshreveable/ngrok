@@ -24,12 +24,12 @@ type State struct {
 // implement client.ui.State
 func (s State) GetClientVersion() string    { return version.MajorMinor() }
 func (s State) GetServerVersion() string    { return s.serverVersion }
-func (s State) GetPublicUrl() string        { return s.publicUrl }
 func (s State) GetLocalAddr() string        { return s.opts.localaddr }
 func (s State) GetWebPort() int             { return s.opts.webport }
 func (s State) GetStatus() string           { return s.status }
 func (s State) GetProtocol() proto.Protocol { return s.protocol }
 func (s State) GetUpdate() ui.UpdateStatus  { return s.update }
+func (s State) GetPublicUrl() string        { return s.publicUrl }
 
 func (s State) GetConnectionMetrics() (metrics.Meter, metrics.Timer) {
 	return s.metrics.connMeter, s.metrics.connTimer
