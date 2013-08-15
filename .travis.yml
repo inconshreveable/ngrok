@@ -2,8 +2,8 @@ script:
 - make release-all
 install: true
 before_install: 
-- wget https://go.googlecode.com/files/go1.1.1.src.tar.gz
-- tar xzf go1.1.1.src.tar.gz
+- wget https://go.googlecode.com/files/go1.1.2.src.tar.gz
+- tar xzf go1.1.2.src.tar.gz
 - pushd go/src
 - ./make.bash
 - popd
