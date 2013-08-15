@@ -48,6 +48,7 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 	params.Add("version", version.MajorMinor())
 	params.Add("os", runtime.GOOS)
 	params.Add("arch", runtime.GOARCH)
+	params.Add("user", token)
 
 	updateUrl := updateEndpoint + "?" + params.Encode()
 	checkUrl := checkEndpoint + "?" + params.Encode()
@@ -90,7 +91,6 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 
 			// log error to ngrok.com's servers for debugging purposes
 			params.Add("error", err.Error())
-			params.Add("user", token)
 			resp, reportErr := http.PostForm("https://dl.ngrok.com/update/error", params)
 			if err != nil {
 				log.Error("Error while reporting update error: %v, %v", err, reportErr)
