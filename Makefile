@@ -13,7 +13,7 @@ fmt:
 	go fmt ngrok/...
 
 client: deps
-	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
+	go install -x -tags '$(BUILDTAGS)' ngrok/main/ngrok
 
 client-assets:
 	go get github.com/inconshreveable/go-bindata
