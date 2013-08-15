@@ -2,6 +2,8 @@ script:
 - make release-all
 install: true
 before_install: 
+- export CGO_CFLAGS="-mmacosx-version-min=10.6"
+- export CGO_LDFLAGS="-mmacosx-version-min=10.6"
 - wget https://go.googlecode.com/files/go1.1.2.src.tar.gz
 - tar xzf go1.1.2.src.tar.gz
 - pushd go/src
