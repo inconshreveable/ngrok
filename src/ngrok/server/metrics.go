@@ -23,8 +23,6 @@ func init() {
 	} else {
 		metrics = NewLocalMetrics(30 * time.Second)
 	}
-
-	metrics.AddLogPrefix("metrics")
 }
 
 type Metrics interface {
@@ -63,7 +61,7 @@ type LocalMetrics struct {
 
 func NewLocalMetrics(reportInterval time.Duration) *LocalMetrics {
 	metrics := LocalMetrics{
-		Logger:         log.NewPrefixLogger(),
+		Logger:         log.NewPrefixLogger("metrics"),
 		reportInterval: reportInterval,
 		windowsCounter: gometrics.NewCounter(),
 		linuxCounter:   gometrics.NewCounter(),
@@ -171,7 +169,7 @@ type KeenIoMetrics struct {
 
 func NewKeenIoMetrics() *KeenIoMetrics {
 	k := &KeenIoMetrics{
-		Logger:       log.NewPrefixLogger(),
+		Logger:       log.NewPrefixLogger("metrics"),
 		ApiKey:       os.Getenv("KEEN_API_KEY"),
 		ProjectToken: os.Getenv("KEEN_PROJECT_TOKEN"),
 		Requests:     make(chan *KeenIoRequest, 100),
