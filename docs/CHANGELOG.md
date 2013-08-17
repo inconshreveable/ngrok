@@ -1,4 +1,22 @@
 # Changelog
+## 0.21 - 08/17/2013
+- IMPROVEMENT: The ngrok web ui can now be disabled with -webport=-1
+
+## 0.20 - 08/17/2013
+- BUGFIX: Fixed a bug where ngrok would not stop its autoupdate loop even after it should stop
+
+## 0.19 - 08/17/2013
+- BUGFIX: Fixed a bug where ngrok's would loop infinitely trying to checking for updates after the second update check
+- BUGFIX: Fixed a race condition in ngrokd's metrics logging immediately after start up
+
+## 0.18 - 08/15/2013
+- BUGFIX: Fixed a bug where ngrok would compare the Host header for virtual hosting using case-sensitive comparisons
+- BUGFIX: Fixed a bug where ngrok would not include the port number in the virtual host when not serving on port 80
+- BUGFIX: Fixed a bug where ngrok would crash when trying to replay a request
+- IMPROVEMENT: ngrok can now indicate manual updates again
+- IMPROVEMENT: ngrok can now supports update channels
+- IMPROVEMENT: ngrok can now detect some updates that will fail before downloading
+
 ## 0.17 - 07/30/2013
 - BUGFIX: Fixed an issue where ngrok's registry cache would return a URL from a different protocol
 
