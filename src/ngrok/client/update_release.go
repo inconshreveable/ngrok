@@ -58,6 +58,7 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 		available, err := update.NewDownload(checkUrl).Check()
 		if err != nil {
 			log.Error("Error while checking for update: %v", err)
+			return
 		}
 
 		if !available {
