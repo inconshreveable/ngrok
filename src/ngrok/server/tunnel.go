@@ -41,9 +41,6 @@ type Tunnel struct {
 	// control connection
 	ctl *Control
 
-	// proxy connections
-	proxies chan conn.Conn
-
 	// logger
 	log.Logger
 
@@ -73,18 +70,18 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 	hostname := strings.TrimSpace(t.regMsg.Hostname)
 	if hostname != "" {
 		t.url = fmt.Sprintf("%s://%s", protocol, hostname)
-		return tunnels.Register(t.url, t)
+		return tunnelRegistry.Register(t.url, t)
 	}
 
 	// Register for specific subdomain
 	subdomain := strings.TrimSpace(t.regMsg.Subdomain)
 	if subdomain != "" {
 		t.url = fmt.Sprintf("%s://%s.%s", protocol, subdomain, vhost)
-		return tunnels.Register(t.url, t)
+		return tunnelRegistry.Register(t.url, t)
 	}
 
 	// Register for random URL
-	t.url, err = tunnels.RegisterRepeat(func() string {
+	t.url, err = tunnelRegistry.RegisterRepeat(func() string {
 		return fmt.Sprintf("%s://%x.%s", protocol, rand.Int31(), vhost)
 	}, t)
 
@@ -95,11 +92,10 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 // on a control channel
 func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 	t = &Tunnel{
-		regMsg:  m,
-		start:   time.Now(),
-		ctl:     ctl,
-		proxies: make(chan conn.Conn, 10),
-		Logger:  log.NewPrefixLogger(),
+		regMsg: m,
+		start:  time.Now(),
+		ctl:    ctl,
+		Logger: log.NewPrefixLogger(),
 	}
 
 	switch t.regMsg.Protocol {
@@ -107,7 +103,7 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 		var port int = 0
 
 		// try to return to you the same port you had before
-		cachedUrl := tunnels.GetCachedRegistration(t)
+		cachedUrl := tunnelRegistry.GetCachedRegistration(t)
 		if cachedUrl != "" {
 			parts := strings.Split(cachedUrl, ":")
 			portPart := parts[len(parts)-1]
@@ -139,7 +135,7 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 		t.url = fmt.Sprintf("tcp://%s:%d", domain, addr.Port)
 
 		// register it
-		if err = tunnels.RegisterAndCache(t.url, t); err != nil {
+		if err = tunnelRegistry.RegisterAndCache(t.url, t); err != nil {
 			// This should never be possible because the OS will
 			// only assign available ports to us.
 			t.listener.Close()
@@ -177,7 +173,7 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 	return
 }
 
-func (t *Tunnel) shutdown() {
+func (t *Tunnel) Shutdown() {
 	t.Info("Shutting down")
 
 	// mark that we're shutting down
@@ -189,21 +185,12 @@ func (t *Tunnel) shutdown() {
 	}
 
 	// remove ourselves from the tunnel registry
-	tunnels.Del(t.url)
+	tunnelRegistry.Del(t.url)
 
 	// let the control connection know we're shutting down
 	// currently, only the control connection shuts down tunnels,
 	// so it doesn't need to know about it
 	// t.ctl.stoptunnel <- t
-
-	// we're safe to close(t.proxies) because t.closing
-	// protects us inside of RegisterProxy
-	close(t.proxies)
-
-	// shut down all of the proxy connections
-	for c := range t.proxies {
-		c.Close()
-	}
 
 	metrics.CloseTunnel(t)
 }
@@ -253,49 +240,20 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 	startTime := time.Now()
 	metrics.OpenConnection(t, publicConn)
 
-	// initial timeout is zero to try to get a proxy connection without asking for one
-	timeout := time.NewTimer(0)
-	var proxyConn conn.Conn
-
-	// get a proxy connection. if we timeout, request one over the control channel
-	for proxyConn == nil {
-		var ok bool
-		select {
-		case proxyConn, ok = <-t.proxies:
-			if !ok {
-				publicConn.Info("Dropping connection because tunnel is shutting down")
-				return
-			}
-			continue
-		case <-timeout.C:
-			t.Debug("Requesting new proxy connection")
-			// request a proxy connection
-			t.ctl.out <- &msg.ReqProxyMsg{Url: t.url}
-			// timeout after 1 second if we don't get one
-			timeout.Reset(1 * time.Second)
-		}
-	}
-	t.Info("Got proxy connection %s", proxyConn.Id())
-
-	defer proxyConn.Close()
-	bytesIn, bytesOut := conn.Join(publicConn, proxyConn)
-
-	metrics.CloseConnection(t, publicConn, startTime, bytesIn, bytesOut)
-}
-
-func (t *Tunnel) RegisterProxy(conn conn.Conn) {
-	if atomic.LoadInt32(&t.closing) == 1 {
-		t.Debug("Can't register proxies for a tunnel that is closing")
-		conn.Close()
+	// get a proxy connection
+	proxyConn, err := t.ctl.GetProxy()
+	if err != nil {
+		t.Warn("Failed to get proxy connection: %v", err)
 		return
 	}
+	defer proxyConn.Close()
+	t.Info("Got proxy connection %s", proxyConn.Id())
+	proxyConn.AddLogPrefix(t.Id())
 
-	t.Info("Registered proxy connection %s", conn.Id())
-	conn.AddLogPrefix(t.Id())
-	select {
-	case t.proxies <- conn:
-	default:
-		// t.proxies buffer is full, discard this one
-		conn.Close()
-	}
+	// tell the client we're going to start using this proxy connection
+	msg.WriteMsg(proxyConn, &msg.StartProxyMsg{Url: t.url})
+
+	// join the public and proxy connections
+	bytesIn, bytesOut := conn.Join(publicConn, proxyConn)
+	metrics.CloseConnection(t, publicConn, startTime, bytesIn, bytesOut)
 }

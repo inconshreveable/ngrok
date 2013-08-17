@@ -1,18 +1,20 @@
 package server
 
 import (
-	"fmt"
+	"math/rand"
 	"net"
 	"ngrok/conn"
 	log "ngrok/log"
 	"ngrok/msg"
+	"ngrok/util"
 	"os"
 )
 
 // GLOBALS
 var (
 	opts              *Options
-	tunnels           *TunnelRegistry
+	tunnelRegistry    *TunnelRegistry
+	controlRegistry   *ControlRegistry
 	registryCacheSize uint64 = 1024 * 1024 // 1 MB
 	domain            string
 	publicPort        int
@@ -27,22 +29,18 @@ func NewProxy(pxyConn conn.Conn, regPxy *msg.RegProxyMsg) {
 		}
 	}()
 
-	// add log prefix
-	pxyConn.AddLogPrefix("pxy")
+	// set logging prefix
+	pxyConn.SetType("pxy")
 
-	// look up the tunnel for this proxy
-	pxyConn.Info("Registering new proxy for %s", regPxy.Url)
-	tunnel := tunnels.Get(regPxy.Url)
-	if tunnel == nil {
-		panic("No tunnel found for: " + regPxy.Url)
+	// look up the control connection for this proxy
+	pxyConn.Info("Registering new proxy for %s", regPxy.ClientId)
+	ctl := controlRegistry.Get(regPxy.ClientId)
+
+	if ctl == nil {
+		panic("No client found for identifier: " + regPxy.ClientId)
 	}
 
-	if regPxy.ClientId != tunnel.regMsg.ClientId {
-		panic(fmt.Sprintf("Client identifier %s does not match tunnel's %s", regPxy.ClientId, tunnel.regMsg.ClientId))
-	}
-
-	// register the proxy connection with the tunnel
-	tunnel.RegisterProxy(pxyConn)
+	ctl.RegisterProxy(pxyConn)
 }
 
 // Listen for incoming control and proxy connections
@@ -52,7 +50,7 @@ func NewProxy(pxyConn conn.Conn, regPxy *msg.RegProxyMsg) {
 // restrictive firewalls.
 func tunnelListener(addr *net.TCPAddr, domain string) {
 	// listen for incoming connections
-	listener, err := conn.Listen(addr, "ctl", tlsConfig)
+	listener, err := conn.Listen(addr, "tun", tlsConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -82,9 +80,17 @@ func Main() {
 	// init logging
 	log.LogTo(opts.logto)
 
-	// init tunnel registry
+	// seed random number generator
+	seed, err := util.RandomSeed()
+	if err != nil {
+		panic(err)
+	}
+	rand.Seed(seed)
+
+	// init tunnel/control registry
 	registryCacheFile := os.Getenv("REGISTRY_CACHE_FILE")
-	tunnels = NewTunnelRegistry(registryCacheSize, registryCacheFile)
+	tunnelRegistry = NewTunnelRegistry(registryCacheSize, registryCacheFile)
+	controlRegistry = NewControlRegistry()
 
 	// ngrok clients
 	go tunnelListener(&net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: opts.tunnelPort}, opts.domain)

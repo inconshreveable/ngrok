@@ -10,7 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"ngrok/client/assets"
-	"ngrok/client/ui"
+	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
@@ -237,8 +237,7 @@ func (h *WebHttpView) register() {
 			h.ctl.Cmds <- ui.CmdRequest{Payload: bodyBytes}
 			w.Write([]byte(http.StatusText(200)))
 		} else {
-			// XXX: 400
-			http.NotFound(w, r)
+			http.Error(w, http.StatusText(400), 400)
 		}
 	})
 

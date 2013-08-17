@@ -26,6 +26,7 @@ func LogTo(target string) {
 
 type Logger interface {
 	AddLogPrefix(string)
+	ClearLogPrefixes()
 	Debug(string, ...interface{})
 	Info(string, ...interface{})
 	Warn(string, ...interface{}) error
@@ -73,6 +74,10 @@ func (pl *PrefixLogger) AddLogPrefix(prefix string) {
 	}
 
 	pl.prefix += "[" + prefix + "]"
+}
+
+func (pl *PrefixLogger) ClearLogPrefixes() {
+	pl.prefix = ""
 }
 
 // we should never really use these . . . always prefer logging through a prefix logger

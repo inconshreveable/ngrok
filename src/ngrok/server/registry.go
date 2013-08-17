@@ -32,7 +32,7 @@ func NewTunnelRegistry(cacheSize uint64, cacheFile string) *TunnelRegistry {
 	registry := &TunnelRegistry{
 		tunnels:  make(map[string]*Tunnel),
 		affinity: cache.NewLRUCache(cacheSize),
-		Logger:   log.NewPrefixLogger("registry"),
+		Logger:   log.NewPrefixLogger("registry", "tun"),
 	}
 
 	// LRUCache uses Gob encoding. Unfortunately, Gob is fickle and will fail
@@ -158,4 +158,48 @@ func (r *TunnelRegistry) Get(url string) *Tunnel {
 	r.RLock()
 	defer r.RUnlock()
 	return r.tunnels[url]
+}
+
+// ControlRegistry maps a client ID to Control structures
+type ControlRegistry struct {
+	controls map[string]*Control
+	log.Logger
+	sync.RWMutex
+}
+
+func NewControlRegistry() *ControlRegistry {
+	return &ControlRegistry{
+		controls: make(map[string]*Control),
+		Logger:   log.NewPrefixLogger("registry", "ctl"),
+	}
+}
+
+func (r *ControlRegistry) Get(clientId string) *Control {
+	r.RLock()
+	defer r.RUnlock()
+	return r.controls[clientId]
+}
+
+func (r *ControlRegistry) Add(clientId string, ctl *Control) error {
+	r.Lock()
+	defer r.Unlock()
+	if r.controls[clientId] == nil {
+		r.Info("Registered control with id %s", clientId)
+		r.controls[clientId] = ctl
+		return nil
+	} else {
+		return fmt.Errorf("Client with id %s already registered!", clientId)
+	}
+}
+
+func (r *ControlRegistry) Del(clientId string) error {
+	r.Lock()
+	defer r.Unlock()
+	if r.controls[clientId] == nil {
+		return fmt.Errorf("No control found for client id: %s", clientId)
+	} else {
+		r.Info("Removed control registry id %s", clientId)
+		delete(r.controls, clientId)
+		return nil
+	}
 }

@@ -6,23 +6,23 @@ package term
 import (
 	"fmt"
 	termbox "github.com/nsf/termbox-go"
-	"ngrok/client/ui"
+	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"time"
 )
 
 type TermView struct {
-	ctl      *ui.Controller
+	ctl      mvc.Controller
 	updates  chan interface{}
 	flush    chan int
-	subviews []ui.View
-	state    ui.State
+	subviews []mvc.View
+	state    mvc.State
 	log.Logger
 	*area
 }
 
-func New(ctl *ui.Controller, state ui.State) *TermView {
+func New(ctl mvc.Controller, state mvc.State) *TermView {
 	// initialize terminal display
 	termbox.Init()
 
@@ -35,7 +35,7 @@ func New(ctl *ui.Controller, state ui.State) *TermView {
 		ctl:      ctl,
 		updates:  ctl.Updates.Reg(),
 		flush:    make(chan int),
-		subviews: make([]ui.View, 0),
+		subviews: make([]mvc.View, 0),
 		state:    state,
 		Logger:   log.NewPrefixLogger(),
 		area:     NewArea(0, 0, w, 10),
@@ -81,13 +81,13 @@ func (v *TermView) Render() {
 	updateStatus := v.state.GetUpdate()
 	var updateMsg string
 	switch updateStatus {
-	case ui.UpdateNone:
+	case mvc.UpdateNone:
 		updateMsg = ""
-	case ui.UpdateInstalling:
+	case mvc.UpdateInstalling:
 		updateMsg = "ngrok is updating"
-	case ui.UpdateReady:
+	case mvc.UpdateReady:
 		updateMsg = "ngrok has updated: restart ngrok for the new version"
-	case ui.UpdateError:
+	case mvc.UpdateError:
 		updateMsg = "new version available at https://ngrok.com"
 	default:
 		pct := float64(updateStatus) / 100.0
@@ -142,7 +142,7 @@ func (v *TermView) run() {
 
 		case obj := <-v.updates:
 			if obj != nil {
-				v.state = obj.(ui.State)
+				v.state = obj.(mvc.State)
 			}
 			v.Render()
 
@@ -150,6 +150,10 @@ func (v *TermView) run() {
 			return
 		}
 	}
+}
+
+func (v *TermView) Shutdown(wg *sync.WaitGroup) {
+	wg.Done()
 }
 
 func (v *TermView) input() {
@@ -160,7 +164,7 @@ func (v *TermView) input() {
 			switch ev.Key {
 			case termbox.KeyCtrlC:
 				v.Info("Got quit command")
-				v.ctl.Cmds <- ui.CmdQuit{}
+				ctl.Shutdown()
 			}
 
 		case termbox.EventResize:

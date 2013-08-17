@@ -15,6 +15,7 @@ func init() {
 	TypeMap["RegAckMsg"] = t((*RegAckMsg)(nil))
 	TypeMap["RegProxyMsg"] = t((*RegProxyMsg)(nil))
 	TypeMap["ReqProxyMsg"] = t((*ReqProxyMsg)(nil))
+	TypeMap["StartProxyMsg"] = t((*StartProxyMsg)(nil))
 	TypeMap["PingMsg"] = t((*PingMsg)(nil))
 	TypeMap["PongMsg"] = t((*PongMsg)(nil))
 	TypeMap["VerisonMsg"] = t((*VersionMsg)(nil))
@@ -48,14 +49,17 @@ type RegAckMsg struct {
 	Url       string
 	ProxyAddr string
 	Error     string
-}
-
-type RegProxyMsg struct {
-	Url      string
-	ClientId string
+	ClientId  string
 }
 
 type ReqProxyMsg struct {
+}
+
+type RegProxyMsg struct {
+	ClientId string
+}
+
+type StartProxyMsg struct {
 	Url string
 }
 

@@ -16,6 +16,7 @@ type Conn interface {
 	net.Conn
 	log.Logger
 	Id() string
+	SetType(string)
 }
 
 type tcpConn struct {
@@ -101,6 +102,14 @@ func (c *tcpConn) Close() error {
 
 func (c *tcpConn) Id() string {
 	return fmt.Sprintf("%s:%x", c.typ, c.id)
+}
+
+func (c *tcpConn) SetType(typ string) {
+	oldId := c.Id()
+	c.typ = typ
+	c.ClearLogPrefixes()
+	c.AddLogPrefix(c.Id())
+	c.Info("Renamed connection %s", oldId)
 }
 
 func Join(c Conn, c2 Conn) (int64, int64) {

@@ -5,8 +5,10 @@ import (
 	"io"
 	"ngrok/conn"
 	"ngrok/msg"
+	"ngrok/util"
 	"ngrok/version"
 	"runtime/debug"
+	"sync/atomic"
 	"time"
 )
 
@@ -37,19 +39,45 @@ type Control struct {
 
 	// all of the tunnels this control connection handles
 	tunnels []*Tunnel
+
+	// proxy connections
+	proxies chan conn.Conn
+
+	// closing indicator
+	closing int32
+
+	// identifier
+	id string
 }
 
-func NewControl(conn conn.Conn, regMsg *msg.RegMsg) {
+func NewControl(ctlConn conn.Conn, regMsg *msg.RegMsg) {
 	// create the object
 	// channels are buffered because we read and write to them
 	// from the same goroutine in managerThread()
 	c := &Control{
-		conn:     conn,
+		conn:     ctlConn,
 		out:      make(chan msg.Message, 5),
 		in:       make(chan msg.Message, 5),
 		stop:     make(chan msg.Message, 5),
+		proxies:  make(chan conn.Conn, 10),
 		lastPing: time.Now(),
 	}
+
+	// assign the random id
+	serverId, err := util.RandId(8)
+	if err != nil {
+		c.stop <- &msg.RegAckMsg{Error: err.Error()}
+	}
+	c.id = fmt.Sprintf("%s-%s", regMsg.ClientId, serverId)
+
+	// register the control
+	err = controlRegistry.Add(c.id, c)
+	if err != nil {
+		c.stop <- &msg.RegAckMsg{Error: err.Error()}
+	}
+
+	// set logging prefix
+	ctlConn.SetType("ctl")
 
 	// register the first tunnel
 	c.in <- regMsg
@@ -57,6 +85,7 @@ func NewControl(conn conn.Conn, regMsg *msg.RegMsg) {
 	// manage the connection
 	go c.managerThread()
 	go c.readThread()
+
 }
 
 // Register a new tunnel on this control connection
@@ -87,6 +116,7 @@ func (c *Control) registerTunnel(regMsg *msg.RegMsg) {
 		ProxyAddr: fmt.Sprintf("%s:%d", opts.domain, opts.tunnelPort),
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
+		ClientId:  c.id,
 	}
 
 	if regMsg.Protocol == "http" {
@@ -105,13 +135,32 @@ func (c *Control) managerThread() {
 			c.conn.Info("Control::managerThread failed with error %v: %s", err, debug.Stack())
 		}
 
+		// remove from the control registry
+		controlRegistry.Del(c.id)
+
+		// mark that we're shutting down
+		atomic.StoreInt32(&c.closing, 1)
+
+		// stop the reaping timer
 		reap.Stop()
+
+		// close the connection
 		c.conn.Close()
 
 		// shutdown all of the tunnels
 		for _, t := range c.tunnels {
-			t.shutdown()
+			t.Shutdown()
 		}
+
+		// we're safe to close(c.proxies) because c.closing
+		// protects us inside of RegisterProxy
+		close(c.proxies)
+
+		// shut down all of the proxy connections
+		for p := range c.proxies {
+			p.Close()
+		}
+
 	}()
 
 	for {
@@ -171,4 +220,61 @@ func (c *Control) readThread() {
 			c.in <- msg
 		}
 	}
+}
+
+func (c *Control) RegisterProxy(conn conn.Conn) {
+	if atomic.LoadInt32(&c.closing) == 1 {
+		c.conn.Debug("Can't register proxies for a control that is closing")
+		conn.Close()
+		return
+	}
+
+	select {
+	case c.proxies <- conn:
+		c.conn.Info("Registered proxy connection %s", conn.Id())
+	default:
+		// c.proxies buffer is full, discard this one
+		conn.Close()
+	}
+}
+
+// Remove a proxy connection from the pool and return it
+// If not proxy connections are in the pool, request one
+// and wait until it is available
+// Returns an error if we couldn't get a proxy because it took too long
+// or the tunnel is closing
+func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
+	// initial timeout is zero to try to get a proxy connection without asking for one
+	timeout := time.NewTimer(0)
+
+	// get a proxy connection. if we timeout, request one over the control channel
+	for proxyConn == nil {
+		var ok bool
+		select {
+		case proxyConn, ok = <-c.proxies:
+			if !ok {
+				err = fmt.Errorf("No proxy connections available, control is closing")
+				return
+			}
+			continue
+		case <-timeout.C:
+			c.conn.Debug("Requesting new proxy connection")
+			// request a proxy connection
+			c.out <- &msg.ReqProxyMsg{}
+			// timeout after 1 second if we don't get one
+			timeout.Reset(1 * time.Second)
+		}
+	}
+
+	// To try to reduce latency hanndling tunnel connections, we employ
+	// the following curde heuristic:
+	// If the proxy connection pool is empty, request a new one.
+	// The idea is to always have at least one proxy connection available for immediate use.
+	// There are two major issues with this strategy: it's not thread safe and it's not predictive.
+	// It should be a good start though.
+	if len(c.proxies) == 0 {
+		c.out <- &msg.ReqProxyMsg{}
+	}
+
+	return
 }

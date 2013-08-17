@@ -6,7 +6,7 @@ import (
 	"github.com/garyburd/go-websocket/websocket"
 	"net/http"
 	"ngrok/client/assets"
-	"ngrok/client/ui"
+	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"

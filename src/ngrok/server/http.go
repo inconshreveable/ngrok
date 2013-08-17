@@ -74,7 +74,7 @@ func httpHandler(tcpConn net.Conn, proto string) {
 	conn.Debug("Found hostname %s in request", host)
 
 	// multiplex to find the right backend host
-	tunnel := tunnels.Get(fmt.Sprintf("%s://%s", proto, host))
+	tunnel := tunnelRegistry.Get(fmt.Sprintf("%s://%s", proto, host))
 	if tunnel == nil {
 		conn.Info("No tunnel found for hostname %s", host)
 		conn.Write([]byte(fmt.Sprintf(NotFound, len(host)+18, host)))

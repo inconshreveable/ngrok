@@ -6,9 +6,9 @@ import (
 	update "github.com/inconshreveable/go-update"
 	"net/http"
 	"net/url"
-	"ngrok/client/ui"
 	"ngrok/log"
 	"ngrok/version"
+	"ngrok/client/mvc"
 	"runtime"
 	"time"
 )
@@ -17,7 +17,7 @@ const (
 	updateEndpoint = "https://dl.ngrok.com/update"
 )
 
-func autoUpdate(s *State, ctl *ui.Controller, token string) {
+func autoUpdate(ctl mvc.Controller, token string) {
 	update := func() (updateSuccessful bool) {
 		params := make(url.Values)
 		params.Add("version", version.MajorMinor())
@@ -34,7 +34,7 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 						close(downloadComplete)
 						return
 					} else if progress == 100 {
-						s.update = ui.UpdateInstalling
+						s.update = mvc.UpdateInstalling
 						ctl.Update(s)
 						close(downloadComplete)
 						return
@@ -42,7 +42,7 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 						if progress%25 == 0 {
 							log.Info("Downloading update %d%% complete", progress)
 						}
-						s.update = ui.UpdateStatus(progress)
+						s.update = mvc.UpdateStatus(progress)
 						ctl.Update(s)
 					}
 				}
@@ -55,9 +55,9 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 		if err != nil {
 			log.Error("Error while updating ngrok: %v", err)
 			if download.Available {
-				s.update = ui.UpdateError
+				s.update = mvc.UpdateError
 			} else {
-				s.update = ui.UpdateNone
+				s.update = mvc.UpdateNone
 			}
 
 			// record the error to ngrok.com's servers for debugging purposes
@@ -71,11 +71,11 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 		} else {
 			if download.Available {
 				log.Info("Marked update ready")
-				s.update = ui.UpdateReady
+				s.update = mvc.UpdateReady
 				updateSuccessful = true
 			} else {
 				log.Info("No update available at this time")
-				s.update = ui.UpdateNone
+				s.update = mvc.UpdateNone
 			}
 		}
 
