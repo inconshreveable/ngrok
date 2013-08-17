@@ -118,8 +118,9 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 	// try to update immediately and then at a set interval
 	update()
 	for _ = range time.Tick(updateCheckInterval) {
-		for tryAgain {
-			update()
+		if !tryAgain {
+			break
 		}
+		update()
 	}
 }
