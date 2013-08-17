@@ -53,7 +53,7 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 	updateUrl := updateEndpoint + "?" + params.Encode()
 	checkUrl := checkEndpoint + "?" + params.Encode()
 
-	update := func() (tryAgain bool) {
+	update := func() {
 		log.Info("Checking for update")
 		available, err := update.NewDownload(checkUrl).Check()
 		if err != nil {
