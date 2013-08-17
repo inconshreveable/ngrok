@@ -119,6 +119,9 @@ func (v *TermView) Render() {
 	v.Printf(0, 4, "%-30s%s", "Protocol", v.state.GetProtocol().GetName())
 	v.Printf(0, 5, "%-30s%s -> %s", "Forwarding", v.state.GetPublicUrl(), v.state.GetLocalAddr())
 	webAddr := fmt.Sprintf("http://localhost:%d", v.state.GetWebPort())
+	if v.state.GetWebPort() == -1 {
+		webAddr = "disabled"
+	}
 	v.Printf(0, 6, "%-30s%s", "Web Interface", webAddr)
 
 	connMeter, connTimer := v.state.GetConnectionMetrics()
