@@ -255,7 +255,10 @@ func Main() {
 
 	// init ui
 	ctl := ui.NewController()
-	web.NewWebView(ctl, s, opts.webport)
+	if opts.webport != -1 {
+		web.NewWebView(ctl, s, opts.webport)
+	}
+
 	if opts.logto != "stdout" {
 		term.New(ctl, s)
 	}
