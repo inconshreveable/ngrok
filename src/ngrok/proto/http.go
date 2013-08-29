@@ -23,18 +23,21 @@ type HttpResponse struct {
 }
 
 type HttpTxn struct {
-	Req      *HttpRequest
-	Resp     *HttpResponse
-	Start    time.Time
-	Duration time.Duration
-	UserData interface{}
+	Req          *HttpRequest
+	Resp         *HttpResponse
+	Start        time.Time
+	Duration     time.Duration
+	UserData     interface{}
+	ConnUserData interface{}
 }
 
 type Http struct {
-	Txns     *util.Broadcast
-	reqGauge metrics.Gauge
-	reqMeter metrics.Meter
-	reqTimer metrics.Timer
+	Txns         *util.Broadcast
+	reqGauge     metrics.Gauge
+	reqMeter     metrics.Meter
+	reqTimer     metrics.Timer
+	UserData     interface{}
+	ConnUserData interface{}
 }
 
 func NewHttp() *Http {
@@ -54,7 +57,7 @@ func extractBody(r io.Reader) ([]byte, io.ReadCloser, error) {
 
 func (h *Http) GetName() string { return "http" }
 
-func (h *Http) WrapConn(c conn.Conn) conn.Conn {
+func (h *Http) WrapConn(c conn.Conn, ctx interface{}) conn.Conn {
 	tee := conn.NewTee(c)
 	lastTxn := make(chan *HttpTxn)
 	go h.readRequests(tee, lastTxn)

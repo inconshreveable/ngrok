@@ -24,17 +24,17 @@ const (
 
 type Tunnel struct {
 	PublicUrl string
-	Protocol proto.Protocol
+	Protocol  proto.Protocol
 	LocalAddr string
 }
 
 type State interface {
 	GetClientVersion() string
 	GetServerVersion() string
-	GetUpdate() UpdateStatus
 	GetTunnels() []Tunnel
-	GetStatus() string
-	GetWebPort() int
+	GetProtocols() []proto.Protocol
+	GetUpdateStatus() UpdateStatus
+	GetConnStatus() ConnStatus
 	GetConnectionMetrics() (metrics.Meter, metrics.Timer)
 	GetBytesInMetrics() (metrics.Counter, metrics.Histogram)
 	GetBytesOutMetrics() (metrics.Counter, metrics.Histogram)

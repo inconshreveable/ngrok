@@ -303,7 +303,7 @@ ngrok.directive({
 
 ngrok.controller({
     "HttpTxns": function($scope, txnSvc) {
-        $scope.publicUrl = window.data.UiState.Url;
+        $scope.tunnels = window.data.UiState.Tunnels;
         $scope.txns = txnSvc.all();
 
         if (!!window.WebSocket) {

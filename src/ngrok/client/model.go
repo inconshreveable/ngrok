@@ -2,12 +2,10 @@ package client
 
 import (
 	"fmt"
+	metrics "github.com/inconshreveable/go-metrics"
 	"io/ioutil"
 	"math"
-	"math/rand"
 	"ngrok/client/mvc"
-	"ngrok/client/views/term"
-	"ngrok/client/views/web"
 	"ngrok/conn"
 	"ngrok/log"
 	"ngrok/msg"
@@ -17,7 +15,6 @@ import (
 	"runtime"
 	"sync/atomic"
 	"time"
-	metrics "github.com/inconshreveable/go-metrics"
 )
 
 const (
@@ -32,26 +29,30 @@ const (
 `
 )
 
-type ClientModel {
+type ClientModel struct {
 	log.Logger
 
 	id            string
-	tunnels       []mvc.Tunnel
+	tunnels       map[string]mvc.Tunnel
 	serverVersion string
-	opts          *Options
 	metrics       *ClientMetrics
 	updateStatus  mvc.UpdateStatus
 	connStatus    mvc.ConnStatus
-	protoMap      map[string] *proto.Protocol
+	protoMap      map[string]proto.Protocol
+	protocols     []proto.Protocol
+	ctl           mvc.Controller
+	serverAddr    string
+	authToken     string
 }
 
-func newClient() {
-	protoMap := make(map[string] *proto.Protocol)
+func newClientModel(ctl mvc.Controller) *ClientModel {
+	protoMap := make(map[string]proto.Protocol)
 	protoMap["http"] = proto.NewHttp()
 	protoMap["https"] = protoMap["http"]
 	protoMap["tcp"] = proto.NewTcp()
+	protocols := []proto.Protocol{protoMap["http"], protoMap["tcp"]}
 
-	return &Client {
+	return &ClientModel{
 		Logger: log.NewPrefixLogger("client"),
 
 		// unique client id
@@ -63,22 +64,35 @@ func newClient() {
 		// update status
 		updateStatus: mvc.UpdateNone,
 
-		// command-line options
-		opts: opts,
-
 		// metrics
 		metrics: NewClientMetrics(),
 
 		// protocols
 		protoMap: protoMap,
+
+		// protocol list
+		protocols: protocols,
+
+		// open tunnels
+		tunnels: make(map[string]mvc.Tunnel),
+
+		// controller
+		ctl: ctl,
 	}
 }
 
 // mvc.State interface
-func (c ClientModel) GetClientVersion() string    { return version.MajorMinor() }
-func (c ClientModel) GetServerVersion() string    { return c.serverVersion }
-func (c ClientModel) GetTunnels() []mvc.Tunnel    { return c.tunnels }
-func (c ClientModel) GetConnStatus() mvc.ConnStatus           { return c.connStatus }
+func (c ClientModel) GetProtocols() []proto.Protocol { return c.protocols }
+func (c ClientModel) GetClientVersion() string       { return version.MajorMinor() }
+func (c ClientModel) GetServerVersion() string       { return c.serverVersion }
+func (c ClientModel) GetTunnels() []mvc.Tunnel {
+	tunnels := make([]mvc.Tunnel, 0)
+	for _, t := range c.tunnels {
+		tunnels = append(tunnels, t)
+	}
+	return tunnels
+}
+func (c ClientModel) GetConnStatus() mvc.ConnStatus     { return c.connStatus }
 func (c ClientModel) GetUpdateStatus() mvc.UpdateStatus { return c.updateStatus }
 
 func (c ClientModel) GetConnectionMetrics() (metrics.Meter, metrics.Timer) {
@@ -94,44 +108,43 @@ func (c ClientModel) GetBytesOutMetrics() (metrics.Counter, metrics.Histogram) {
 }
 
 // mvc.Model interface
-func (c *ClientModel) PlayRequest(tunnel *mvc.Tunnel, payload []byte) {
-	t := m.tunnels[tunnel.PublicUrl]
+func (c *ClientModel) PlayRequest(tunnel mvc.Tunnel, payload []byte) {
+	t := c.tunnels[tunnel.PublicUrl]
 
 	var localConn conn.Conn
-	localConn, err := conn.Dial(t.localaddr, "prv", nil)
+	localConn, err := conn.Dial(t.LocalAddr, "prv", nil)
 	if err != nil {
-		m.Warn("Failed to open private leg to %s: %v", t.localaddr, err)
+		c.Warn("Failed to open private leg to %s: %v", t.LocalAddr, err)
 		return
 	}
 	//defer localConn.Close()
-	localConn = t.protocol.WrapConn(localConn)
+	// XXX: send user context that indicates it's a replayed connection
+	localConn = t.Protocol.WrapConn(localConn, nil)
 	localConn.Write(payload)
 	ioutil.ReadAll(localConn)
 }
 
-func (c *ClientModel) Shutdown(wg *sync.WaitGroup) {
-	// there's no clean shutdown needed, do it immediately
-	wg.Done()
+func (c *ClientModel) Shutdown() {
 }
 
 func (c *ClientModel) update() {
-	c.ctl.Update(m)
+	c.ctl.Update(c)
 }
 
-func (c *ClientModel) Run(serverAddr, authToken string, ctl mvc.Controller, tunnel *mvc.Tunnel) {
+func (c *ClientModel) Run(serverAddr, authToken string, ctl mvc.Controller, reg *msg.RegMsg, localaddr string) {
 	c.serverAddr = serverAddr
 	c.authToken = authToken
 	c.ctl = ctl
-	c.reconnectingControl(tunnel)
+	c.reconnectingControl(reg, localaddr)
 }
 
-func (c *ClientModel) reconnectingControl(reg *msg.RegMsg) {
+func (c *ClientModel) reconnectingControl(reg *msg.RegMsg, localaddr string) {
 	// how long we should wait before we reconnect
 	maxWait := 30 * time.Second
 	wait := 1 * time.Second
 
 	for {
-		c.control(reg)
+		c.control(reg, localaddr)
 
 		if c.connStatus == mvc.ConnOnline {
 			wait = 1 * time.Second
@@ -148,7 +161,7 @@ func (c *ClientModel) reconnectingControl(reg *msg.RegMsg) {
 }
 
 // Establishes and manages a tunnel control connection with the server
-func (c *ClientModel) control(reg *msg.RegMsg) {
+func (c *ClientModel) control(reg *msg.RegMsg, localaddr string) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("control recovering from failure %v", r)
@@ -163,13 +176,13 @@ func (c *ClientModel) control(reg *msg.RegMsg) {
 	defer conn.Close()
 
 	// register with the server
-	reg["OS"] = runtime.GOOS
-	reg["ClientId"] = c.id
-	reg["Version"] = version.Proto
-	reg["MmVersion"] = version.MajorMinor()
-	reg["User"] = c.authtoken
+	reg.OS = runtime.GOOS
+	reg.ClientId = c.id
+	reg.Version = version.Proto
+	reg.MmVersion = version.MajorMinor()
+	reg.User = c.authToken
 
-	if err != nil {
+	if err = msg.WriteMsg(conn, reg); err != nil {
 		panic(err)
 	}
 
@@ -185,22 +198,22 @@ func (c *ClientModel) control(reg *msg.RegMsg) {
 		return
 	}
 
-	tunnel := &mvc.Tunnel {
+	tunnel := mvc.Tunnel{
 		PublicUrl: regAck.Url,
 		LocalAddr: localaddr,
-		Protocol: c.protoMap[reg.Protocol],
+		Protocol:  c.protoMap[reg.Protocol],
 	}
 
-	c.tunnels[tunnel.Url] = tunnel
+	c.tunnels[tunnel.PublicUrl] = tunnel
 
 	// update UI state
 	c.id = regAck.ClientId
-	conn.Info("Tunnel established at %v", tunnel.Url)
-	c.status = mvc.ConnOnline
+	c.Info("Tunnel established at %v", tunnel.PublicUrl)
+	c.connStatus = mvc.ConnOnline
 	c.serverVersion = regAck.MmVersion
 	c.update()
 
-	SaveAuthToken(c.authtoken)
+	SaveAuthToken(c.authToken)
 
 	// start the heartbeat
 	lastPong := time.Now().UnixNano()
@@ -219,6 +232,23 @@ func (c *ClientModel) control(reg *msg.RegMsg) {
 
 		case *msg.PongMsg:
 			atomic.StoreInt64(&lastPong, time.Now().UnixNano())
+
+		case *msg.RegAckMsg:
+			if m.Error != "" {
+				c.Error("Server failed to allocate tunnel: %s", regAck.Error)
+				continue
+			}
+
+			tunnel := mvc.Tunnel{
+				PublicUrl: m.Url,
+				LocalAddr: localaddr,
+				Protocol:  c.protoMap[m.Protocol],
+			}
+
+			c.tunnels[tunnel.PublicUrl] = tunnel
+			c.Info("Tunnel established at %v", tunnel.PublicUrl)
+			c.update()
+
 		default:
 			conn.Warn("Ignoring unknown control message %v ", m)
 		}
@@ -234,7 +264,7 @@ func (c *ClientModel) proxy() {
 	}
 
 	defer remoteConn.Close()
-	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{ClientId: s.id})
+	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{ClientId: c.id})
 	if err != nil {
 		log.Error("Failed to write RegProxyMsg: %v", err)
 		return
@@ -247,23 +277,27 @@ func (c *ClientModel) proxy() {
 		return
 	}
 
-	tunnel := tunnels[startPxyMsg.Url]
-	if tunnel == nil {
+	tunnel, ok := c.tunnels[startPxyMsg.Url]
+	if !ok {
 		c.Error("Couldn't find tunnel for proxy: %s", startPxyMsg.Url)
 		return
 	}
 
 	// start up the private connection
 	start := time.Now()
-	localConn, err := conn.Dial(tunnel.localaddr, "prv", nil)
+	localConn, err := conn.Dial(tunnel.LocalAddr, "prv", nil)
 	if err != nil {
-		remoteConn.Warn("Failed to open private leg %s: %v", tunnel.localaddr, err)
-		badGatewayBody := fmt.Sprintf(BadGateway, tunnel.publicUrl, tunnel.localaddr, tunnel.localaddr)
-		remoteConn.Write([]byte(fmt.Sprintf(`HTTP/1.0 502 Bad Gateway
+		remoteConn.Warn("Failed to open private leg %s: %v", tunnel.LocalAddr, err)
+
+		if tunnel.Protocol.GetName() == "http" {
+			// try to be helpful when you're in HTTP mode and a human might see the output
+			badGatewayBody := fmt.Sprintf(BadGateway, tunnel.PublicUrl, tunnel.LocalAddr, tunnel.LocalAddr)
+			remoteConn.Write([]byte(fmt.Sprintf(`HTTP/1.0 502 Bad Gateway
 Content-Type: text/html
 Content-Length: %d
 
 %s`, len(badGatewayBody), badGatewayBody)))
+		}
 		return
 	}
 	defer localConn.Close()
@@ -273,7 +307,8 @@ Content-Length: %d
 	m.connMeter.Mark(1)
 	c.update()
 	m.connTimer.Time(func() {
-		localConn := tunnel.protocol.WrapConn(localConn)
+		// XXX: wrap with connection context
+		localConn := tunnel.Protocol.WrapConn(localConn, nil)
 		bytesIn, bytesOut := conn.Join(localConn, remoteConn)
 		m.bytesIn.Update(bytesIn)
 		m.bytesOut.Update(bytesOut)

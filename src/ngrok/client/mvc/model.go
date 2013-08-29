@@ -1,13 +1,13 @@
 package mvc
 
 import (
-	"sync"
+	"ngrok/msg"
 )
 
 type Model interface {
-	Run(opts *Options, ctl Controller)
+	Run(serverAddr, authToken string, ctl Controller, reg *msg.RegMsg, localaddr string)
 
-	Shutdown(wg *sync.WaitGroup)
+	Shutdown()
 
-	PlayRequest(tunnel *Tunnel, payload []byte)
+	PlayRequest(tunnel Tunnel, payload []byte)
 }

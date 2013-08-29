@@ -113,7 +113,7 @@ func (c *Control) registerTunnel(regMsg *msg.RegMsg) {
 	// acknowledge success
 	c.out <- &msg.RegAckMsg{
 		Url:       t.url,
-		ProxyAddr: fmt.Sprintf("%s:%d", opts.domain, opts.tunnelPort),
+		Protocol:  regMsg.Protocol,
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
 		ClientId:  c.id,

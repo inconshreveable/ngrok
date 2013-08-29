@@ -55,17 +55,18 @@ type SerializedResponse struct {
 }
 
 type WebHttpView struct {
+	log.Logger
+
 	webview      *WebView
-	ctl          *ui.Controller
+	ctl          mvc.Controller
 	httpProto    *proto.Http
-	updates      chan interface{}
 	state        chan SerializedUiState
 	HttpRequests *util.Ring
 	idToTxn      map[string]*SerializedTxn
 }
 
 type SerializedUiState struct {
-	Url string
+	Tunnels []mvc.Tunnel
 }
 
 type SerializedPayload struct {
@@ -73,20 +74,18 @@ type SerializedPayload struct {
 	UiState SerializedUiState
 }
 
-func NewWebHttpView(wv *WebView, ctl *ui.Controller, proto *proto.Http) *WebHttpView {
-	w := &WebHttpView{
+func newWebHttpView(ctl mvc.Controller, wv *WebView, proto *proto.Http) *WebHttpView {
+	whv := &WebHttpView{
+		Logger:       log.NewPrefixLogger("view", "web", "http"),
 		webview:      wv,
 		ctl:          ctl,
 		httpProto:    proto,
 		idToTxn:      make(map[string]*SerializedTxn),
-		updates:      ctl.Updates.Reg(),
-		state:        make(chan SerializedUiState),
 		HttpRequests: util.NewRing(20),
 	}
-	go w.updateHttp()
-	go w.updateUiState()
-	w.register()
-	return w
+	ctl.Go(whv.updateHttp)
+	whv.register()
+	return whv
 }
 
 type XMLDoc struct {
@@ -156,13 +155,13 @@ func (whv *WebHttpView) updateHttp() {
 		if htxn.UserData == nil {
 			id, err := util.RandId(8)
 			if err != nil {
-				log.Error("Failed to generate txn identifier for web storage: %v", err)
+				whv.Error("Failed to generate txn identifier for web storage: %v", err)
 				continue
 			}
 
 			rawReq, err := httputil.DumpRequest(htxn.Req.Request, true)
 			if err != nil {
-				log.Error("Failed to dump request: %v", err)
+				whv.Error("Failed to dump request: %v", err)
 				continue
 			}
 
@@ -189,7 +188,7 @@ func (whv *WebHttpView) updateHttp() {
 		} else {
 			rawResp, err := httputil.DumpResponse(htxn.Resp.Response, true)
 			if err != nil {
-				log.Error("Failed to dump response: %v", err)
+				whv.Error("Failed to dump response: %v", err)
 				continue
 			}
 
@@ -206,35 +205,26 @@ func (whv *WebHttpView) updateHttp() {
 
 			payload, err := json.Marshal(txn)
 			if err != nil {
-				log.Error("Failed to serialized txn payload for websocket: %v", err)
+				whv.Error("Failed to serialized txn payload for websocket: %v", err)
 			}
 			whv.webview.wsMessages.In() <- payload
 		}
 	}
 }
 
-func (v *WebHttpView) updateUiState() {
-	var s SerializedUiState
-	for {
-		select {
-		case obj := <-v.updates:
-			uiState := obj.(ui.State)
-			s.Url = uiState.GetPublicUrl()
-		case v.state <- s:
-		}
-	}
-}
-
-func (h *WebHttpView) register() {
+func (whv *WebHttpView) register() {
 	http.HandleFunc("/http/in/replay", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
-		if txn, ok := h.idToTxn[txnid]; ok {
+		if txn, ok := whv.idToTxn[txnid]; ok {
 			bodyBytes, err := httputil.DumpRequestOut(txn.HttpTxn.Req.Request, true)
 			if err != nil {
 				panic(err)
 			}
-			h.ctl.Cmds <- ui.CmdRequest{Payload: bodyBytes}
+			// XXX: pull the tunnel out of the transaction's user context
+			//h.ctl.PlayRequest(tunnel, bodyBytes)
+			var t mvc.Tunnel
+			whv.ctl.PlayRequest(t, bodyBytes)
 			w.Write([]byte(http.StatusText(200)))
 		} else {
 			http.Error(w, http.StatusText(400), 400)
@@ -250,8 +240,8 @@ func (h *WebHttpView) register() {
 		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(pageTmpl)))
 
 		payloadData := SerializedPayload{
-			Txns:    h.HttpRequests.Slice(),
-			UiState: <-h.state,
+			Txns:    whv.HttpRequests.Slice(),
+			UiState: SerializedUiState{Tunnels: whv.ctl.State().GetTunnels()},
 		}
 
 		payload, err := json.Marshal(payloadData)
@@ -264,4 +254,7 @@ func (h *WebHttpView) register() {
 			panic(err)
 		}
 	})
+}
+
+func (whv *WebHttpView) Shutdown() {
 }

@@ -1,6 +1,4 @@
-/*
-   interactive terminal interface for local clients
-*/
+// interactive terminal interface for local clients
 package term
 
 import (
@@ -9,6 +7,7 @@ import (
 	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
+	"ngrok/util"
 	"time"
 )
 
@@ -16,61 +15,50 @@ type TermView struct {
 	ctl      mvc.Controller
 	updates  chan interface{}
 	flush    chan int
+	shutdown chan int
+	redraw   *util.Broadcast
 	subviews []mvc.View
-	state    mvc.State
 	log.Logger
 	*area
 }
 
-func New(ctl mvc.Controller, state mvc.State) *TermView {
+func NewTermView(ctl mvc.Controller) *TermView {
 	// initialize terminal display
 	termbox.Init()
-
-	// make sure ngrok doesn't quit until we've cleaned up
-	ctl.Wait.Add(1)
 
 	w, _ := termbox.Size()
 
 	v := &TermView{
 		ctl:      ctl,
-		updates:  ctl.Updates.Reg(),
+		updates:  ctl.Updates().Reg(),
+		redraw:   util.NewBroadcast(),
 		flush:    make(chan int),
-		subviews: make([]mvc.View, 0),
-		state:    state,
-		Logger:   log.NewPrefixLogger(),
+		shutdown: make(chan int),
+		Logger:   log.NewPrefixLogger("view", "term"),
 		area:     NewArea(0, 0, w, 10),
 	}
 
-	v.Logger.AddLogPrefix("view")
-	v.Logger.AddLogPrefix("term")
-
-	switch p := state.GetProtocol().(type) {
-	case *proto.Http:
-		v.subviews = append(v.subviews, NewHttp(p, v.flush, ctl.Shutdown, 0, 10))
-	default:
-	}
-
-	v.Render()
-
-	go v.run()
-	go v.input()
+	ctl.Go(v.run)
+	ctl.Go(v.input)
 
 	return v
 }
 
-func colorForConn(status string) termbox.Attribute {
+func connStatusRepr(status mvc.ConnStatus) (string, termbox.Attribute) {
 	switch status {
-	case "connecting":
-		return termbox.ColorCyan
-	case "reconnecting":
-		return termbox.ColorRed
-	case "online":
-		return termbox.ColorGreen
+	case mvc.ConnConnecting:
+		return "connecting", termbox.ColorCyan
+	case mvc.ConnReconnecting:
+		return "reconnecting", termbox.ColorRed
+	case mvc.ConnOnline:
+		return "online", termbox.ColorGreen
 	}
-	return termbox.ColorWhite
+	return "unknown", termbox.ColorWhite
 }
 
-func (v *TermView) Render() {
+func (v *TermView) draw() {
+	state := v.ctl.State()
+
 	v.Clear()
 
 	// quit instructions
@@ -78,7 +66,7 @@ func (v *TermView) Render() {
 	v.Printf(v.w-len(quitMsg), 0, quitMsg)
 
 	// new version message
-	updateStatus := v.state.GetUpdate()
+	updateStatus := state.GetUpdateStatus()
 	var updateMsg string
 	switch updateStatus {
 	case mvc.UpdateNone:
@@ -111,49 +99,64 @@ func (v *TermView) Render() {
 	}
 
 	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "ngrok")
+	statusStr, statusColor := connStatusRepr(state.GetConnStatus())
+	v.APrintf(statusColor, 0, 2, "%-30s%s", "Tunnel Status", statusStr)
 
-	status := v.state.GetStatus()
-	v.APrintf(colorForConn(status), 0, 2, "%-30s%s", "Tunnel Status", status)
+	v.Printf(0, 3, "%-30s%s/%s", "Version", state.GetClientVersion(), state.GetServerVersion())
+	var i int = 4
+	for _, t := range state.GetTunnels() {
+		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
+		i++
+	}
+	webAddr := fmt.Sprintf("http://localhost:%d", v.ctl.GetWebViewPort())
+	v.Printf(0, i+0, "%-30s%s", "Web Interface", webAddr)
 
-	v.Printf(0, 3, "%-30s%s/%s", "Version", v.state.GetClientVersion(), v.state.GetServerVersion())
-	v.Printf(0, 4, "%-30s%s", "Protocol", v.state.GetProtocol().GetName())
-	v.Printf(0, 5, "%-30s%s -> %s", "Forwarding", v.state.GetPublicUrl(), v.state.GetLocalAddr())
-	webAddr := fmt.Sprintf("http://localhost:%d", v.state.GetWebPort())
-	v.Printf(0, 6, "%-30s%s", "Web Interface", webAddr)
-
-	connMeter, connTimer := v.state.GetConnectionMetrics()
-	v.Printf(0, 7, "%-30s%d", "# Conn", connMeter.Count())
+	connMeter, connTimer := state.GetConnectionMetrics()
+	v.Printf(0, i+1, "%-30s%d", "# Conn", connMeter.Count())
 
 	msec := float64(time.Millisecond)
-	v.Printf(0, 8, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
+	v.Printf(0, i+2, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
 
 	termbox.Flush()
 }
 
 func (v *TermView) run() {
-	defer v.ctl.Wait.Done()
+	defer close(v.shutdown)
 	defer termbox.Close()
 
+	redraw := v.redraw.Reg()
+	defer v.redraw.UnReg(redraw)
+
+	v.draw()
 	for {
 		v.Debug("Waiting for update")
 		select {
 		case <-v.flush:
 			termbox.Flush()
 
-		case obj := <-v.updates:
-			if obj != nil {
-				v.state = obj.(mvc.State)
-			}
-			v.Render()
+		case <-v.updates:
+			v.draw()
 
-		case <-v.ctl.Shutdown:
+		case <-redraw:
+			v.draw()
+
+		case <-v.shutdown:
 			return
 		}
 	}
 }
 
-func (v *TermView) Shutdown(wg *sync.WaitGroup) {
-	wg.Done()
+func (v *TermView) Shutdown() {
+	v.shutdown <- 1
+	<-v.shutdown
+}
+
+func (v *TermView) Flush() {
+	v.flush <- 1
+}
+
+func (v *TermView) NewHttpView(p *proto.Http) *HttpView {
+	return newTermHttpView(v.ctl, v, p, 0, 12)
 }
 
 func (v *TermView) input() {
@@ -164,21 +167,14 @@ func (v *TermView) input() {
 			switch ev.Key {
 			case termbox.KeyCtrlC:
 				v.Info("Got quit command")
-				ctl.Shutdown()
+				v.ctl.Shutdown("")
 			}
 
 		case termbox.EventResize:
 			v.Info("Resize event, redrawing")
-			// send nil to update channel to force re-rendering
-			v.updates <- nil
-			for _, sv := range v.subviews {
-				sv.Render()
-			}
+			v.redraw.In() <- 1
 
 		case termbox.EventError:
-			if v.ctl.IsShuttingDown() {
-				return
-			}
 			panic(ev.Err)
 		}
 	}
