@@ -44,7 +44,7 @@ func newTermHttpView(ctl mvc.Controller, termView *TermView, proto *proto.Http, 
 		termView:     termView,
 		Logger:       log.NewPrefixLogger("view", "term", "http"),
 	}
-	go v.Run()
+	ctl.Go(v.Run)
 	return v
 }
 

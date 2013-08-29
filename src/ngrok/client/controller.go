@@ -85,14 +85,17 @@ func (ctl *Controller) PlayRequest(tunnel mvc.Tunnel, payload []byte) {
 }
 
 func (ctl *Controller) Go(fn func()) {
-	defer func() {
-		if r := recover(); r != nil {
-			ctl.Error("goroutine crashed: %v", r)
-			// XXX
-		}
-	}()
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err := util.MakePanicTrace(r)
+				ctl.Error(err)
+				ctl.Shutdown(err)
+			}
+		}()
 
-	go fn()
+		fn()
+	}()
 }
 
 // private functions

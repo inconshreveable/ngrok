@@ -26,7 +26,7 @@ func autoUpdate(ctl mvc.Controller, token string) {
 
 		download := update.NewDownload()
 		downloadComplete := make(chan int)
-		go func() {
+		ctl.Go(func() {
 			for {
 				select {
 				case progress, ok := <-download.Progress:
@@ -47,7 +47,7 @@ func autoUpdate(ctl mvc.Controller, token string) {
 					}
 				}
 			}
-		}()
+		})
 
 		log.Info("Checking for update")
 		err := download.UpdateFromUrl(updateEndpoint + "?" + params.Encode())

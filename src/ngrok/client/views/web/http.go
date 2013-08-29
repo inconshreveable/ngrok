@@ -214,6 +214,14 @@ func (whv *WebHttpView) updateHttp() {
 
 func (whv *WebHttpView) register() {
 	http.HandleFunc("/http/in/replay", func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				err := util.MakePanicTrace(r)
+				whv.Error("Replay failed: %v", err)
+				http.Error(w, err, 500)
+			}
+		}()
+
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
 		if txn, ok := whv.idToTxn[txnid]; ok {
@@ -232,6 +240,14 @@ func (whv *WebHttpView) register() {
 	})
 
 	http.HandleFunc("/http/in", func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				err := util.MakePanicTrace(r)
+				whv.Error("HTTP web view failed: %v", err)
+				http.Error(w, err, 500)
+			}
+		}()
+
 		pageTmpl, err := assets.ReadAsset("assets/client/page.html")
 		if err != nil {
 			panic(err)

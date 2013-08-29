@@ -16,7 +16,6 @@ import (
 type WebView struct {
 	log.Logger
 
-	// saved only for creating subviews
 	ctl mvc.Controller
 
 	// messages sent over this broadcast are sent too all websocket connections
@@ -68,7 +67,7 @@ func NewWebView(ctl mvc.Controller, port int) *WebView {
 	})
 
 	wv.Info("Serving web interface on localhost:%d", port)
-	go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	wv.ctl.Go(func() { http.ListenAndServe(fmt.Sprintf(":%d", port), nil) })
 	return wv
 }
 
