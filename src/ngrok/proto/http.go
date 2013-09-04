@@ -9,6 +9,7 @@ import (
 	"net/http/httputil"
 	"ngrok/conn"
 	"ngrok/util"
+	"sync"
 	"time"
 )
 
@@ -111,5 +112,29 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		}
 
 		h.Txns.In() <- txn
+
+		// XXX: remove web socket shim in favor of a real websocket protocol analyzer
+		if txn.Req.Header.Get("Upgrade") == "websocket" {
+			tee.Info("Upgrading to websocket")
+			var wg sync.WaitGroup
+
+			// shim for websockets
+			// in order for websockets to work, we need to continue reading all of the
+			// the bytes in the analyzer so that the joined connections will continue
+			// sending bytes to each other
+			wg.Add(2)
+			go func() {
+				ioutil.ReadAll(tee.WriteBuffer())
+				wg.Done()
+			}()
+
+			go func() {
+				ioutil.ReadAll(tee.ReadBuffer())
+				wg.Done()
+			}()
+
+			wg.Wait()
+			break
+		}
 	}
 }
