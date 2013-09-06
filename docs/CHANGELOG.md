@@ -1,4 +1,10 @@
 # Changelog
+## 0.23 - 09/06/2013
+- BUGFIX: Fixed a bug which caused some important HTTP headers to be omitted from request introspection and replay
+
+## 0.22 - 09/04/2013
+- FEATURE: ngrok now tunnels websocket requests
+
 ## 0.21 - 08/17/2013
 - IMPROVEMENT: The ngrok web ui can now be disabled with -webport=-1
 
