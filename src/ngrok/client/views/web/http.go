@@ -160,7 +160,7 @@ func (whv *WebHttpView) updateHttp() {
 				continue
 			}
 
-			rawReq, err := httputil.DumpRequest(htxn.Req.Request, true)
+			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
 			if err != nil {
 				log.Error("Failed to dump request: %v", err)
 				continue
@@ -230,11 +230,11 @@ func (h *WebHttpView) register() {
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
 		if txn, ok := h.idToTxn[txnid]; ok {
-			bodyBytes, err := httputil.DumpRequest(txn.HttpTxn.Req.Request, true)
+			reqBytes, err := base64.StdEncoding.DecodeString(txn.Req.Raw)
 			if err != nil {
 				panic(err)
 			}
-			h.ctl.Cmds <- ui.CmdRequest{Payload: bodyBytes}
+			h.ctl.Cmds <- ui.CmdRequest{Payload: reqBytes}
 			w.Write([]byte(http.StatusText(200)))
 		} else {
 			// XXX: 400

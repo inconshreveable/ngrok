@@ -80,6 +80,10 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn) {
 			tee.Warn("Failed to extract request body: %v", err)
 		}
 
+		// golang's ReadRequest/DumpRequestOut is broken. Fix up the request so it works later
+		req.URL.Scheme = "http"
+		req.URL.Host = req.Host
+
 		txn := &HttpTxn{Start: time.Now()}
 		txn.Req = &HttpRequest{Request: req}
 		txn.Req.BodyBytes, txn.Req.Body, err = extractBody(req.Body)
