@@ -99,8 +99,8 @@ func parseArgs() *Options {
 
 	server := flag.String(
 		"server",
-		"ngrok.com:4443",
-		"The remote ngrok server")
+		"ngrokd.ngrok.com:443",
+		"Address of the remote ngrokd server")
 
 	httpAuth := flag.String(
 		"httpauth",
