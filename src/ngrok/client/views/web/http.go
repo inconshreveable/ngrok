@@ -160,7 +160,7 @@ func (whv *WebHttpView) updateHttp() {
 				continue
 			}
 
-			rawReq, err := httputil.DumpRequest(htxn.Req.Request, true)
+			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
 			if err != nil {
 				whv.Error("Failed to dump request: %v", err)
 				continue
@@ -227,12 +227,11 @@ func (whv *WebHttpView) register() {
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
 		if txn, ok := whv.idToTxn[txnid]; ok {
-			bodyBytes, err := httputil.DumpRequestOut(txn.HttpTxn.Req.Request, true)
+			reqBytes, err := base64.StdEncoding.DecodeString(txn.Req.Raw)
 			if err != nil {
 				panic(err)
 			}
-			// XXX: pull the tunnel out of the transaction's user context
-			whv.ctl.PlayRequest(txn.ConnCtx.Tunnel, bodyBytes)
+			whv.ctl.PlayRequest(txn.ConnCtx.Tunnel, reqBytes)
 			w.Write([]byte(http.StatusText(200)))
 		} else {
 			http.Error(w, http.StatusText(400), 400)

@@ -15,67 +15,99 @@ import (
 
 const (
 	updateEndpoint = "https://dl.ngrok.com/update"
+	checkEndpoint  = "https://dl.ngrok.com/update/check"
 )
 
-func autoUpdate(ctl mvc.Controller, token string) {
-	update := func() (updateSuccessful bool) {
-		params := make(url.Values)
-		params.Add("version", version.MajorMinor())
-		params.Add("os", runtime.GOOS)
-		params.Add("arch", runtime.GOARCH)
-
-		download := update.NewDownload()
-		downloadComplete := make(chan int)
-		ctl.Go(func() {
-			for {
-				select {
-				case progress, ok := <-download.Progress:
-					if !ok {
-						close(downloadComplete)
-						return
-					} else if progress == 100 {
-						s.update = mvc.UpdateInstalling
-						ctl.Update(s)
-						close(downloadComplete)
-						return
-					} else {
-						if progress%25 == 0 {
-							log.Info("Downloading update %d%% complete", progress)
-						}
-						s.update = mvc.UpdateStatus(progress)
-						ctl.Update(s)
-					}
-				}
-			}
-		})
-
-		log.Info("Checking for update")
-		err := download.UpdateFromUrl(updateEndpoint + "?" + params.Encode())
-		<-downloadComplete
-		if err != nil {
-			log.Error("Error while updating ngrok: %v", err)
-			if download.Available {
-				s.update = mvc.UpdateError
+func progressWatcher(s *State, ctl *ui.Controller, progress chan int, complete chan int) {
+	for {
+		select {
+		case pct, ok := <-progress:
+			if !ok {
+				close(complete)
+				return
+			} else if pct == 100 {
+				s.update = ui.UpdateInstalling
+				ctl.Update(s)
+				close(complete)
+				return
 			} else {
-				s.update = mvc.UpdateNone
+				if pct%25 == 0 {
+					log.Info("Downloading update %d%% complete", pct)
+				}
+				s.update = ui.UpdateStatus(pct)
+				ctl.Update(s)
+			}
+		}
+	}
+}
+
+func autoUpdate(s *State, ctl *ui.Controller, token string) {
+	tryAgain := true
+
+	params := make(url.Values)
+	params.Add("version", version.MajorMinor())
+	params.Add("os", runtime.GOOS)
+	params.Add("arch", runtime.GOARCH)
+	params.Add("user", token)
+
+	updateUrl := updateEndpoint + "?" + params.Encode()
+	checkUrl := checkEndpoint + "?" + params.Encode()
+
+	update := func() {
+		log.Info("Checking for update")
+		available, err := update.NewDownload(checkUrl).Check()
+		if err != nil {
+			log.Error("Error while checking for update: %v", err)
+			return
+		}
+
+		if !available {
+			log.Info("No update available")
+			return
+		}
+
+		// stop trying after a single download attempt
+		// XXX: improve this so the we can:
+		// 1. safely update multiple times
+		// 2. only retry after a network connection failure
+		tryAgain = false
+
+		download := update.NewDownload(updateUrl)
+		downloadComplete := make(chan int)
+
+		go progressWatcher(s, ctl, download.Progress, downloadComplete)
+
+		log.Info("Trying to update . . .")
+		err, errRecover := download.GetAndUpdate()
+		<-downloadComplete
+
+		if err != nil {
+			// log error to console
+			log.Error("Error while updating ngrok: %v", err)
+			if errRecover != nil {
+				log.Error("Error while recovering from failed ngrok update, your binary may be missing: %v", errRecover.Error())
+				params.Add("errorRecover", errRecover.Error())
 			}
 
-			// record the error to ngrok.com's servers for debugging purposes
+			// log error to ngrok.com's servers for debugging purposes
 			params.Add("error", err.Error())
-			params.Add("user", token)
-			resp, err := http.PostForm("https://dl.ngrok.com/update/error", params)
+			resp, reportErr := http.PostForm("https://dl.ngrok.com/update/error", params)
 			if err != nil {
-				log.Error("Error while reporting update error")
+				log.Error("Error while reporting update error: %v, %v", err, reportErr)
 			}
 			resp.Body.Close()
+
+			// tell the user to update manually
+			s.update = ui.UpdateAvailable
 		} else {
-			if download.Available {
-				log.Info("Marked update ready")
-				s.update = mvc.UpdateReady
-				updateSuccessful = true
+			if !download.Available {
+				// this is the way the server tells us to update manually
+				log.Info("Server wants us to update manually")
+				s.update = ui.UpdateAvailable
 			} else {
-				log.Info("No update available at this time")
-				s.update = mvc.UpdateNone
+				// tell the user the update is ready
+				log.Info("Update ready!")
+				s.update = ui.UpdateReady
 			}
 		}
 
@@ -86,11 +118,9 @@ func autoUpdate(ctl mvc.Controller, token string) {
 	// try to update immediately and then at a set interval
 	update()
 	for _ = range time.Tick(updateCheckInterval) {
-		if update() {
-			// stop trying to update if the update function is successful
-			// XXX: improve this by trying to download versions newer than
-			// the last one we downloaded
-			return
+		if !tryAgain {
+			break
 		}
+		update()
 	}
 }

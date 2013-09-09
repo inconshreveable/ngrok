@@ -11,7 +11,7 @@ const (
 	UpdateNone = -1 * iota
 	UpdateInstalling
 	UpdateReady
-	UpdateError
+	UpdateAvailable
 )
 
 type ConnStatus int

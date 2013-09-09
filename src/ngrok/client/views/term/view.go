@@ -75,7 +75,7 @@ func (v *TermView) draw() {
 		updateMsg = "ngrok is updating"
 	case mvc.UpdateReady:
 		updateMsg = "ngrok has updated: restart ngrok for the new version"
-	case mvc.UpdateError:
+	case mvc.UpdateAvailable:
 		updateMsg = "new version available at https://ngrok.com"
 	default:
 		pct := float64(updateStatus) / 100.0
@@ -109,6 +109,9 @@ func (v *TermView) draw() {
 		i++
 	}
 	webAddr := fmt.Sprintf("http://localhost:%d", v.ctl.GetWebViewPort())
+	if state.GetWebPort() == -1 {
+		webAddr = "disabled"
+	}
 	v.Printf(0, i+0, "%-30s%s", "Web Interface", webAddr)
 
 	connMeter, connTimer := state.GetConnectionMetrics()

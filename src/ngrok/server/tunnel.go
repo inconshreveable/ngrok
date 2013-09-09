@@ -66,6 +66,10 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 		vhost = vhost[0 : len(vhost)-len(defaultPortSuffix)]
 	}
 
+	// Canonicalize by always using lower-case
+	vhost = strings.ToLower(vhost)
+	t.url = strings.ToLower(t.url)
+
 	// Register for specific hostname
 	hostname := strings.TrimSpace(t.regMsg.Hostname)
 	if hostname != "" {
@@ -88,7 +92,7 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 	return
 }
 
-// Create a new tunnel from aregistration message received
+// Create a new tunnel from a registration message received
 // on a control channel
 func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 	t = &Tunnel{

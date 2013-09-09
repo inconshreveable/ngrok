@@ -125,7 +125,7 @@ func parseArgs() *Options {
 	webport := flag.Int(
 		"webport",
 		4040,
-		"The port on which the web interface is served")
+		"The port on which the web interface is served, -1 to disable")
 
 	logto := flag.String(
 		"log",
