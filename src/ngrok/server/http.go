@@ -31,10 +31,10 @@ Bad Request
 )
 
 // Listens for new http(s) connections from the public internet
-func httpListener(addr *net.TCPAddr, tlsCfg *tls.Config) {
+func startHttpListener(addr string, tlsCfg *tls.Config) (listener *conn.Listener) {
 	// bind/listen for incoming connections
-	listener, err := conn.Listen(addr, "pub", tlsCfg)
-	if err != nil {
+	var err error
+	if listener, err = conn.Listen(addr, "pub", tlsCfg); err != nil {
 		panic(err)
 	}
 
@@ -43,10 +43,14 @@ func httpListener(addr *net.TCPAddr, tlsCfg *tls.Config) {
 		proto = "https"
 	}
 
-	log.Info("Listening for public %s connections on %v", proto, listener.Port)
-	for conn := range listener.Conns {
-		go httpHandler(conn, proto)
-	}
+	log.Info("Listening for public %s connections on %v", proto, listener.Addr.String())
+	go func() {
+		for conn := range listener.Conns {
+			go httpHandler(conn, proto)
+		}
+	}()
+
+	return
 }
 
 // Handles a new http connection from the public internet

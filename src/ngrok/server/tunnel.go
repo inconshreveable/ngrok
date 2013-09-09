@@ -102,7 +102,8 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 		Logger: log.NewPrefixLogger(),
 	}
 
-	switch t.regMsg.Protocol {
+	proto := t.regMsg.Protocol
+	switch proto {
 	case "tcp":
 		var port int = 0
 
@@ -136,7 +137,7 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 
 		// create the url
 		addr := t.listener.Addr().(*net.TCPAddr)
-		t.url = fmt.Sprintf("tcp://%s:%d", domain, addr.Port)
+		t.url = fmt.Sprintf("tcp://%s:%d", opts.domain, addr.Port)
 
 		// register it
 		if err = tunnelRegistry.RegisterAndCache(t.url, t); err != nil {
@@ -149,15 +150,20 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 
 		go t.listenTcp(t.listener)
 
-	case "http":
-		if err = registerVhost(t, "http", opts.httpPort); err != nil {
+	case "http", "https":
+		l, ok := listeners[proto]
+		if !ok {
+			err = fmt.Errorf("Not listeneing for %s connections", proto)
 			return
 		}
 
-	case "https":
-		if err = registerVhost(t, "https", opts.httpsPort); err != nil {
+		if err = registerVhost(t, proto, l.Addr.(*net.TCPAddr).Port); err != nil {
 			return
 		}
+
+	default:
+		err = fmt.Errorf("Protocol %s is not supported", proto)
+		return
 	}
 
 	if m.Version != version.Proto {

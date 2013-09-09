@@ -5,17 +5,17 @@ import (
 )
 
 type Options struct {
-	httpPort   int
-	httpsPort  int
-	tunnelPort int
+	httpAddr   string
+	httpsAddr  string
+	tunnelAddr string
 	domain     string
 	logto      string
 }
 
 func parseArgs() *Options {
-	httpPort := flag.Int("httpPort", 80, "Public HTTP port, -1 to disable")
-	httpsPort := flag.Int("httpsPort", 443, "Public HTTPS port, -1 to disable")
-	tunnelPort := flag.Int("tunnelPort", 4443, "Port to which ngrok clients connect")
+	httpAddr := flag.String("httpAddr", ":80", "Public address for HTTP connections, empty string to disable")
+	httpsAddr := flag.String("httpsAddr", ":443", "Public address listening for HTTPS connections, emptry string to disable")
+	tunnelAddr := flag.String("tunnelAddr", ":4443", "Public address listening for ngrok client")
 	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
 	logto := flag.String(
 		"log",
@@ -25,9 +25,9 @@ func parseArgs() *Options {
 	flag.Parse()
 
 	return &Options{
-		httpPort:   *httpPort,
-		httpsPort:  *httpsPort,
-		tunnelPort: *tunnelPort,
+		httpAddr:   *httpAddr,
+		httpsAddr:  *httpsAddr,
+		tunnelAddr: *tunnelAddr,
 		domain:     *domain,
 		logto:      *logto,
 	}
