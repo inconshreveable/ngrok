@@ -178,7 +178,7 @@ func (whv *WebHttpView) updateHttp() {
 					Body:       body,
 					Binary:     !utf8.Valid(rawReq),
 				},
-				Start: htxn.Start.Unix(),
+				Start:   htxn.Start.Unix(),
 				ConnCtx: htxn.ConnUserCtx.(mvc.ConnectionContext),
 			}
 

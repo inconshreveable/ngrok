@@ -259,7 +259,7 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 
 		// tell the client we're going to start using this proxy connection
 		startPxyMsg := &msg.StartProxyMsg{
-			Url: t.url,
+			Url:        t.url,
 			ClientAddr: publicConn.RemoteAddr().String(),
 		}
 		if err = msg.WriteMsg(proxyConn, startPxyMsg); err != nil {
