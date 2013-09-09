@@ -240,18 +240,37 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 	startTime := time.Now()
 	metrics.OpenConnection(t, publicConn)
 
-	// get a proxy connection
-	proxyConn, err := t.ctl.GetProxy()
-	if err != nil {
-		t.Warn("Failed to get proxy connection: %v", err)
-		return
-	}
-	defer proxyConn.Close()
-	t.Info("Got proxy connection %s", proxyConn.Id())
-	proxyConn.AddLogPrefix(t.Id())
+	var proxyConn conn.Conn
+	var attempts int
+	var err error
+	for {
+		// get a proxy connection
+		if proxyConn, err = t.ctl.GetProxy(); err != nil {
+			t.Warn("Failed to get proxy connection: %v", err)
+			return
+		}
+		defer proxyConn.Close()
+		t.Info("Got proxy connection %s", proxyConn.Id())
+		proxyConn.AddLogPrefix(t.Id())
 
-	// tell the client we're going to start using this proxy connection
-	msg.WriteMsg(proxyConn, &msg.StartProxyMsg{Url: t.url})
+		// tell the client we're going to start using this proxy connection
+		startPxyMsg := &msg.StartProxyMsg{
+			Url: t.url,
+			ClientAddr: publicConn.RemoteAddr().String(),
+		}
+		if err = msg.WriteMsg(proxyConn, startPxyMsg); err != nil {
+			attempts += 1
+			proxyConn.Warn("Failed to write StartProxyMessage: %v, attempt %d", err, attempts)
+			if attempts > 3 {
+				// give up
+				publicConn.Error("Too many failures starting proxy connection")
+				return
+			}
+		} else {
+			// success
+			break
+		}
+	}
 
 	// join the public and proxy connections
 	bytesIn, bytesOut := conn.Join(publicConn, proxyConn)

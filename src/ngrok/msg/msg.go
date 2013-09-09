@@ -60,7 +60,8 @@ type RegProxyMsg struct {
 }
 
 type StartProxyMsg struct {
-	Url string
+	Url        string
+	ClientAddr string
 }
 
 type PingMsg struct {

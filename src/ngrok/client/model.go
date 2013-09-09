@@ -109,17 +109,15 @@ func (c ClientModel) GetBytesOutMetrics() (metrics.Counter, metrics.Histogram) {
 
 // mvc.Model interface
 func (c *ClientModel) PlayRequest(tunnel mvc.Tunnel, payload []byte) {
-	t := c.tunnels[tunnel.PublicUrl]
-
 	var localConn conn.Conn
-	localConn, err := conn.Dial(t.LocalAddr, "prv", nil)
+	localConn, err := conn.Dial(tunnel.LocalAddr, "prv", nil)
 	if err != nil {
-		c.Warn("Failed to open private leg to %s: %v", t.LocalAddr, err)
+		c.Warn("Failed to open private leg to %s: %v", tunnel.LocalAddr, err)
 		return
 	}
-	//defer localConn.Close()
-	// XXX: send user context that indicates it's a replayed connection
-	localConn = t.Protocol.WrapConn(localConn, nil)
+
+	defer localConn.Close()
+	localConn = tunnel.Protocol.WrapConn(localConn, mvc.ConnectionContext{Tunnel: tunnel, ClientAddr: "127.0.0.1"})
 	localConn.Write(payload)
 	ioutil.ReadAll(localConn)
 }
@@ -307,8 +305,7 @@ Content-Length: %d
 	m.connMeter.Mark(1)
 	c.update()
 	m.connTimer.Time(func() {
-		// XXX: wrap with connection context
-		localConn := tunnel.Protocol.WrapConn(localConn, nil)
+		localConn := tunnel.Protocol.WrapConn(localConn, mvc.ConnectionContext{Tunnel: tunnel, ClientAddr: startPxyMsg.ClientAddr})
 		bytesIn, bytesOut := conn.Join(localConn, remoteConn)
 		m.bytesIn.Update(bytesIn)
 		m.bytesOut.Update(bytesOut)

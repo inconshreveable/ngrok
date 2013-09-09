@@ -28,6 +28,11 @@ type Tunnel struct {
 	LocalAddr string
 }
 
+type ConnectionContext struct {
+	Tunnel     Tunnel
+	ClientAddr string
+}
+
 type State interface {
 	GetClientVersion() string
 	GetServerVersion() string

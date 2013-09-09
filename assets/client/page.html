@@ -81,7 +81,7 @@
                         </div>
                         <div  class="span4">
                             <i class="icon-user"></i> IP
-                            <span style="margin-left: 8px;" class="muted">{{Txn.Req.Header['X-Real-Ip'][0]}}</span>
+                            <span style="margin-left: 8px;" class="muted">{{Txn.ConnCtx.ClientAddr.split(":")[0]}}</span>
                         </div>
                     </div>
                     <hr />

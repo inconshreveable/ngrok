@@ -22,6 +22,7 @@ type SerializedTxn struct {
 	Id             string
 	Duration       int64
 	Start          int64
+	ConnCtx        mvc.ConnectionContext
 	*proto.HttpTxn `json:"-"`
 	Req            SerializedRequest
 	Resp           SerializedResponse
@@ -152,7 +153,7 @@ func (whv *WebHttpView) updateHttp() {
 
 		// we haven't processed this transaction yet if we haven't set the
 		// user data
-		if htxn.UserData == nil {
+		if htxn.UserCtx == nil {
 			id, err := util.RandId(8)
 			if err != nil {
 				whv.Error("Failed to generate txn identifier for web storage: %v", err)
@@ -178,9 +179,10 @@ func (whv *WebHttpView) updateHttp() {
 					Binary:     !utf8.Valid(rawReq),
 				},
 				Start: htxn.Start.Unix(),
+				ConnCtx: htxn.ConnUserCtx.(mvc.ConnectionContext),
 			}
 
-			htxn.UserData = whtxn
+			htxn.UserCtx = whtxn
 			// XXX: unsafe map access from multiple go routines
 			whv.idToTxn[whtxn.Id] = whtxn
 			// XXX: use return value to delete from map so we don't leak memory
@@ -192,7 +194,7 @@ func (whv *WebHttpView) updateHttp() {
 				continue
 			}
 
-			txn := htxn.UserData.(*SerializedTxn)
+			txn := htxn.UserCtx.(*SerializedTxn)
 			body := makeBody(htxn.Resp.Header, htxn.Resp.BodyBytes)
 			txn.Duration = htxn.Duration.Nanoseconds()
 			txn.Resp = SerializedResponse{
@@ -230,9 +232,7 @@ func (whv *WebHttpView) register() {
 				panic(err)
 			}
 			// XXX: pull the tunnel out of the transaction's user context
-			//h.ctl.PlayRequest(tunnel, bodyBytes)
-			var t mvc.Tunnel
-			whv.ctl.PlayRequest(t, bodyBytes)
+			whv.ctl.PlayRequest(txn.ConnCtx.Tunnel, bodyBytes)
 			w.Write([]byte(http.StatusText(200)))
 		} else {
 			http.Error(w, http.StatusText(400), 400)
