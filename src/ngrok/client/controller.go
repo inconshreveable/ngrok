@@ -168,7 +168,7 @@ func (ctl *Controller) Run(opts *Options) {
 		}
 	}
 
-	ctl.Go(func() { autoUpdate(ctl, opts.authtoken) })
+	ctl.Go(func() { autoUpdate(state, opts.authtoken) })
 
 	reg := &msg.RegMsg{
 		Protocol:  opts.protocol,

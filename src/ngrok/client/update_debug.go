@@ -7,5 +7,5 @@ import (
 )
 
 // no auto-updating in debug mode
-func autoUpdate(ctl mvc.Controller, token string) {
+func autoUpdate(state mvc.State, token string) {
 }

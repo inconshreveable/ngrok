@@ -18,7 +18,7 @@ const (
 	checkEndpoint  = "https://dl.ngrok.com/update/check"
 )
 
-func progressWatcher(s *State, ctl *ui.Controller, progress chan int, complete chan int) {
+func progressWatcher(s mvc.State, progress chan int, complete chan int) {
 	for {
 		select {
 		case pct, ok := <-progress:
@@ -26,22 +26,21 @@ func progressWatcher(s *State, ctl *ui.Controller, progress chan int, complete c
 				close(complete)
 				return
 			} else if pct == 100 {
-				s.update = ui.UpdateInstalling
-				ctl.Update(s)
+				s.SetUpdateStatus(mvc.UpdateInstalling)
 				close(complete)
 				return
 			} else {
 				if pct%25 == 0 {
 					log.Info("Downloading update %d%% complete", pct)
 				}
-				s.update = ui.UpdateStatus(pct)
-				ctl.Update(s)
+				s.SetUpdateStatus(mvc.UpdateStatus(pct))
 			}
 		}
 	}
 }
 
-func autoUpdate(s *State, ctl *ui.Controller, token string) {
+func autoUpdate(s mvc.State, token string) {
+		log.Info("autoUpdate running")
 	tryAgain := true
 
 	params := make(url.Values)
@@ -75,7 +74,7 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 		download := update.NewDownload(updateUrl)
 		downloadComplete := make(chan int)
 
-		go progressWatcher(s, ctl, download.Progress, downloadComplete)
+		go progressWatcher(s, download.Progress, downloadComplete)
 
 		log.Info("Trying to update . . .")
 		err, errRecover := download.GetAndUpdate()
@@ -98,20 +97,19 @@ func autoUpdate(s *State, ctl *ui.Controller, token string) {
 			resp.Body.Close()
 
 			// tell the user to update manually
-			s.update = ui.UpdateAvailable
+			s.SetUpdateStatus(mvc.UpdateAvailable)
 		} else {
 			if !download.Available {
 				// this is the way the server tells us to update manually
 				log.Info("Server wants us to update manually")
-				s.update = ui.UpdateAvailable
+				s.SetUpdateStatus(mvc.UpdateAvailable)
 			} else {
 				// tell the user the update is ready
 				log.Info("Update ready!")
-				s.update = ui.UpdateReady
+				s.SetUpdateStatus(mvc.UpdateReady)
 			}
 		}
 
-		ctl.Update(s)
 		return
 	}
 

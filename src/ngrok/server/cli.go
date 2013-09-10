@@ -17,10 +17,7 @@ func parseArgs() *Options {
 	httpsAddr := flag.String("httpsAddr", ":443", "Public address listening for HTTPS connections, emptry string to disable")
 	tunnelAddr := flag.String("tunnelAddr", ":4443", "Public address listening for ngrok client")
 	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
-	logto := flag.String(
-		"log",
-		"stdout",
-		"Write log messages to this file. 'stdout' and 'none' have special meanings")
+	logto := flag.String("log", "stdout", "Write log messages to this file. 'stdout' and 'none' have special meanings")
 
 	flag.Parse()
 

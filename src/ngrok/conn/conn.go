@@ -45,8 +45,8 @@ func Listen(addr, typ string, tlsCfg *tls.Config) (l *Listener, err error) {
 	}
 
 	l = &Listener{
-		Addr: listener.Addr(),
-		Conns:   make(chan Conn),
+		Addr:  listener.Addr(),
+		Conns: make(chan Conn),
 	}
 
 	go func() {

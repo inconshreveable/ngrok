@@ -43,4 +43,5 @@ type State interface {
 	GetConnectionMetrics() (metrics.Meter, metrics.Timer)
 	GetBytesInMetrics() (metrics.Counter, metrics.Histogram)
 	GetBytesOutMetrics() (metrics.Counter, metrics.Histogram)
+	SetUpdateStatus(UpdateStatus)
 }
