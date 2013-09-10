@@ -200,7 +200,6 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 	}
 
 	c.id = authResp.ClientId
-	c.connStatus = mvc.ConnOnline
 	c.serverVersion = authResp.MmVersion
 	c.Info("Authenticated with server, client id: %v", c.id)
 	c.update()
@@ -255,6 +254,7 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 			}
 
 			c.tunnels[tunnel.PublicUrl] = tunnel
+			c.connStatus = mvc.ConnOnline
 			c.Info("Tunnel established at %v", tunnel.PublicUrl)
 			c.update()
 

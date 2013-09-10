@@ -179,22 +179,21 @@ func (ctl *Controller) Run(opts *Options) {
 
 	ctl.Go(func() { ctl.model.Run(opts.server, opts.authtoken, ctl, reqTunnel, opts.localaddr) })
 
-	quitMessage := ""
-	defer func() {
-		ctl.doShutdown()
-		fmt.Println(quitMessage)
-	}()
-
 	updates := ctl.updates.Reg()
 	defer ctl.updates.UnReg(updates)
 
+	done := make(chan int)
 	for {
 		select {
 		case obj := <-ctl.cmds:
 			switch cmd := obj.(type) {
 			case cmdQuit:
-				quitMessage = cmd.message
-				return
+				msg := cmd.message
+				go func() {
+					ctl.doShutdown()
+					fmt.Println(msg)
+					done <- 1
+				}()
 
 			case cmdPlayRequest:
 				ctl.Go(func() { ctl.model.PlayRequest(cmd.tunnel, cmd.payload) })
@@ -204,6 +203,8 @@ func (ctl *Controller) Run(opts *Options) {
 			state = obj.(mvc.State)
 
 		case ctl.state <- state:
+		case <-done:
+			return
 		}
 	}
 }
