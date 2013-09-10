@@ -81,9 +81,7 @@ func parseLocalAddr() string {
 
 func parseProtocol(proto string) string {
 	switch proto {
-	case "http":
-		fallthrough
-	case "tcp":
+	case "http", "https", "http+https", "tcp":
 		return proto
 	default:
 		fail("%s is not a valid protocol", proto)
@@ -119,8 +117,8 @@ func parseArgs() *Options {
 
 	protocol := flag.String(
 		"proto",
-		"http",
-		"The protocol of the traffic over the tunnel {'http', 'tcp'} (default: 'http')")
+		"http+https",
+		"The protocol of the traffic over the tunnel {'http', 'https', 'tcp'} (default: 'http+https')")
 
 	webport := flag.Int(
 		"webport",

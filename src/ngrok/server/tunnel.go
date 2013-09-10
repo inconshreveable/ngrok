@@ -68,17 +68,16 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 
 	// Canonicalize by always using lower-case
 	vhost = strings.ToLower(vhost)
-	t.url = strings.ToLower(t.url)
 
 	// Register for specific hostname
-	hostname := strings.TrimSpace(t.req.Hostname)
+	hostname := strings.ToLower(strings.TrimSpace(t.req.Hostname))
 	if hostname != "" {
 		t.url = fmt.Sprintf("%s://%s", protocol, hostname)
 		return tunnelRegistry.Register(t.url, t)
 	}
 
 	// Register for specific subdomain
-	subdomain := strings.TrimSpace(t.req.Subdomain)
+	subdomain := strings.ToLower(strings.TrimSpace(t.req.Subdomain))
 	if subdomain != "" {
 		t.url = fmt.Sprintf("%s://%s.%s", protocol, subdomain, vhost)
 		return tunnelRegistry.Register(t.url, t)

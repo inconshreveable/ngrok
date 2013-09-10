@@ -210,17 +210,6 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 		panic(err)
 	}
 
-	// register an https tunnel as well for http tunnels
-	if reqTunnel.Protocol == "http" {
-		httpsReqTunnel := *reqTunnel
-		httpsReqTunnel.Protocol = "https"
-		// httpsReqTunnel.ReqId =
-
-		if err = msg.WriteMsg(conn, &httpsReqTunnel); err != nil {
-			panic(err)
-		}
-	}
-
 	// start the heartbeat
 	lastPong := time.Now().UnixNano()
 	c.ctl.Go(func() { c.heartbeat(&lastPong, conn) })

@@ -8,6 +8,7 @@ import (
 	"ngrok/util"
 	"ngrok/version"
 	"runtime/debug"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -110,31 +111,38 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 }
 
 // Register a new tunnel on this control connection
-func (c *Control) registerTunnel(reqTunnel *msg.ReqTunnel) {
-	c.conn.Debug("Registering new tunnel")
-	t, err := NewTunnel(reqTunnel, c)
-	if err != nil {
-		ack := &msg.NewTunnel{Error: err.Error()}
-		if len(c.tunnels) == 0 {
-			// you can't fail your first tunnel registration
-			// terminate the control connection
-			c.stop <- ack
-		} else {
-			// inform client of failure
-			c.out <- ack
+func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
+	for _, proto := range strings.Split(rawTunnelReq.Protocol, "+") {
+		tunnelReq := *rawTunnelReq
+		tunnelReq.Protocol = proto
+
+		c.conn.Debug("Registering new tunnel")
+		t, err := NewTunnel(&tunnelReq, c)
+		if err != nil {
+			ack := &msg.NewTunnel{Error: err.Error()}
+			if len(c.tunnels) == 0 {
+				// you can't fail your first tunnel registration
+				// terminate the control connection
+				c.stop <- ack
+			} else {
+				// inform client of failure
+				c.out <- ack
+			}
+
+			// we're done
+			return
 		}
 
-		// we're done
-		return
-	}
+		// add it to the list of tunnels
+		c.tunnels = append(c.tunnels, t)
 
-	// add it to the list of tunnels
-	c.tunnels = append(c.tunnels, t)
+		// acknowledge success
+		c.out <- &msg.NewTunnel{
+			Url:      t.url,
+			Protocol: proto,
+		}
 
-	// acknowledge success
-	c.out <- &msg.NewTunnel{
-		Url:      t.url,
-		Protocol: reqTunnel.Protocol,
+		rawTunnelReq.Hostname = strings.Replace(t.url, proto+"://", "", 1)
 	}
 }
 
