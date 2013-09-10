@@ -106,8 +106,10 @@ func (c ClientModel) GetBytesInMetrics() (metrics.Counter, metrics.Histogram) {
 func (c ClientModel) GetBytesOutMetrics() (metrics.Counter, metrics.Histogram) {
 	return c.metrics.bytesOutCount, c.metrics.bytesOut
 }
-func (c ClientModel) SetUpdateStatus(updateStatus mvc.UpdateStatus) { c.updateStatus = updateStatus; c.update() }
-
+func (c ClientModel) SetUpdateStatus(updateStatus mvc.UpdateStatus) {
+	c.updateStatus = updateStatus
+	c.update()
+}
 
 // mvc.Model interface
 func (c *ClientModel) PlayRequest(tunnel mvc.Tunnel, payload []byte) {

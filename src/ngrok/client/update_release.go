@@ -40,7 +40,6 @@ func progressWatcher(s mvc.State, progress chan int, complete chan int) {
 }
 
 func autoUpdate(s mvc.State, token string) {
-		log.Info("autoUpdate running")
 	tryAgain := true
 
 	params := make(url.Values)
