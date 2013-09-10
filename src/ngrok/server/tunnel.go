@@ -8,7 +8,6 @@ import (
 	"ngrok/conn"
 	"ngrok/log"
 	"ngrok/msg"
-	"ngrok/version"
 	"os"
 	"strconv"
 	"strings"
@@ -27,7 +26,8 @@ var defaultPortMap = map[string]int{
  *         route public traffic to a firewalled endpoint.
  */
 type Tunnel struct {
-	regMsg *msg.RegMsg
+	// request that opened the tunnel
+	req *msg.ReqTunnel
 
 	// time when the tunnel was opened
 	start time.Time
@@ -71,14 +71,14 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 	t.url = strings.ToLower(t.url)
 
 	// Register for specific hostname
-	hostname := strings.TrimSpace(t.regMsg.Hostname)
+	hostname := strings.TrimSpace(t.req.Hostname)
 	if hostname != "" {
 		t.url = fmt.Sprintf("%s://%s", protocol, hostname)
 		return tunnelRegistry.Register(t.url, t)
 	}
 
 	// Register for specific subdomain
-	subdomain := strings.TrimSpace(t.regMsg.Subdomain)
+	subdomain := strings.TrimSpace(t.req.Subdomain)
 	if subdomain != "" {
 		t.url = fmt.Sprintf("%s://%s.%s", protocol, subdomain, vhost)
 		return tunnelRegistry.Register(t.url, t)
@@ -94,15 +94,15 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 
 // Create a new tunnel from a registration message received
 // on a control channel
-func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
+func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 	t = &Tunnel{
-		regMsg: m,
+		req:    m,
 		start:  time.Now(),
 		ctl:    ctl,
 		Logger: log.NewPrefixLogger(),
 	}
 
-	proto := t.regMsg.Protocol
+	proto := t.req.Protocol
 	switch proto {
 	case "tcp":
 		var port int = 0
@@ -163,11 +163,6 @@ func NewTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel, err error) {
 
 	default:
 		err = fmt.Errorf("Protocol %s is not supported", proto)
-		return
-	}
-
-	if m.Version != version.Proto {
-		err = fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), m.Version)
 		return
 	}
 
@@ -264,7 +259,7 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 		proxyConn.AddLogPrefix(t.Id())
 
 		// tell the client we're going to start using this proxy connection
-		startPxyMsg := &msg.StartProxyMsg{
+		startPxyMsg := &msg.StartProxy{
 			Url:        t.url,
 			ClientAddr: publicConn.RemoteAddr().String(),
 		}

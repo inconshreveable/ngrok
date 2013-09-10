@@ -18,6 +18,9 @@ const (
 )
 
 type Control struct {
+	// auth message
+	auth *msg.Auth
+
 	// actual connection
 	conn conn.Conn
 
@@ -50,11 +53,14 @@ type Control struct {
 	id string
 }
 
-func NewControl(ctlConn conn.Conn, regMsg *msg.RegMsg) {
+func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
+	var err error
+
 	// create the object
 	// channels are buffered because we read and write to them
 	// from the same goroutine in managerThread()
 	c := &Control{
+		auth:     authMsg,
 		conn:     ctlConn,
 		out:      make(chan msg.Message, 5),
 		in:       make(chan msg.Message, 5),
@@ -63,37 +69,52 @@ func NewControl(ctlConn conn.Conn, regMsg *msg.RegMsg) {
 		lastPing: time.Now(),
 	}
 
-	// assign the random id
-	serverId, err := util.RandId(8)
-	if err != nil {
-		c.stop <- &msg.RegAckMsg{Error: err.Error()}
+	failAuth := func(e error) {
+		_ = msg.WriteMsg(ctlConn, &msg.AuthResp{Error: e.Error()})
+		ctlConn.Close()
 	}
-	c.id = fmt.Sprintf("%s-%s", regMsg.ClientId, serverId)
+
+	// register the clientid
+	c.id = authMsg.ClientId
+	if c.id == "" {
+		// it's a new session, assign an ID
+		if c.id, err = util.SecureRandId(16); err != nil {
+			failAuth(err)
+			return
+		}
+	}
+
+	if authMsg.Version != version.Proto {
+		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
+		return
+	}
 
 	// register the control
-	err = controlRegistry.Add(c.id, c)
-	if err != nil {
-		c.stop <- &msg.RegAckMsg{Error: err.Error()}
+	controlRegistry.Add(c.id, c)
+
+	c.out <- &msg.AuthResp{
+		Version:   version.Proto,
+		MmVersion: version.MajorMinor(),
+		ClientId:  c.id,
 	}
+
+	// As a performance optimization, ask for a proxy connection up front
+	c.out <- &msg.ReqProxy{}
 
 	// set logging prefix
 	ctlConn.SetType("ctl")
 
-	// register the first tunnel
-	c.in <- regMsg
-
 	// manage the connection
 	go c.managerThread()
 	go c.readThread()
-
 }
 
 // Register a new tunnel on this control connection
-func (c *Control) registerTunnel(regMsg *msg.RegMsg) {
+func (c *Control) registerTunnel(reqTunnel *msg.ReqTunnel) {
 	c.conn.Debug("Registering new tunnel")
-	t, err := NewTunnel(regMsg, c)
+	t, err := NewTunnel(reqTunnel, c)
 	if err != nil {
-		ack := &msg.RegAckMsg{Error: err.Error()}
+		ack := &msg.NewTunnel{Error: err.Error()}
 		if len(c.tunnels) == 0 {
 			// you can't fail your first tunnel registration
 			// terminate the control connection
@@ -111,18 +132,9 @@ func (c *Control) registerTunnel(regMsg *msg.RegMsg) {
 	c.tunnels = append(c.tunnels, t)
 
 	// acknowledge success
-	c.out <- &msg.RegAckMsg{
-		Url:       t.url,
-		Protocol:  regMsg.Protocol,
-		Version:   version.Proto,
-		MmVersion: version.MajorMinor(),
-		ClientId:  c.id,
-	}
-
-	if regMsg.Protocol == "http" {
-		httpsRegMsg := *regMsg
-		httpsRegMsg.Protocol = "https"
-		c.in <- &httpsRegMsg
+	c.out <- &msg.NewTunnel{
+		Url:      t.url,
+		Protocol: reqTunnel.Protocol,
 	}
 }
 
@@ -182,18 +194,12 @@ func (c *Control) managerThread() {
 
 		case mRaw := <-c.in:
 			switch m := mRaw.(type) {
-			case *msg.RegMsg:
+			case *msg.ReqTunnel:
 				c.registerTunnel(m)
 
-			case *msg.PingMsg:
+			case *msg.Ping:
 				c.lastPing = time.Now()
-				c.out <- &msg.PongMsg{}
-
-			case *msg.VersionMsg:
-				c.out <- &msg.VersionRespMsg{
-					Version:   version.Proto,
-					MmVersion: version.MajorMinor(),
-				}
+				c.out <- &msg.Pong{}
 			}
 		}
 	}
@@ -260,7 +266,7 @@ func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
 		case <-timeout.C:
 			c.conn.Debug("Requesting new proxy connection")
 			// request a proxy connection
-			c.out <- &msg.ReqProxyMsg{}
+			c.out <- &msg.ReqProxy{}
 			// timeout after 1 second if we don't get one
 			timeout.Reset(1 * time.Second)
 		}
@@ -273,7 +279,7 @@ func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
 	// There are two major issues with this strategy: it's not thread safe and it's not predictive.
 	// It should be a good start though.
 	if len(c.proxies) == 0 {
-		c.out <- &msg.ReqProxyMsg{}
+		c.out <- &msg.ReqProxy{}
 	}
 
 	return

@@ -92,10 +92,10 @@ func (r *TunnelRegistry) Register(url string, t *Tunnel) error {
 
 func (r *TunnelRegistry) cacheKeys(t *Tunnel) (ip string, id string) {
 	clientIp := t.ctl.conn.RemoteAddr().(*net.TCPAddr).IP.String()
-	clientId := t.regMsg.ClientId
+	clientId := t.ctl.id
 
-	ipKey := fmt.Sprintf("client-ip-%s:%s", t.regMsg.Protocol, clientIp)
-	idKey := fmt.Sprintf("client-id-%s:%s", t.regMsg.Protocol, clientId)
+	ipKey := fmt.Sprintf("client-ip-%s:%s", t.req.Protocol, clientIp)
+	idKey := fmt.Sprintf("client-id-%s:%s", t.req.Protocol, clientId)
 	return ipKey, idKey
 }
 
@@ -180,16 +180,11 @@ func (r *ControlRegistry) Get(clientId string) *Control {
 	return r.controls[clientId]
 }
 
-func (r *ControlRegistry) Add(clientId string, ctl *Control) error {
+func (r *ControlRegistry) Add(clientId string, ctl *Control) {
 	r.Lock()
 	defer r.Unlock()
-	if r.controls[clientId] == nil {
-		r.Info("Registered control with id %s", clientId)
-		r.controls[clientId] = ctl
-		return nil
-	} else {
-		return fmt.Errorf("Client with id %s already registered!", clientId)
-	}
+	r.controls[clientId] = ctl
+	r.Info("Registered control with id %s", clientId)
 }
 
 func (r *ControlRegistry) Del(clientId string) error {

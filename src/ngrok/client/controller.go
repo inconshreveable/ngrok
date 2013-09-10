@@ -170,15 +170,14 @@ func (ctl *Controller) Run(opts *Options) {
 
 	ctl.Go(func() { autoUpdate(state, opts.authtoken) })
 
-	reg := &msg.RegMsg{
+	reqTunnel := &msg.ReqTunnel{
 		Protocol:  opts.protocol,
 		Hostname:  opts.hostname,
 		Subdomain: opts.subdomain,
 		HttpAuth:  opts.httpAuth,
-		User:      opts.authtoken,
 	}
 
-	ctl.Go(func() { ctl.model.Run(opts.server, opts.authtoken, ctl, reg, opts.localaddr) })
+	ctl.Go(func() { ctl.model.Run(opts.server, opts.authtoken, ctl, reqTunnel, opts.localaddr) })
 
 	quitMessage := ""
 	defer func() {

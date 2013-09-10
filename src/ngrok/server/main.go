@@ -15,15 +15,15 @@ const (
 
 // GLOBALS
 var (
-	tunnelRegistry    *TunnelRegistry
-	controlRegistry   *ControlRegistry
+	tunnelRegistry  *TunnelRegistry
+	controlRegistry *ControlRegistry
 
 	// XXX: kill these global variables - they're only used in tunnel.go for constructing forwarding URLs
-	opts              *Options
-	listeners         map[string] *conn.Listener
+	opts      *Options
+	listeners map[string]*conn.Listener
 )
 
-func NewProxy(pxyConn conn.Conn, regPxy *msg.RegProxyMsg) {
+func NewProxy(pxyConn conn.Conn, regPxy *msg.RegProxy) {
 	// fail gracefully if the proxy connection fails to register
 	defer func() {
 		if r := recover(); r != nil {
@@ -58,7 +58,7 @@ func tunnelListener(addr string) {
 		panic(err)
 	}
 
-	log.Info("Listening for control and proxy connections on %d", listener.Addr.String())
+	log.Info("Listening for control and proxy connections on %s", listener.Addr.String())
 	for c := range listener.Conns {
 		var rawMsg msg.Message
 		if rawMsg, err = msg.ReadMsg(c); err != nil {
@@ -67,10 +67,10 @@ func tunnelListener(addr string) {
 		}
 
 		switch m := rawMsg.(type) {
-		case *msg.RegMsg:
+		case *msg.Auth:
 			go NewControl(c, m)
 
-		case *msg.RegProxyMsg:
+		case *msg.RegProxy:
 			go NewProxy(c, m)
 		}
 	}
@@ -96,7 +96,7 @@ func Main() {
 	controlRegistry = NewControlRegistry()
 
 	// start listeners
-	listeners = make(map[string] *conn.Listener)
+	listeners = make(map[string]*conn.Listener)
 
 	// listen for http
 	if opts.httpAddr != "" {

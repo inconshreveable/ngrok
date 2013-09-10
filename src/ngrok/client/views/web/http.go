@@ -154,12 +154,6 @@ func (whv *WebHttpView) updateHttp() {
 		// we haven't processed this transaction yet if we haven't set the
 		// user data
 		if htxn.UserCtx == nil {
-			id, err := util.RandId(8)
-			if err != nil {
-				whv.Error("Failed to generate txn identifier for web storage: %v", err)
-				continue
-			}
-
 			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
 			if err != nil {
 				whv.Error("Failed to dump request: %v", err)
@@ -168,7 +162,7 @@ func (whv *WebHttpView) updateHttp() {
 
 			body := makeBody(htxn.Req.Header, htxn.Req.BodyBytes)
 			whtxn := &SerializedTxn{
-				Id:      id,
+				Id:      util.RandId(8),
 				HttpTxn: htxn,
 				Req: SerializedRequest{
 					MethodPath: htxn.Req.Method + " " + htxn.Req.URL.Path,

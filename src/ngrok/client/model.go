@@ -10,7 +10,6 @@ import (
 	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/proto"
-	"ngrok/util"
 	"ngrok/version"
 	"runtime"
 	"sync/atomic"
@@ -54,9 +53,6 @@ func newClientModel(ctl mvc.Controller) *ClientModel {
 
 	return &ClientModel{
 		Logger: log.NewPrefixLogger("client"),
-
-		// unique client id
-		id: util.RandIdOrPanic(8),
 
 		// connection status
 		connStatus: mvc.ConnConnecting,
@@ -133,20 +129,20 @@ func (c *ClientModel) update() {
 	c.ctl.Update(c)
 }
 
-func (c *ClientModel) Run(serverAddr, authToken string, ctl mvc.Controller, reg *msg.RegMsg, localaddr string) {
+func (c *ClientModel) Run(serverAddr, authToken string, ctl mvc.Controller, reqTunnel *msg.ReqTunnel, localaddr string) {
 	c.serverAddr = serverAddr
 	c.authToken = authToken
 	c.ctl = ctl
-	c.reconnectingControl(reg, localaddr)
+	c.reconnectingControl(reqTunnel, localaddr)
 }
 
-func (c *ClientModel) reconnectingControl(reg *msg.RegMsg, localaddr string) {
+func (c *ClientModel) reconnectingControl(reqTunnel *msg.ReqTunnel, localaddr string) {
 	// how long we should wait before we reconnect
 	maxWait := 30 * time.Second
 	wait := 1 * time.Second
 
 	for {
-		c.control(reg, localaddr)
+		c.control(reqTunnel, localaddr)
 
 		if c.connStatus == mvc.ConnOnline {
 			wait = 1 * time.Second
@@ -163,7 +159,7 @@ func (c *ClientModel) reconnectingControl(reg *msg.RegMsg, localaddr string) {
 }
 
 // Establishes and manages a tunnel control connection with the server
-func (c *ClientModel) control(reg *msg.RegMsg, localaddr string) {
+func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("control recovering from failure %v", r)
@@ -177,45 +173,54 @@ func (c *ClientModel) control(reg *msg.RegMsg, localaddr string) {
 	}
 	defer conn.Close()
 
-	// register with the server
-	reg.OS = runtime.GOOS
-	reg.ClientId = c.id
-	reg.Version = version.Proto
-	reg.MmVersion = version.MajorMinor()
-	reg.User = c.authToken
+	// authenticate with the server
+	auth := &msg.Auth{
+		ClientId:  c.id,
+		OS:        runtime.GOOS,
+		Arch:      runtime.GOARCH,
+		Version:   version.Proto,
+		MmVersion: version.MajorMinor(),
+		User:      c.authToken,
+	}
 
-	if err = msg.WriteMsg(conn, reg); err != nil {
+	if err = msg.WriteMsg(conn, auth); err != nil {
 		panic(err)
 	}
 
-	// wait for the server to ack our register
-	var regAck msg.RegAckMsg
-	if err = msg.ReadMsgInto(conn, &regAck); err != nil {
+	// wait for the server to authenticate us
+	var authResp msg.AuthResp
+	if err = msg.ReadMsgInto(conn, &authResp); err != nil {
 		panic(err)
 	}
 
-	if regAck.Error != "" {
-		emsg := fmt.Sprintf("Server failed to allocate tunnel: %s", regAck.Error)
+	if authResp.Error != "" {
+		emsg := fmt.Sprintf("Failed to authenticate to server: %s", authResp.Error)
 		c.ctl.Shutdown(emsg)
 		return
 	}
 
-	tunnel := mvc.Tunnel{
-		PublicUrl: regAck.Url,
-		LocalAddr: localaddr,
-		Protocol:  c.protoMap[reg.Protocol],
+	c.id = authResp.ClientId
+	c.connStatus = mvc.ConnOnline
+	c.serverVersion = authResp.MmVersion
+	c.Info("Authenticated with server, client id: %v", c.id)
+	c.update()
+	SaveAuthToken(c.authToken)
+
+	// register the tunnel
+	if err = msg.WriteMsg(conn, reqTunnel); err != nil {
+		panic(err)
 	}
 
-	c.tunnels[tunnel.PublicUrl] = tunnel
+	// register an https tunnel as well for http tunnels
+	if reqTunnel.Protocol == "http" {
+		httpsReqTunnel := *reqTunnel
+		httpsReqTunnel.Protocol = "https"
+		// httpsReqTunnel.ReqId =
 
-	// update UI state
-	c.id = regAck.ClientId
-	c.Info("Tunnel established at %v", tunnel.PublicUrl)
-	c.connStatus = mvc.ConnOnline
-	c.serverVersion = regAck.MmVersion
-	c.update()
-
-	SaveAuthToken(c.authToken)
+		if err = msg.WriteMsg(conn, &httpsReqTunnel); err != nil {
+			panic(err)
+		}
+	}
 
 	// start the heartbeat
 	lastPong := time.Now().UnixNano()
@@ -229,15 +234,17 @@ func (c *ClientModel) control(reg *msg.RegMsg, localaddr string) {
 		}
 
 		switch m := rawMsg.(type) {
-		case *msg.ReqProxyMsg:
+		case *msg.ReqProxy:
 			c.ctl.Go(c.proxy)
 
-		case *msg.PongMsg:
+		case *msg.Pong:
 			atomic.StoreInt64(&lastPong, time.Now().UnixNano())
 
-		case *msg.RegAckMsg:
+		case *msg.NewTunnel:
 			if m.Error != "" {
-				c.Error("Server failed to allocate tunnel: %s", regAck.Error)
+				emsg := fmt.Sprintf("Server failed to allocate tunnel: %s", m.Error)
+				c.Error(emsg)
+				c.ctl.Shutdown(emsg)
 				continue
 			}
 
@@ -266,22 +273,22 @@ func (c *ClientModel) proxy() {
 	}
 
 	defer remoteConn.Close()
-	err = msg.WriteMsg(remoteConn, &msg.RegProxyMsg{ClientId: c.id})
+	err = msg.WriteMsg(remoteConn, &msg.RegProxy{ClientId: c.id})
 	if err != nil {
-		log.Error("Failed to write RegProxyMsg: %v", err)
+		log.Error("Failed to write RegProxy: %v", err)
 		return
 	}
 
 	// wait for the server to ack our register
-	var startPxyMsg msg.StartProxyMsg
-	if err = msg.ReadMsgInto(remoteConn, &startPxyMsg); err != nil {
-		log.Error("Server failed to write StartProxyMsg: %v", err)
+	var startPxy msg.StartProxy
+	if err = msg.ReadMsgInto(remoteConn, &startPxy); err != nil {
+		log.Error("Server failed to write StartProxy: %v", err)
 		return
 	}
 
-	tunnel, ok := c.tunnels[startPxyMsg.Url]
+	tunnel, ok := c.tunnels[startPxy.Url]
 	if !ok {
-		c.Error("Couldn't find tunnel for proxy: %s", startPxyMsg.Url)
+		c.Error("Couldn't find tunnel for proxy: %s", startPxy.Url)
 		return
 	}
 
@@ -309,7 +316,7 @@ Content-Length: %d
 	m.connMeter.Mark(1)
 	c.update()
 	m.connTimer.Time(func() {
-		localConn := tunnel.Protocol.WrapConn(localConn, mvc.ConnectionContext{Tunnel: tunnel, ClientAddr: startPxyMsg.ClientAddr})
+		localConn := tunnel.Protocol.WrapConn(localConn, mvc.ConnectionContext{Tunnel: tunnel, ClientAddr: startPxy.ClientAddr})
 		bytesIn, bytesOut := conn.Join(localConn, remoteConn)
 		m.bytesIn.Update(bytesIn)
 		m.bytesOut.Update(bytesOut)
@@ -345,7 +352,7 @@ func (c *ClientModel) heartbeat(lastPongAddr *int64, conn conn.Conn) {
 			}
 
 		case <-ping.C:
-			err := msg.WriteMsg(conn, &msg.PingMsg{})
+			err := msg.WriteMsg(conn, &msg.Ping{})
 			if err != nil {
 				conn.Debug("Got error %v when writing PingMsg", err)
 				return

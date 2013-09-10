@@ -89,7 +89,7 @@ func httpHandler(tcpConn net.Conn, proto string) {
 	// If the client specified http auth and it doesn't match this request's auth
 	// then fail the request with 401 Not Authorized and request the client reissue the
 	// request with basic authdeny the request
-	if tunnel.regMsg.HttpAuth != "" && req.Header.Get("Authorization") != tunnel.regMsg.HttpAuth {
+	if tunnel.req.HttpAuth != "" && req.Header.Get("Authorization") != tunnel.req.HttpAuth {
 		conn.Info("Authentication failed: %s", req.Header.Get("Authorization"))
 		conn.Write([]byte(NotAuthorized))
 		return

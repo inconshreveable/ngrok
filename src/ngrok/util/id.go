@@ -2,31 +2,32 @@ package util
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"fmt"
+	mrand "math/rand"
 )
 
-func RandomSeed() (int64, error) {
-	b := make([]byte, 8)
-	n, err := rand.Read(b)
-	if n != 8 {
-		return 0, fmt.Errorf("Only generated %d random bytes, %d requested", n, 8)
-	}
-
-	if err != nil {
-		return 0, err
-	}
-
-	var seed int64
-	var i uint
-	for i = 0; i < 8; i++ {
-		seed = seed | int64(b[i]<<(i*8))
-	}
-
-	return seed, nil
+func RandomSeed() (seed int64, err error) {
+	err = binary.Read(rand.Reader, binary.LittleEndian, &seed)
+	return
 }
 
-// create a random identifier for this client
-func RandId(idlen int) (id string, err error) {
+// creates a random identifier of the specified length
+func RandId(idlen int) string {
+	b := make([]byte, idlen)
+	var randVal uint32
+	for i := 0; i < idlen; i++ {
+		byteIdx := i % 4
+		if byteIdx == 0 {
+			randVal = mrand.Uint32()
+		}
+		b[i] = byte((randVal >> (8 * uint(byteIdx))) & 0xFF)
+	}
+	return fmt.Sprintf("%x", b)
+}
+
+// like RandId, but uses a crypto/rand for secure random identifiers
+func SecureRandId(idlen int) (id string, err error) {
 	b := make([]byte, idlen)
 	n, err := rand.Read(b)
 
@@ -43,8 +44,8 @@ func RandId(idlen int) (id string, err error) {
 	return
 }
 
-func RandIdOrPanic(idlen int) string {
-	id, err := RandId(idlen)
+func SecureRandIdOrPanic(idlen int) string {
+	id, err := SecureRandId(idlen)
 	if err != nil {
 		panic(err)
 	}
