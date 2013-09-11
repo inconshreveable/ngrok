@@ -5,7 +5,7 @@ import (
 )
 
 type Model interface {
-	Run(serverAddr, authToken string, ctl Controller, reqTunnel *msg.ReqTunnel, localaddr string)
+	Run(serverAddr, proxyAddr, authToken string, ctl Controller, reqTunnel *msg.ReqTunnel, localaddr string)
 
 	Shutdown()
 

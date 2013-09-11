@@ -15,16 +15,17 @@ var (
 )
 
 type Options struct {
-	server    string
-	httpAuth  string
-	hostname  string
-	localaddr string
-	protocol  string
-	url       string
-	subdomain string
-	webport   int
-	logto     string
-	authtoken string
+	serverAddr string
+	proxyAddr  string
+	httpAuth   string
+	hostname   string
+	localaddr  string
+	protocol   string
+	url        string
+	subdomain  string
+	webport    int
+	logto      string
+	authtoken  string
 }
 
 func fail(msg string, args ...interface{}) {
@@ -95,10 +96,15 @@ func parseArgs() *Options {
 		"",
 		"Authentication token for identifying a premium ngrok.com account")
 
-	server := flag.String(
-		"server",
+	serverAddr := flag.String(
+		"serverAddr",
 		"ngrokd.ngrok.com:443",
 		"Address of the remote ngrokd server")
+
+	proxyAddr := flag.String(
+		"proxyAddr",
+		"",
+		"The address of an http proxy to connect through (ex: proxy.example.org:3128)")
 
 	httpAuth := flag.String(
 		"httpauth",
@@ -143,14 +149,15 @@ func parseArgs() *Options {
 	}
 
 	return &Options{
-		server:    *server,
-		httpAuth:  *httpAuth,
-		subdomain: *subdomain,
-		localaddr: parseLocalAddr(),
-		protocol:  parseProtocol(*protocol),
-		webport:   *webport,
-		logto:     *logto,
-		authtoken: *authtoken,
-		hostname:  *hostname,
+		serverAddr: *serverAddr,
+		proxyAddr:  *proxyAddr,
+		httpAuth:   *httpAuth,
+		subdomain:  *subdomain,
+		localaddr:  parseLocalAddr(),
+		protocol:   parseProtocol(*protocol),
+		webport:    *webport,
+		logto:      *logto,
+		authtoken:  *authtoken,
+		hostname:   *hostname,
 	}
 }

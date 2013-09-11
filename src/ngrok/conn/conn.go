@@ -78,13 +78,50 @@ func Dial(addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
 		return
 	}
 
-	if tlsCfg != nil {
-		rawConn = tls.Client(rawConn, tlsCfg)
-	}
-
 	conn = wrapConn(rawConn, typ)
 	conn.Debug("New connection to: %v", rawConn.RemoteAddr())
+
+	if tlsCfg != nil {
+		conn.StartTLS(tlsCfg)
+	}
+
 	return
+}
+
+func DialHttpProxy(proxyAddr, addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
+	// dial the proxy
+	if conn, err = Dial(proxyAddr, typ, nil); err != nil {
+		return
+	}
+
+	// send an HTTP proxy CONNECT message
+	req, err := http.NewRequest("CONNECT", "http://"+addr, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; ngrok)")
+	req.Write(conn)
+
+	// read the proxy's response
+	resp, err := http.ReadResponse(bufio.NewReader(conn), req)
+	if err != nil {
+		return
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("Non-200 response from proxy server: %s", resp.Status)
+		return
+	}
+
+	// upgrade to TLS
+	conn.StartTLS(tlsCfg)
+
+	return
+}
+
+func (c *loggedConn) StartTLS(tlsCfg *tls.Config) {
+	c.Conn = tls.Client(c.Conn, tlsCfg)
 }
 
 func (c *loggedConn) Close() error {

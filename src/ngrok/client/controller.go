@@ -177,7 +177,7 @@ func (ctl *Controller) Run(opts *Options) {
 		HttpAuth:  opts.httpAuth,
 	}
 
-	ctl.Go(func() { ctl.model.Run(opts.server, opts.authtoken, ctl, reqTunnel, opts.localaddr) })
+	ctl.Go(func() { ctl.model.Run(opts.serverAddr, opts.proxyAddr, opts.authtoken, ctl, reqTunnel, opts.localaddr) })
 
 	updates := ctl.updates.Reg()
 	defer ctl.updates.UnReg(updates)

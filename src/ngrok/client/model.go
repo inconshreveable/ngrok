@@ -41,6 +41,7 @@ type ClientModel struct {
 	protocols     []proto.Protocol
 	ctl           mvc.Controller
 	serverAddr    string
+	proxyAddr     string
 	authToken     string
 }
 
@@ -129,8 +130,9 @@ func (c *ClientModel) update() {
 	c.ctl.Update(c)
 }
 
-func (c *ClientModel) Run(serverAddr, authToken string, ctl mvc.Controller, reqTunnel *msg.ReqTunnel, localaddr string) {
+func (c *ClientModel) Run(serverAddr, proxyAddr, authToken string, ctl mvc.Controller, reqTunnel *msg.ReqTunnel, localaddr string) {
 	c.serverAddr = serverAddr
+	c.proxyAddr = proxyAddr
 	c.authToken = authToken
 	c.ctl = ctl
 	c.reconnectingControl(reqTunnel, localaddr)
@@ -167,11 +169,20 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 	}()
 
 	// establish control channel
-	conn, err := conn.Dial(c.serverAddr, "ctl", tlsConfig)
+	var (
+		ctlConn conn.Conn
+		err     error
+	)
+	if c.proxyAddr == "" {
+		// simple non-proxied case, just connect to the server
+		ctlConn, err = conn.Dial(c.serverAddr, "ctl", tlsConfig)
+	} else {
+		ctlConn, err = conn.DialHttpProxy(c.proxyAddr, c.serverAddr, "ctl", tlsConfig)
+	}
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close()
+	defer ctlConn.Close()
 
 	// authenticate with the server
 	auth := &msg.Auth{
@@ -183,13 +194,13 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 		User:      c.authToken,
 	}
 
-	if err = msg.WriteMsg(conn, auth); err != nil {
+	if err = msg.WriteMsg(ctlConn, auth); err != nil {
 		panic(err)
 	}
 
 	// wait for the server to authenticate us
 	var authResp msg.AuthResp
-	if err = msg.ReadMsgInto(conn, &authResp); err != nil {
+	if err = msg.ReadMsgInto(ctlConn, &authResp); err != nil {
 		panic(err)
 	}
 
@@ -206,18 +217,18 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 	SaveAuthToken(c.authToken)
 
 	// register the tunnel
-	if err = msg.WriteMsg(conn, reqTunnel); err != nil {
+	if err = msg.WriteMsg(ctlConn, reqTunnel); err != nil {
 		panic(err)
 	}
 
 	// start the heartbeat
 	lastPong := time.Now().UnixNano()
-	c.ctl.Go(func() { c.heartbeat(&lastPong, conn) })
+	c.ctl.Go(func() { c.heartbeat(&lastPong, ctlConn) })
 
 	// main control loop
 	for {
 		var rawMsg msg.Message
-		if rawMsg, err = msg.ReadMsg(conn); err != nil {
+		if rawMsg, err = msg.ReadMsg(ctlConn); err != nil {
 			panic(err)
 		}
 
@@ -248,20 +259,30 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 			c.update()
 
 		default:
-			conn.Warn("Ignoring unknown control message %v ", m)
+			ctlConn.Warn("Ignoring unknown control message %v ", m)
 		}
 	}
 }
 
 // Establishes and manages a tunnel proxy connection with the server
 func (c *ClientModel) proxy() {
-	remoteConn, err := conn.Dial(c.serverAddr, "pxy", tlsConfig)
+	var (
+		remoteConn conn.Conn
+		err        error
+	)
+
+	if c.proxyAddr == "" {
+		remoteConn, err = conn.Dial(c.serverAddr, "pxy", tlsConfig)
+	} else {
+		remoteConn, err = conn.DialHttpProxy(c.proxyAddr, c.serverAddr, "pxy", tlsConfig)
+	}
+
 	if err != nil {
 		log.Error("Failed to establish proxy connection: %v", err)
 		return
 	}
-
 	defer remoteConn.Close()
+
 	err = msg.WriteMsg(remoteConn, &msg.RegProxy{ClientId: c.id})
 	if err != nil {
 		log.Error("Failed to write RegProxy: %v", err)
