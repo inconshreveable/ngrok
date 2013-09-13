@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"ngrok/log"
+	"strings"
 )
 
 type Conn interface {
@@ -89,6 +91,15 @@ func Dial(addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
 }
 
 func DialHttpProxy(proxyAddr, addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
+	var proxyAuth string
+
+	// parse the proxy address for authentication credentials
+	addrParts := strings.Split(proxyAddr, "@")
+	if len(addrParts) == 2 {
+		proxyAddr = addrParts[1]
+		proxyAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(addrParts[0]))
+	}
+
 	// dial the proxy
 	if conn, err = Dial(proxyAddr, typ, nil); err != nil {
 		return
@@ -98,6 +109,10 @@ func DialHttpProxy(proxyAddr, addr, typ string, tlsCfg *tls.Config) (conn *logge
 	req, err := http.NewRequest("CONNECT", "http://"+addr, nil)
 	if err != nil {
 		return
+	}
+
+	if proxyAuth != "" {
+		req.Header.Set("Proxy-Authorization", proxyAuth)
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; ngrok)")
 	req.Write(conn)

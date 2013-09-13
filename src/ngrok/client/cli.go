@@ -104,7 +104,7 @@ func parseArgs() *Options {
 	proxyAddr := flag.String(
 		"proxyAddr",
 		"",
-		"The address of an http proxy to connect through (ex: proxy.example.org:3128)")
+		"The address of an http proxy to connect through (ex: [user:pw@]proxy.example.org:3128)")
 
 	httpAuth := flag.String(
 		"httpauth",
