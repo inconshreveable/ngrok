@@ -7,10 +7,12 @@ import (
 	"ngrok/msg"
 	"ngrok/util"
 	"os"
+	"time"
 )
 
 const (
-	registryCacheSize uint64 = 1024 * 1024 // 1 MB
+	registryCacheSize uint64        = 1024 * 1024 // 1 MB
+	connReadTimeout   time.Duration = 10 * time.Second
 )
 
 // GLOBALS
@@ -60,19 +62,30 @@ func tunnelListener(addr string) {
 
 	log.Info("Listening for control and proxy connections on %s", listener.Addr.String())
 	for c := range listener.Conns {
-		var rawMsg msg.Message
-		if rawMsg, err = msg.ReadMsg(c); err != nil {
-			c.Error("Failed to read message: %v", err)
-			c.Close()
-		}
+		go func(tunnelConn conn.Conn) {
+			tunnelConn.SetReadDeadline(time.Now().Add(connReadTimeout))
+			var rawMsg msg.Message
+			if rawMsg, err = msg.ReadMsg(tunnelConn); err != nil {
+				tunnelConn.Error("Failed to read message: %v", err)
+				tunnelConn.Close()
+				return
+			}
 
-		switch m := rawMsg.(type) {
-		case *msg.Auth:
-			go NewControl(c, m)
+			// don't timeout after the initial read, tunnel heartbeating will kill
+			// dead connections
+			tunnelConn.SetReadDeadline(time.Time{})
 
-		case *msg.RegProxy:
-			go NewProxy(c, m)
-		}
+			switch m := rawMsg.(type) {
+			case *msg.Auth:
+				NewControl(tunnelConn, m)
+
+			case *msg.RegProxy:
+				NewProxy(tunnelConn, m)
+
+			default:
+				tunnelConn.Close()
+			}
+		}(c)
 	}
 }
 

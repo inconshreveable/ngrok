@@ -7,6 +7,7 @@ import (
 	"ngrok/conn"
 	"ngrok/log"
 	"strings"
+	"time"
 )
 
 const (
@@ -66,6 +67,9 @@ func httpHandler(tcpConn net.Conn, proto string) {
 		}
 	}()
 
+	// Make sure we detect dead connections while we decide how to multiplex
+	conn.SetDeadline(time.Now().Add(connReadTimeout))
+
 	// read out the http request
 	req, err := conn.ReadRequest()
 	if err != nil {
@@ -95,5 +99,9 @@ func httpHandler(tcpConn net.Conn, proto string) {
 		return
 	}
 
+	// dead connections will now be handled by tunnel heartbeating and the client
+	conn.SetDeadline(time.Time{})
+
+	// let the tunnel handle the connection now
 	tunnel.HandlePublicConnection(conn)
 }
