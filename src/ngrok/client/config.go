@@ -15,7 +15,7 @@ import (
 )
 
 type Configuration struct {
-	ProxyUrl           string `yaml:"proxy_url"`
+	HttpProxy          string `yaml:"http_proxy"`
 	ServerAddr         string `yaml:"server_addr"`
 	InspectAddr        string `yaml:"inspect_addr"`
 	TrustHostRootCerts bool   `yaml:"trust_host_root_certs"`
@@ -79,8 +79,8 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		config.InspectAddr = "127.0.0.1:4040"
 	}
 
-	if config.ProxyUrl == "" {
-		config.ProxyUrl = os.Getenv("http_proxy")
+	if config.HttpProxy == "" {
+		config.HttpProxy = os.Getenv("http_proxy")
 	}
 
 	// override configuration with command-line options
@@ -141,9 +141,9 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		return
 	}
 
-	if config.ProxyUrl != "" {
+	if config.HttpProxy != "" {
 		var proxyUrl *url.URL
-		if proxyUrl, err = url.Parse(config.ProxyUrl); err != nil {
+		if proxyUrl, err = url.Parse(config.HttpProxy); err != nil {
 			return
 		} else {
 			if proxyUrl.Scheme != "http" && proxyUrl.Scheme != "https" {
