@@ -1,6 +1,8 @@
 package client
 
 import (
+"fmt"
+	"os"
 	"math/rand"
 	"ngrok/log"
 	"ngrok/util"
@@ -8,22 +10,29 @@ import (
 
 func Main() {
 	// parse options
-	opts := parseArgs()
+	opts, err := parseArgs()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	// set up logging
 	log.LogTo(opts.logto)
 
-	// set up auth token
-	if opts.authtoken == "" {
-		opts.authtoken = LoadAuthToken()
+	// read configuration file
+	config, err := LoadConfiguration(opts)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	// seed random number generator
 	seed, err := util.RandomSeed()
 	if err != nil {
-		log.Error("Couldn't securely seed the random number generator!")
+		fmt.Printf("Couldn't securely seed the random number generator!")
+		os.Exit(1)
 	}
 	rand.Seed(seed)
 
-	NewController().Run(opts)
+	NewController().Run(config)
 }

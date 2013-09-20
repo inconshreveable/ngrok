@@ -2,7 +2,6 @@
 package web
 
 import (
-	"fmt"
 	"github.com/garyburd/go-websocket/websocket"
 	"net/http"
 	"ngrok/client/assets"
@@ -22,7 +21,7 @@ type WebView struct {
 	wsMessages *util.Broadcast
 }
 
-func NewWebView(ctl mvc.Controller, port int) *WebView {
+func NewWebView(ctl mvc.Controller, addr string) *WebView {
 	wv := &WebView{
 		Logger:     log.NewPrefixLogger("view", "web"),
 		wsMessages: util.NewBroadcast(),
@@ -66,8 +65,8 @@ func NewWebView(ctl mvc.Controller, port int) *WebView {
 		w.Write(buf)
 	})
 
-	wv.Info("Serving web interface on localhost:%d", port)
-	wv.ctl.Go(func() { http.ListenAndServe(fmt.Sprintf(":%d", port), nil) })
+	wv.Info("Serving web interface on %s", addr)
+	wv.ctl.Go(func() { http.ListenAndServe(addr, nil) })
 	return wv
 }
 

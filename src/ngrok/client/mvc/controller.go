@@ -23,6 +23,6 @@ type Controller interface {
 	// safe wrapper for running go-routines
 	Go(fn func())
 
-	// the port where the web interface is running
-	GetWebViewPort() int
+	// the address where the web inspection interface is running
+	GetWebInspectAddr() string
 }

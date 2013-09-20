@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"math/rand"
 	"ngrok/conn"
 	log "ngrok/log"
@@ -53,7 +54,7 @@ func NewProxy(pxyConn conn.Conn, regPxy *msg.RegProxy) {
 // for ease of deployment. The hope is that by running on port 443, using
 // TLS and running all connections over the same port, we can bust through
 // restrictive firewalls.
-func tunnelListener(addr string) {
+func tunnelListener(addr string, tlsConfig *tls.Config) {
 	// listen for incoming connections
 	listener, err := conn.Listen(addr, "tun", tlsConfig)
 	if err != nil {
@@ -111,6 +112,12 @@ func Main() {
 	// start listeners
 	listeners = make(map[string]*conn.Listener)
 
+	// load tls configuration
+	tlsConfig, err := LoadTLSConfig(opts.tlsCrt, opts.tlsKey)
+	if err != nil {
+		panic(err)
+	}
+
 	// listen for http
 	if opts.httpAddr != "" {
 		listeners["http"] = startHttpListener(opts.httpAddr, nil)
@@ -122,5 +129,5 @@ func Main() {
 	}
 
 	// ngrok clients
-	tunnelListener(opts.tunnelAddr)
+	tunnelListener(opts.tunnelAddr, tlsConfig)
 }

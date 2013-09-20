@@ -140,6 +140,7 @@ func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
 		c.out <- &msg.NewTunnel{
 			Url:      t.url,
 			Protocol: proto,
+			ReqId:    rawTunnelReq.ReqId,
 		}
 
 		rawTunnelReq.Hostname = strings.Replace(t.url, proto+"://", "", 1)

@@ -6,7 +6,6 @@ import (
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
 	"ngrok/log"
-	"ngrok/msg"
 	"ngrok/proto"
 	"ngrok/util"
 	"sync"
@@ -48,7 +47,7 @@ type Controller struct {
 	state chan mvc.State
 
 	// options
-	opts *Options
+	config *Configuration
 }
 
 // public interface
@@ -127,29 +126,29 @@ func (ctl *Controller) addView(v mvc.View) {
 	ctl.views = append(ctl.views, v)
 }
 
-func (ctl *Controller) GetWebViewPort() int {
-	return ctl.opts.webport
+func (ctl *Controller) GetWebInspectAddr() string {
+	return ctl.config.InspectAddr
 }
 
-func (ctl *Controller) Run(opts *Options) {
-	// Save the options
-	ctl.opts = opts
+func (ctl *Controller) Run(config *Configuration) {
+	// Save the configuration
+	ctl.config = config
 
 	// init the model
-	model := newClientModel(ctl)
+	model := newClientModel(config, ctl)
 	ctl.model = model
 	var state mvc.State = model
 
 	// init web ui
 	var webView *web.WebView
-	if opts.webport != -1 {
-		webView = web.NewWebView(ctl, opts.webport)
+	if config.InspectAddr != "disabled" {
+		webView = web.NewWebView(ctl, config.InspectAddr)
 		ctl.addView(webView)
 	}
 
 	// init term ui
 	var termView *term.TermView
-	if opts.logto != "stdout" {
+	if config.LogTo != "stdout" {
 		termView = term.NewTermView(ctl)
 		ctl.addView(termView)
 	}
@@ -168,16 +167,8 @@ func (ctl *Controller) Run(opts *Options) {
 		}
 	}
 
-	ctl.Go(func() { autoUpdate(state, opts.authtoken) })
-
-	reqTunnel := &msg.ReqTunnel{
-		Protocol:  opts.protocol,
-		Hostname:  opts.hostname,
-		Subdomain: opts.subdomain,
-		HttpAuth:  opts.httpAuth,
-	}
-
-	ctl.Go(func() { ctl.model.Run(opts.serverAddr, opts.proxyAddr, opts.authtoken, ctl, reqTunnel, opts.localaddr) })
+	ctl.Go(func() { autoUpdate(state, config.AuthToken) })
+	ctl.Go(ctl.model.Run)
 
 	updates := ctl.updates.Reg()
 	defer ctl.updates.UnReg(updates)

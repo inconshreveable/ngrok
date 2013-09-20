@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"fmt"
 	metrics "github.com/inconshreveable/go-metrics"
 	"io/ioutil"
@@ -10,13 +11,16 @@ import (
 	"ngrok/log"
 	"ngrok/msg"
 	"ngrok/proto"
+	"ngrok/util"
 	"ngrok/version"
 	"runtime"
+	"strings"
 	"sync/atomic"
 	"time"
 )
 
 const (
+	defaultServerAddr   = "ngrokd.ngrok.com:443"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
@@ -41,19 +45,41 @@ type ClientModel struct {
 	protocols     []proto.Protocol
 	ctl           mvc.Controller
 	serverAddr    string
-	proxyAddr     string
+	proxyUrl      string
 	authToken     string
+	tlsConfig     *tls.Config
+	tunnelConfig  map[string]TunnelConfiguration
 }
 
-func newClientModel(ctl mvc.Controller) *ClientModel {
+func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 	protoMap := make(map[string]proto.Protocol)
 	protoMap["http"] = proto.NewHttp()
 	protoMap["https"] = protoMap["http"]
 	protoMap["tcp"] = proto.NewTcp()
 	protocols := []proto.Protocol{protoMap["http"], protoMap["tcp"]}
 
+	// configure TLS
+	var tlsConfig *tls.Config
+	if config.TrustHostRootCerts {
+		tlsConfig = &tls.Config{}
+	} else {
+		var err error
+		if tlsConfig, err = LoadTLSConfig(rootCrtPaths); err != nil {
+			panic(err)
+		}
+	}
+
 	return &ClientModel{
 		Logger: log.NewPrefixLogger("client"),
+
+		// server address
+		serverAddr: config.ServerAddr,
+
+		// proxy address
+		proxyUrl: config.ProxyUrl,
+
+		// auth token
+		authToken: config.AuthToken,
 
 		// connection status
 		connStatus: mvc.ConnConnecting,
@@ -75,6 +101,12 @@ func newClientModel(ctl mvc.Controller) *ClientModel {
 
 		// controller
 		ctl: ctl,
+
+		// tls configuration
+		tlsConfig: tlsConfig,
+
+		// tunnel configuration
+		tunnelConfig: config.Tunnels,
 	}
 }
 
@@ -130,22 +162,16 @@ func (c *ClientModel) update() {
 	c.ctl.Update(c)
 }
 
-func (c *ClientModel) Run(serverAddr, proxyAddr, authToken string, ctl mvc.Controller, reqTunnel *msg.ReqTunnel, localaddr string) {
-	c.serverAddr = serverAddr
-	c.proxyAddr = proxyAddr
-	c.authToken = authToken
-	c.ctl = ctl
-	c.reconnectingControl(reqTunnel, localaddr)
-}
-
-func (c *ClientModel) reconnectingControl(reqTunnel *msg.ReqTunnel, localaddr string) {
+func (c *ClientModel) Run() {
 	// how long we should wait before we reconnect
 	maxWait := 30 * time.Second
 	wait := 1 * time.Second
 
 	for {
-		c.control(reqTunnel, localaddr)
+		// run the control channel
+		c.control()
 
+		// control oonly returns when a failure has occurred, so we're going to try to reconnect
 		if c.connStatus == mvc.ConnOnline {
 			wait = 1 * time.Second
 		}
@@ -161,7 +187,7 @@ func (c *ClientModel) reconnectingControl(reqTunnel *msg.ReqTunnel, localaddr st
 }
 
 // Establishes and manages a tunnel control connection with the server
-func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
+func (c *ClientModel) control() {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("control recovering from failure %v", r)
@@ -173,11 +199,11 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 		ctlConn conn.Conn
 		err     error
 	)
-	if c.proxyAddr == "" {
+	if c.proxyUrl == "" {
 		// simple non-proxied case, just connect to the server
-		ctlConn, err = conn.Dial(c.serverAddr, "ctl", tlsConfig)
+		ctlConn, err = conn.Dial(c.serverAddr, "ctl", c.tlsConfig)
 	} else {
-		ctlConn, err = conn.DialHttpProxy(c.proxyAddr, c.serverAddr, "ctl", tlsConfig)
+		ctlConn, err = conn.DialHttpProxy(c.proxyUrl, c.serverAddr, "ctl", c.tlsConfig)
 	}
 	if err != nil {
 		panic(err)
@@ -214,11 +240,32 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 	c.serverVersion = authResp.MmVersion
 	c.Info("Authenticated with server, client id: %v", c.id)
 	c.update()
-	SaveAuthToken(c.authToken)
 
-	// register the tunnel
-	if err = msg.WriteMsg(ctlConn, reqTunnel); err != nil {
-		panic(err)
+	// request tunnels
+	reqIdToTunnelConfig := make(map[string]TunnelConfiguration)
+	for _, config := range c.tunnelConfig {
+		// create the protocol list to ask for
+		var protocols []string
+		for proto, _ := range config.Protocols {
+			protocols = append(protocols, proto)
+		}
+
+		reqTunnel := &msg.ReqTunnel{
+			ReqId:     util.RandId(8),
+			Protocol:  strings.Join(protocols, "+"),
+			Hostname:  config.Hostname,
+			Subdomain: config.Subdomain,
+			HttpAuth:  config.HttpAuth,
+		}
+
+		// send the tunnel request
+		if err = msg.WriteMsg(ctlConn, reqTunnel); err != nil {
+			panic(err)
+		}
+
+		// save request id association so we know which local address
+		// to proxy to later
+		reqIdToTunnelConfig[reqTunnel.ReqId] = config
 	}
 
 	// start the heartbeat
@@ -249,7 +296,7 @@ func (c *ClientModel) control(reqTunnel *msg.ReqTunnel, localaddr string) {
 
 			tunnel := mvc.Tunnel{
 				PublicUrl: m.Url,
-				LocalAddr: localaddr,
+				LocalAddr: reqIdToTunnelConfig[m.ReqId].Protocols[m.Protocol],
 				Protocol:  c.protoMap[m.Protocol],
 			}
 
@@ -271,10 +318,10 @@ func (c *ClientModel) proxy() {
 		err        error
 	)
 
-	if c.proxyAddr == "" {
-		remoteConn, err = conn.Dial(c.serverAddr, "pxy", tlsConfig)
+	if c.proxyUrl == "" {
+		remoteConn, err = conn.Dial(c.serverAddr, "pxy", c.tlsConfig)
 	} else {
-		remoteConn, err = conn.DialHttpProxy(c.proxyAddr, c.serverAddr, "pxy", tlsConfig)
+		remoteConn, err = conn.DialHttpProxy(c.proxyUrl, c.serverAddr, "pxy", c.tlsConfig)
 	}
 
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 	"net"
 	"net/http"
 	"ngrok/log"
-	"strings"
+	"net/url"
 )
 
 type Conn interface {
@@ -90,18 +90,31 @@ func Dial(addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
 	return
 }
 
-func DialHttpProxy(proxyAddr, addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
-	var proxyAuth string
+func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
+	// parse the proxy address
+	var parsedUrl *url.URL
+	if parsedUrl, err = url.Parse(proxyUrl); err != nil {
+		return
+	}
 
-	// parse the proxy address for authentication credentials
-	addrParts := strings.Split(proxyAddr, "@")
-	if len(addrParts) == 2 {
-		proxyAddr = addrParts[1]
-		proxyAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(addrParts[0]))
+	var proxyAuth string
+	if parsedUrl.User != nil {
+		proxyAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(parsedUrl.User.String()))
+	}
+
+	var proxyTlsConfig *tls.Config
+	switch parsedUrl.Scheme {
+		case "http":
+			proxyTlsConfig = nil
+		case "https":
+			proxyTlsConfig = new(tls.Config)
+		default:
+			err = fmt.Errorf("Proxy URL scheme must be http or https, got: %s", parsedUrl.Scheme)
+			return
 	}
 
 	// dial the proxy
-	if conn, err = Dial(proxyAddr, typ, nil); err != nil {
+	if conn, err = Dial(parsedUrl.Host, typ, proxyTlsConfig); err != nil {
 		return
 	}
 

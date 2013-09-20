@@ -2,7 +2,6 @@
 package term
 
 import (
-	"fmt"
 	termbox "github.com/nsf/termbox-go"
 	"ngrok/client/mvc"
 	"ngrok/log"
@@ -108,11 +107,7 @@ func (v *TermView) draw() {
 		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
 		i++
 	}
-	webAddr := fmt.Sprintf("http://localhost:%d", v.ctl.GetWebViewPort())
-	if v.ctl.GetWebViewPort() == -1 {
-		webAddr = "disabled"
-	}
-	v.Printf(0, i+0, "%-30s%s", "Web Interface", webAddr)
+	v.Printf(0, i+0, "%-30s%s", "Web Interface", v.ctl.GetWebInspectAddr())
 
 	connMeter, connTimer := state.GetConnectionMetrics()
 	v.Printf(0, i+1, "%-30s%d", "# Conn", connMeter.Count())

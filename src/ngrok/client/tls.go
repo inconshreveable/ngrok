@@ -4,42 +4,34 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"ngrok/client/assets"
 )
 
-var (
-	tlsConfig *tls.Config
-)
-
-func init() {
+func LoadTLSConfig(rootCertPaths []string) (*tls.Config, error) {
 	pool := x509.NewCertPool()
 
-	ngrokRootCrt, err := assets.ReadAsset("assets/client/tls/ngrokroot.crt")
-	if err != nil {
-		panic(err)
-	}
+	for _, certPath := range rootCertPaths {
+		rootCrt, err := assets.ReadAsset(certPath)
+		if err != nil {
+			return nil, err
+		}
 
-	snakeoilCaCrt, err := assets.ReadAsset("assets/client/tls/snakeoilca.crt")
-	if err != nil {
-		panic(err)
-	}
-
-	for _, b := range [][]byte{ngrokRootCrt, snakeoilCaCrt} {
-		pemBlock, _ := pem.Decode(b)
+		pemBlock, _ := pem.Decode(rootCrt)
 		if pemBlock == nil {
-			panic("Bad PEM data")
+			return nil, fmt.Errorf("Bad PEM data")
 		}
 
 		certs, err := x509.ParseCertificates(pemBlock.Bytes)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		pool.AddCert(certs[0])
 	}
 
-	tlsConfig = &tls.Config{
+	return &tls.Config{
 		RootCAs:    pool,
-		ServerName: "tls.ngrok.com",
-	}
+		ServerName: "ngrokd.ngrok.com",
+	}, nil
 }
