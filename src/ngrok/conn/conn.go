@@ -119,7 +119,7 @@ func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *logged
 	}
 
 	// send an HTTP proxy CONNECT message
-	req, err := http.NewRequest("CONNECT", "http://"+addr, nil)
+	req, err := http.NewRequest("CONNECT", "https://"+addr, nil)
 	if err != nil {
 		return
 	}
