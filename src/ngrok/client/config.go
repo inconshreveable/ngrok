@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -29,21 +30,6 @@ type TunnelConfiguration struct {
 	Hostname  string            `yaml:"hostname"`
 	Protocols map[string]string `yaml:"proto"`
 	HttpAuth  string            `yaml:"auth"`
-}
-
-func defaultPath() string {
-	user, err := user.Current()
-
-	// user.Current() does not work on linux when cross compilling because
-	// it requires CGO; use os.Getenv("HOME") hack until we compile natively
-	homeDir := os.Getenv("HOME")
-	if err != nil {
-		log.Warn("Failed to get user's home directory: %s. Using $HOME: %s", err.Error(), homeDir)
-	} else {
-		homeDir = user.HomeDir
-	}
-
-	return path.Join(homeDir, ".ngrok")
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
@@ -68,6 +54,15 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	if err = goyaml.Unmarshal(configBuf, &config); err != nil {
 		err = fmt.Errorf("Error parsing configuration file %s: %v", configPath, err)
 		return
+	}
+
+	// try to parse the old .ngrok format for backwards compatibility
+	matched := false
+	content := strings.TrimSpace(string(configBuf))
+	if matched, err = regexp.MatchString("^[0-9a-zA-Z_\\-!]+$", content); err != nil {
+		return
+	} else if matched {
+		config = &Configuration{AuthToken: content}
 	}
 
 	// set configuration defaults
@@ -167,6 +162,21 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	}
 
 	return
+}
+
+func defaultPath() string {
+	user, err := user.Current()
+
+	// user.Current() does not work on linux when cross compilling because
+	// it requires CGO; use os.Getenv("HOME") hack until we compile natively
+	homeDir := os.Getenv("HOME")
+	if err != nil {
+		log.Warn("Failed to get user's home directory: %s. Using $HOME: %s", err.Error(), homeDir)
+	} else {
+		homeDir = user.HomeDir
+	}
+
+	return path.Join(homeDir, ".ngrok")
 }
 
 func normalizeAddress(addr string, propName string) (string, error) {
