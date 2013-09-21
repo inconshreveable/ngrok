@@ -114,7 +114,9 @@ func parseArgs() (opts *Options, err error) {
 
 	default:
 		if len(flag.Args()) > 1 {
-			err = fmt.Errorf("You may only specify one port/address to tunnel to on the command line")
+			err = fmt.Errorf("You may only specify one port to tunnel to on the command line, got %d: %v",
+				len(flag.Args()),
+				flag.Args())
 			return
 		}
 

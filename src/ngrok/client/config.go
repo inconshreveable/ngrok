@@ -16,12 +16,12 @@ import (
 )
 
 type Configuration struct {
-	HttpProxy          string                         `yaml:"http_proxy"`
-	ServerAddr         string                         `yaml:"server_addr"`
-	InspectAddr        string                         `yaml:"inspect_addr"`
-	TrustHostRootCerts bool                           `yaml:"trust_host_root_certs"`
-	AuthToken          string                         `yaml:"auth_token"`
-	Tunnels            map[string]TunnelConfiguration `yaml:"tunnels"`
+	HttpProxy          string                          `yaml:"http_proxy"`
+	ServerAddr         string                          `yaml:"server_addr"`
+	InspectAddr        string                          `yaml:"inspect_addr"`
+	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs"`
+	AuthToken          string                          `yaml:"auth_token"`
+	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels"`
 	LogTo              string
 }
 
@@ -78,6 +78,56 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		config.HttpProxy = os.Getenv("http_proxy")
 	}
 
+	// validate and normalize configuration
+	if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil {
+		return
+	}
+
+	if config.ServerAddr, err = normalizeAddress(config.ServerAddr, "server_addr"); err != nil {
+		return
+	}
+
+	if config.HttpProxy != "" {
+		var proxyUrl *url.URL
+		if proxyUrl, err = url.Parse(config.HttpProxy); err != nil {
+			return
+		} else {
+			if proxyUrl.Scheme != "http" && proxyUrl.Scheme != "https" {
+				err = fmt.Errorf("Proxy url scheme must be 'http' or 'https', got %v", proxyUrl.Scheme)
+				return
+			}
+		}
+	}
+
+	for name, t := range config.Tunnels {
+		if t == nil || t.Protocols == nil || len(t.Protocols) == 0 {
+			err = fmt.Errorf("Tunnel %s does not specify any protocols to tunnel.", name)
+			return
+		}
+
+		for k, addr := range t.Protocols {
+			tunnelName := fmt.Sprintf("for tunnel %s[%s]", name, k)
+			if t.Protocols[k], err = normalizeAddress(addr, tunnelName); err != nil {
+				return
+			}
+
+			if err = validateProtocol(k, tunnelName); err != nil {
+				return
+			}
+		}
+
+		// use the name of the tunnel as the subdomain if none is specified
+		if t.Hostname == "" && t.Subdomain == "" {
+			// XXX: a crude heuristic, really we should be checking if the last part
+			// is a TLD
+			if len(strings.Split(name, ".")) > 1 {
+				t.Hostname = name
+			} else {
+				t.Subdomain = name
+			}
+		}
+	}
+
 	// override configuration with command-line options
 	config.LogTo = opts.logto
 	if opts.authtoken != "" {
@@ -87,8 +137,8 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	switch opts.command {
 	// start a single tunnel, the default, simple ngrok behavior
 	case "default":
-		config.Tunnels = make(map[string]TunnelConfiguration)
-		config.Tunnels["default"] = TunnelConfiguration{
+		config.Tunnels = make(map[string]*TunnelConfiguration)
+		config.Tunnels["default"] = &TunnelConfiguration{
 			Subdomain: opts.subdomain,
 			Hostname:  opts.hostname,
 			HttpAuth:  opts.httpauth,
@@ -96,7 +146,13 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		}
 
 		for _, proto := range strings.Split(opts.protocol, "+") {
-			config.Tunnels["default"].Protocols[proto] = opts.args[0]
+			if err = validateProtocol(proto, "default"); err != nil {
+				return
+			}
+
+			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
+				return
+			}
 		}
 
 	// start tunnels
@@ -127,40 +183,6 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		return
 	}
 
-	// validate and normalize configuration
-	if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil {
-		return
-	}
-
-	if config.ServerAddr, err = normalizeAddress(config.ServerAddr, "server_addr"); err != nil {
-		return
-	}
-
-	if config.HttpProxy != "" {
-		var proxyUrl *url.URL
-		if proxyUrl, err = url.Parse(config.HttpProxy); err != nil {
-			return
-		} else {
-			if proxyUrl.Scheme != "http" && proxyUrl.Scheme != "https" {
-				err = fmt.Errorf("Proxy url scheme must be 'http' or 'https', got %v", proxyUrl.Scheme)
-				return
-			}
-		}
-	}
-
-	for name, t := range config.Tunnels {
-		for k, addr := range t.Protocols {
-			tunnelName := fmt.Sprintf("tunnel %s[%s]", name, k)
-			if t.Protocols[k], err = normalizeAddress(addr, tunnelName); err != nil {
-				return
-			}
-
-			if err = validateProtocol(k, tunnelName); err != nil {
-				return
-			}
-		}
-	}
-
 	return
 }
 
@@ -187,7 +209,7 @@ func normalizeAddress(addr string, propName string) (string, error) {
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
-		return "", fmt.Errorf("Invalid %s '%s': %s", propName, addr, err.Error())
+		return "", fmt.Errorf("Invalid address %s '%s': %s", propName, addr, err.Error())
 	}
 
 	if tcpAddr.IP == nil {

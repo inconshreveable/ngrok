@@ -48,7 +48,7 @@ type ClientModel struct {
 	proxyUrl      string
 	authToken     string
 	tlsConfig     *tls.Config
-	tunnelConfig  map[string]TunnelConfiguration
+	tunnelConfig  map[string]*TunnelConfiguration
 }
 
 func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
@@ -242,7 +242,7 @@ func (c *ClientModel) control() {
 	c.update()
 
 	// request tunnels
-	reqIdToTunnelConfig := make(map[string]TunnelConfiguration)
+	reqIdToTunnelConfig := make(map[string]*TunnelConfiguration)
 	for _, config := range c.tunnelConfig {
 		// create the protocol list to ask for
 		var protocols []string
