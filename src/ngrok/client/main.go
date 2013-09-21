@@ -1,11 +1,11 @@
 package client
 
 import (
-"fmt"
-	"os"
+	"fmt"
 	"math/rand"
 	"ngrok/log"
 	"ngrok/util"
+	"os"
 )
 
 func Main() {

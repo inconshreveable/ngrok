@@ -1,27 +1,27 @@
 package client
 
 import (
-"fmt"
+	"fmt"
 	"io/ioutil"
 	"launchpad.net/goyaml"
+	"net"
+	"net/url"
 	"ngrok/log"
 	"os"
 	"os/user"
 	"path"
-	"strings"
-	"net/url"
-	"net"
 	"strconv"
+	"strings"
 )
 
 type Configuration struct {
-	HttpProxy          string `yaml:"http_proxy"`
-	ServerAddr         string `yaml:"server_addr"`
-	InspectAddr        string `yaml:"inspect_addr"`
-	TrustHostRootCerts bool   `yaml:"trust_host_root_certs"`
-	AuthToken          string `yaml:"auth_token"`
+	HttpProxy          string                         `yaml:"http_proxy"`
+	ServerAddr         string                         `yaml:"server_addr"`
+	InspectAddr        string                         `yaml:"inspect_addr"`
+	TrustHostRootCerts bool                           `yaml:"trust_host_root_certs"`
+	AuthToken          string                         `yaml:"auth_token"`
 	Tunnels            map[string]TunnelConfiguration `yaml:"tunnels"`
-	LogTo			string
+	LogTo              string
 }
 
 type TunnelConfiguration struct {

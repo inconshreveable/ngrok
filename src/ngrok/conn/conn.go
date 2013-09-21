@@ -10,8 +10,8 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"ngrok/log"
 	"net/url"
+	"ngrok/log"
 )
 
 type Conn interface {
@@ -104,13 +104,13 @@ func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *logged
 
 	var proxyTlsConfig *tls.Config
 	switch parsedUrl.Scheme {
-		case "http":
-			proxyTlsConfig = nil
-		case "https":
-			proxyTlsConfig = new(tls.Config)
-		default:
-			err = fmt.Errorf("Proxy URL scheme must be http or https, got: %s", parsedUrl.Scheme)
-			return
+	case "http":
+		proxyTlsConfig = nil
+	case "https":
+		proxyTlsConfig = new(tls.Config)
+	default:
+		err = fmt.Errorf("Proxy URL scheme must be http or https, got: %s", parsedUrl.Scheme)
+		return
 	}
 
 	// dial the proxy
