@@ -1,11 +1,13 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"ngrok/conn"
 	"ngrok/log"
 	"strings"
+	"time"
 )
 
 const (
@@ -29,26 +31,31 @@ Bad Request
 `
 )
 
-/**
- * Listens for new http connections from the public internet
- */
-func httpListener(addr *net.TCPAddr) {
+// Listens for new http(s) connections from the public internet
+func startHttpListener(addr string, tlsCfg *tls.Config) (listener *conn.Listener) {
 	// bind/listen for incoming connections
-	listener, err := conn.Listen(addr, "pub", nil)
-	if err != nil {
+	var err error
+	if listener, err = conn.Listen(addr, "pub", tlsCfg); err != nil {
 		panic(err)
 	}
 
-	log.Info("Listening for public http connections on %v", listener.Port)
-	for conn := range listener.Conns {
-		go httpHandler(conn)
+	proto := "http"
+	if tlsCfg != nil {
+		proto = "https"
 	}
+
+	log.Info("Listening for public %s connections on %v", proto, listener.Addr.String())
+	go func() {
+		for conn := range listener.Conns {
+			go httpHandler(conn, proto)
+		}
+	}()
+
+	return
 }
 
-/**
- * Handles a new http connection from the public internet
- */
-func httpHandler(tcpConn net.Conn) {
+// Handles a new http connection from the public internet
+func httpHandler(tcpConn net.Conn, proto string) {
 	// wrap up the connection for logging
 	conn := conn.NewHttp(tcpConn, "pub")
 
@@ -60,10 +67,13 @@ func httpHandler(tcpConn net.Conn) {
 		}
 	}()
 
+	// Make sure we detect dead connections while we decide how to multiplex
+	conn.SetDeadline(time.Now().Add(connReadTimeout))
+
 	// read out the http request
 	req, err := conn.ReadRequest()
 	if err != nil {
-		conn.Warn("Failed to read valid http request: %v", err)
+		conn.Warn("Failed to read valid %s request: %v", proto, err)
 		conn.Write([]byte(BadRequest))
 		return
 	}
@@ -73,7 +83,7 @@ func httpHandler(tcpConn net.Conn) {
 	conn.Debug("Found hostname %s in request", host)
 
 	// multiplex to find the right backend host
-	tunnel := tunnels.Get("http://" + host)
+	tunnel := tunnelRegistry.Get(fmt.Sprintf("%s://%s", proto, host))
 	if tunnel == nil {
 		conn.Info("No tunnel found for hostname %s", host)
 		conn.Write([]byte(fmt.Sprintf(NotFound, len(host)+18, host)))
@@ -83,11 +93,15 @@ func httpHandler(tcpConn net.Conn) {
 	// If the client specified http auth and it doesn't match this request's auth
 	// then fail the request with 401 Not Authorized and request the client reissue the
 	// request with basic authdeny the request
-	if tunnel.regMsg.HttpAuth != "" && req.Header.Get("Authorization") != tunnel.regMsg.HttpAuth {
+	if tunnel.req.HttpAuth != "" && req.Header.Get("Authorization") != tunnel.req.HttpAuth {
 		conn.Info("Authentication failed: %s", req.Header.Get("Authorization"))
 		conn.Write([]byte(NotAuthorized))
 		return
 	}
 
+	// dead connections will now be handled by tunnel heartbeating and the client
+	conn.SetDeadline(time.Time{})
+
+	// let the tunnel handle the connection now
 	tunnel.HandlePublicConnection(conn)
 }

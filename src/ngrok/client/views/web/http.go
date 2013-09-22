@@ -10,7 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"ngrok/client/assets"
-	"ngrok/client/ui"
+	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
@@ -22,6 +22,7 @@ type SerializedTxn struct {
 	Id             string
 	Duration       int64
 	Start          int64
+	ConnCtx        mvc.ConnectionContext
 	*proto.HttpTxn `json:"-"`
 	Req            SerializedRequest
 	Resp           SerializedResponse
@@ -55,17 +56,18 @@ type SerializedResponse struct {
 }
 
 type WebHttpView struct {
+	log.Logger
+
 	webview      *WebView
-	ctl          *ui.Controller
+	ctl          mvc.Controller
 	httpProto    *proto.Http
-	updates      chan interface{}
 	state        chan SerializedUiState
 	HttpRequests *util.Ring
 	idToTxn      map[string]*SerializedTxn
 }
 
 type SerializedUiState struct {
-	Url string
+	Tunnels []mvc.Tunnel
 }
 
 type SerializedPayload struct {
@@ -73,20 +75,18 @@ type SerializedPayload struct {
 	UiState SerializedUiState
 }
 
-func NewWebHttpView(wv *WebView, ctl *ui.Controller, proto *proto.Http) *WebHttpView {
-	w := &WebHttpView{
+func newWebHttpView(ctl mvc.Controller, wv *WebView, proto *proto.Http) *WebHttpView {
+	whv := &WebHttpView{
+		Logger:       log.NewPrefixLogger("view", "web", "http"),
 		webview:      wv,
 		ctl:          ctl,
 		httpProto:    proto,
 		idToTxn:      make(map[string]*SerializedTxn),
-		updates:      ctl.Updates.Reg(),
-		state:        make(chan SerializedUiState),
 		HttpRequests: util.NewRing(20),
 	}
-	go w.updateHttp()
-	go w.updateUiState()
-	w.register()
-	return w
+	ctl.Go(whv.updateHttp)
+	whv.register()
+	return whv
 }
 
 type XMLDoc struct {
@@ -153,22 +153,16 @@ func (whv *WebHttpView) updateHttp() {
 
 		// we haven't processed this transaction yet if we haven't set the
 		// user data
-		if htxn.UserData == nil {
-			id, err := util.RandId(8)
-			if err != nil {
-				log.Error("Failed to generate txn identifier for web storage: %v", err)
-				continue
-			}
-
+		if htxn.UserCtx == nil {
 			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
 			if err != nil {
-				log.Error("Failed to dump request: %v", err)
+				whv.Error("Failed to dump request: %v", err)
 				continue
 			}
 
 			body := makeBody(htxn.Req.Header, htxn.Req.BodyBytes)
 			whtxn := &SerializedTxn{
-				Id:      id,
+				Id:      util.RandId(8),
 				HttpTxn: htxn,
 				Req: SerializedRequest{
 					MethodPath: htxn.Req.Method + " " + htxn.Req.URL.Path,
@@ -178,10 +172,11 @@ func (whv *WebHttpView) updateHttp() {
 					Body:       body,
 					Binary:     !utf8.Valid(rawReq),
 				},
-				Start: htxn.Start.Unix(),
+				Start:   htxn.Start.Unix(),
+				ConnCtx: htxn.ConnUserCtx.(mvc.ConnectionContext),
 			}
 
-			htxn.UserData = whtxn
+			htxn.UserCtx = whtxn
 			// XXX: unsafe map access from multiple go routines
 			whv.idToTxn[whtxn.Id] = whtxn
 			// XXX: use return value to delete from map so we don't leak memory
@@ -189,11 +184,11 @@ func (whv *WebHttpView) updateHttp() {
 		} else {
 			rawResp, err := httputil.DumpResponse(htxn.Resp.Response, true)
 			if err != nil {
-				log.Error("Failed to dump response: %v", err)
+				whv.Error("Failed to dump response: %v", err)
 				continue
 			}
 
-			txn := htxn.UserData.(*SerializedTxn)
+			txn := htxn.UserCtx.(*SerializedTxn)
 			body := makeBody(htxn.Resp.Header, htxn.Resp.BodyBytes)
 			txn.Duration = htxn.Duration.Nanoseconds()
 			txn.Resp = SerializedResponse{
@@ -206,43 +201,46 @@ func (whv *WebHttpView) updateHttp() {
 
 			payload, err := json.Marshal(txn)
 			if err != nil {
-				log.Error("Failed to serialized txn payload for websocket: %v", err)
+				whv.Error("Failed to serialized txn payload for websocket: %v", err)
 			}
 			whv.webview.wsMessages.In() <- payload
 		}
 	}
 }
 
-func (v *WebHttpView) updateUiState() {
-	var s SerializedUiState
-	for {
-		select {
-		case obj := <-v.updates:
-			uiState := obj.(ui.State)
-			s.Url = uiState.GetPublicUrl()
-		case v.state <- s:
-		}
-	}
-}
-
-func (h *WebHttpView) register() {
+func (whv *WebHttpView) register() {
 	http.HandleFunc("/http/in/replay", func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				err := util.MakePanicTrace(r)
+				whv.Error("Replay failed: %v", err)
+				http.Error(w, err, 500)
+			}
+		}()
+
 		r.ParseForm()
 		txnid := r.Form.Get("txnid")
-		if txn, ok := h.idToTxn[txnid]; ok {
+		if txn, ok := whv.idToTxn[txnid]; ok {
 			reqBytes, err := base64.StdEncoding.DecodeString(txn.Req.Raw)
 			if err != nil {
 				panic(err)
 			}
-			h.ctl.Cmds <- ui.CmdRequest{Payload: reqBytes}
+			whv.ctl.PlayRequest(txn.ConnCtx.Tunnel, reqBytes)
 			w.Write([]byte(http.StatusText(200)))
 		} else {
-			// XXX: 400
-			http.NotFound(w, r)
+			http.Error(w, http.StatusText(400), 400)
 		}
 	})
 
 	http.HandleFunc("/http/in", func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				err := util.MakePanicTrace(r)
+				whv.Error("HTTP web view failed: %v", err)
+				http.Error(w, err, 500)
+			}
+		}()
+
 		pageTmpl, err := assets.ReadAsset("assets/client/page.html")
 		if err != nil {
 			panic(err)
@@ -251,8 +249,8 @@ func (h *WebHttpView) register() {
 		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(pageTmpl)))
 
 		payloadData := SerializedPayload{
-			Txns:    h.HttpRequests.Slice(),
-			UiState: <-h.state,
+			Txns:    whv.HttpRequests.Slice(),
+			UiState: SerializedUiState{Tunnels: whv.ctl.State().GetTunnels()},
 		}
 
 		payload, err := json.Marshal(payloadData)
@@ -265,4 +263,7 @@ func (h *WebHttpView) register() {
 			panic(err)
 		}
 	})
+}
+
+func (whv *WebHttpView) Shutdown() {
 }

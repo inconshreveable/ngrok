@@ -8,7 +8,6 @@ import (
 	"ngrok/conn"
 	"ngrok/log"
 	"ngrok/msg"
-	"ngrok/version"
 	"os"
 	"strconv"
 	"strings"
@@ -16,12 +15,19 @@ import (
 	"time"
 )
 
+var defaultPortMap = map[string]int{
+	"http":  80,
+	"https": 443,
+	"smtp":  25,
+}
+
 /**
  * Tunnel: A control connection, metadata and proxy connections which
  *         route public traffic to a firewalled endpoint.
  */
 type Tunnel struct {
-	regMsg *msg.RegMsg
+	// request that opened the tunnel
+	req *msg.ReqTunnel
 
 	// time when the tunnel was opened
 	start time.Time
@@ -35,9 +41,6 @@ type Tunnel struct {
 	// control connection
 	ctl *Control
 
-	// proxy connections
-	proxies chan conn.Conn
-
 	// logger
 	log.Logger
 
@@ -45,27 +48,66 @@ type Tunnel struct {
 	closing int32
 }
 
-func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
+// Common functionality for registering virtually hosted protocols
+func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
+	vhost := os.Getenv("VHOST")
+	if vhost == "" {
+		vhost = fmt.Sprintf("%s:%d", opts.domain, servingPort)
+	}
+
+	// Canonicalize virtual host by removing default port (e.g. :80 on HTTP)
+	defaultPort, ok := defaultPortMap[protocol]
+	if !ok {
+		return fmt.Errorf("Couldn't find default port for protocol %s", protocol)
+	}
+
+	defaultPortSuffix := fmt.Sprintf(":%d", defaultPort)
+	if strings.HasSuffix(vhost, defaultPortSuffix) {
+		vhost = vhost[0 : len(vhost)-len(defaultPortSuffix)]
+	}
+
+	// Canonicalize by always using lower-case
+	vhost = strings.ToLower(vhost)
+
+	// Register for specific hostname
+	hostname := strings.ToLower(strings.TrimSpace(t.req.Hostname))
+	if hostname != "" {
+		t.url = fmt.Sprintf("%s://%s", protocol, hostname)
+		return tunnelRegistry.Register(t.url, t)
+	}
+
+	// Register for specific subdomain
+	subdomain := strings.ToLower(strings.TrimSpace(t.req.Subdomain))
+	if subdomain != "" {
+		t.url = fmt.Sprintf("%s://%s.%s", protocol, subdomain, vhost)
+		return tunnelRegistry.Register(t.url, t)
+	}
+
+	// Register for random URL
+	t.url, err = tunnelRegistry.RegisterRepeat(func() string {
+		return fmt.Sprintf("%s://%x.%s", protocol, rand.Int31(), vhost)
+	}, t)
+
+	return
+}
+
+// Create a new tunnel from a registration message received
+// on a control channel
+func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 	t = &Tunnel{
-		regMsg:  m,
-		start:   time.Now(),
-		ctl:     ctl,
-		proxies: make(chan conn.Conn),
-		Logger:  log.NewPrefixLogger(),
+		req:    m,
+		start:  time.Now(),
+		ctl:    ctl,
+		Logger: log.NewPrefixLogger(),
 	}
 
-	failReg := func(err error) {
-		t.ctl.stop <- &msg.RegAckMsg{Error: err.Error()}
-	}
-
-	var err error
-
-	switch t.regMsg.Protocol {
+	proto := t.req.Protocol
+	switch proto {
 	case "tcp":
 		var port int = 0
 
 		// try to return to you the same port you had before
-		cachedUrl := tunnels.GetCachedRegistration(t)
+		cachedUrl := tunnelRegistry.GetCachedRegistration(t)
 		if cachedUrl != "" {
 			parts := strings.Split(cachedUrl, ":")
 			portPart := parts[len(parts)-1]
@@ -88,64 +130,38 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 
 		// we tried to bind with a random port and failed (no more ports available?)
 		if err != nil {
-			failReg(t.ctl.conn.Error("Error binding TCP listener: %v", err))
+			err = t.ctl.conn.Error("Error binding TCP listener: %v", err)
 			return
 		}
 
 		// create the url
 		addr := t.listener.Addr().(*net.TCPAddr)
-		t.url = fmt.Sprintf("tcp://%s:%d", domain, addr.Port)
+		t.url = fmt.Sprintf("tcp://%s:%d", opts.domain, addr.Port)
 
 		// register it
-		if err = tunnels.RegisterAndCache(t.url, t); err != nil {
+		if err = tunnelRegistry.RegisterAndCache(t.url, t); err != nil {
 			// This should never be possible because the OS will
 			// only assign available ports to us.
 			t.listener.Close()
-			failReg(fmt.Errorf("TCP listener bound, but failed to register %s", t.url))
+			err = fmt.Errorf("TCP listener bound, but failed to register %s", t.url)
 			return
 		}
 
 		go t.listenTcp(t.listener)
 
-	case "http":
-		vhost := os.Getenv("VHOST")
-		if vhost == "" {
-			vhost = fmt.Sprintf("%s:%d", domain, publicPort)
+	case "http", "https":
+		l, ok := listeners[proto]
+		if !ok {
+			err = fmt.Errorf("Not listeneing for %s connections", proto)
+			return
 		}
 
-		// Canonicalize virtual host on default port 80
-		if strings.HasSuffix(vhost, ":80") {
-			vhost = vhost[0 : len(vhost)-3]
+		if err = registerVhost(t, proto, l.Addr.(*net.TCPAddr).Port); err != nil {
+			return
 		}
 
-		if strings.TrimSpace(t.regMsg.Hostname) != "" {
-			t.url = fmt.Sprintf("http://%s", t.regMsg.Hostname)
-		} else if strings.TrimSpace(t.regMsg.Subdomain) != "" {
-			t.url = fmt.Sprintf("http://%s.%s", t.regMsg.Subdomain, vhost)
-		}
-
-		vhost = strings.ToLower(vhost)
-		t.url = strings.ToLower(t.url)
-
-		if t.url != "" {
-			if err := tunnels.Register(t.url, t); err != nil {
-				failReg(err)
-				return
-			}
-		} else {
-			t.url, err = tunnels.RegisterRepeat(func() string {
-				return fmt.Sprintf("http://%x.%s", rand.Int31(), vhost)
-			}, t)
-
-			if err != nil {
-				failReg(err)
-				return
-			}
-		}
-	}
-
-	if m.Version != version.Proto {
-		failReg(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), m.Version))
+	default:
+		err = fmt.Errorf("Protocol %s is not supported", proto)
 		return
 	}
 
@@ -154,35 +170,31 @@ func newTunnel(m *msg.RegMsg, ctl *Control) (t *Tunnel) {
 		m.HttpAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(m.HttpAuth))
 	}
 
-	t.ctl.conn.AddLogPrefix(t.Id())
 	t.AddLogPrefix(t.Id())
-	t.Info("Registered new tunnel")
-	t.ctl.out <- &msg.RegAckMsg{
-		Url:       t.url,
-		ProxyAddr: fmt.Sprintf("%s", proxyAddr),
-		Version:   version.Proto,
-		MmVersion: version.MajorMinor(),
-	}
+	t.Info("Registered new tunnel on: %s", t.ctl.conn.Id())
 
 	metrics.OpenTunnel(t)
 	return
 }
 
-func (t *Tunnel) shutdown() {
+func (t *Tunnel) Shutdown() {
 	t.Info("Shutting down")
 
 	// mark that we're shutting down
 	atomic.StoreInt32(&t.closing, 1)
 
-	// if we have a public listener (this is a raw TCP tunnel, shut it down
+	// if we have a public listener (this is a raw TCP tunnel), shut it down
 	if t.listener != nil {
 		t.listener.Close()
 	}
 
 	// remove ourselves from the tunnel registry
-	tunnels.Del(t.url)
+	tunnelRegistry.Del(t.url)
 
-	// XXX: shut down all of the proxy connections?
+	// let the control connection know we're shutting down
+	// currently, only the control connection shuts down tunnels,
+	// so it doesn't need to know about it
+	// t.ctl.stoptunnel <- t
 
 	metrics.CloseTunnel(t)
 }
@@ -191,9 +203,7 @@ func (t *Tunnel) Id() string {
 	return t.url
 }
 
-/**
- * Listens for new public tcp connections from the internet.
- */
+// Listens for new public tcp connections from the internet.
 func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 	for {
 		defer func() {
@@ -234,20 +244,39 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 	startTime := time.Now()
 	metrics.OpenConnection(t, publicConn)
 
-	t.Debug("Requesting new proxy connection")
-	t.ctl.out <- &msg.ReqProxyMsg{}
+	var proxyConn conn.Conn
+	var attempts int
+	var err error
+	for {
+		// get a proxy connection
+		if proxyConn, err = t.ctl.GetProxy(); err != nil {
+			t.Warn("Failed to get proxy connection: %v", err)
+			return
+		}
+		defer proxyConn.Close()
+		t.Info("Got proxy connection %s", proxyConn.Id())
+		proxyConn.AddLogPrefix(t.Id())
 
-	proxyConn := <-t.proxies
-	t.Info("Returning proxy connection %s", proxyConn.Id())
+		// tell the client we're going to start using this proxy connection
+		startPxyMsg := &msg.StartProxy{
+			Url:        t.url,
+			ClientAddr: publicConn.RemoteAddr().String(),
+		}
+		if err = msg.WriteMsg(proxyConn, startPxyMsg); err != nil {
+			attempts += 1
+			proxyConn.Warn("Failed to write StartProxyMessage: %v, attempt %d", err, attempts)
+			if attempts > 3 {
+				// give up
+				publicConn.Error("Too many failures starting proxy connection")
+				return
+			}
+		} else {
+			// success
+			break
+		}
+	}
 
-	defer proxyConn.Close()
+	// join the public and proxy connections
 	bytesIn, bytesOut := conn.Join(publicConn, proxyConn)
-
 	metrics.CloseConnection(t, publicConn, startTime, bytesIn, bytesOut)
-}
-
-func (t *Tunnel) RegisterProxy(conn conn.Conn) {
-	t.Info("Registered proxy connection %s", conn.Id())
-	conn.AddLogPrefix(t.Id())
-	t.proxies <- conn
 }

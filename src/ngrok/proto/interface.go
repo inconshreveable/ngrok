@@ -6,5 +6,5 @@ import (
 
 type Protocol interface {
 	GetName() string
-	WrapConn(conn.Conn) conn.Conn
+	WrapConn(conn.Conn, interface{}) conn.Conn
 }

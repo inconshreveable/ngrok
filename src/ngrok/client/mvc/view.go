@@ -1,5 +1,5 @@
-package ui
+package mvc
 
 type View interface {
-	Render()
+	Shutdown()
 }

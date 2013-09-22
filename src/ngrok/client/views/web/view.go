@@ -2,11 +2,10 @@
 package web
 
 import (
-	"fmt"
 	"github.com/garyburd/go-websocket/websocket"
 	"net/http"
 	"ngrok/client/assets"
-	"ngrok/client/ui"
+	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
@@ -14,34 +13,38 @@ import (
 )
 
 type WebView struct {
+	log.Logger
+
+	ctl mvc.Controller
+
+	// messages sent over this broadcast are sent too all websocket connections
 	wsMessages *util.Broadcast
 }
 
-func NewWebView(ctl *ui.Controller, state ui.State, port int) *WebView {
-	v := &WebView{
+func NewWebView(ctl mvc.Controller, addr string) *WebView {
+	wv := &WebView{
+		Logger:     log.NewPrefixLogger("view", "web"),
 		wsMessages: util.NewBroadcast(),
+		ctl:        ctl,
 	}
 
-	switch p := state.GetProtocol().(type) {
-	case *proto.Http:
-		NewWebHttpView(v, ctl, p)
-	}
-
+	// for now, always redirect to the http view
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/http/in", 302)
 	})
 
+	// handle web socket connections
 	http.HandleFunc("/_ws", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Upgrade(w, r.Header, nil, 1024, 1024)
 
 		if err != nil {
 			http.Error(w, "Failed websocket upgrade", 400)
-			log.Warn("Failed websocket upgrade: %v", err)
+			wv.Warn("Failed websocket upgrade: %v", err)
 			return
 		}
 
-		msgs := v.wsMessages.Reg()
-		defer v.wsMessages.UnReg(msgs)
+		msgs := wv.wsMessages.Reg()
+		defer wv.wsMessages.UnReg(msgs)
 		for m := range msgs {
 			err := conn.WriteMessage(websocket.OpText, m.([]byte))
 			if err != nil {
@@ -51,17 +54,25 @@ func NewWebView(ctl *ui.Controller, state ui.State, port int) *WebView {
 		}
 	})
 
+	// serve static assets
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		buf, err := assets.ReadAsset(path.Join("assets", "client", r.URL.Path[1:]))
 		if err != nil {
-			log.Warn("Error serving static file: %s", err.Error())
+			wv.Warn("Error serving static file: %s", err.Error())
 			http.NotFound(w, r)
 			return
 		}
 		w.Write(buf)
 	})
 
-	log.Info("Serving web interface on localhost:%d", port)
-	go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
-	return v
+	wv.Info("Serving web interface on %s", addr)
+	wv.ctl.Go(func() { http.ListenAndServe(addr, nil) })
+	return wv
+}
+
+func (wv *WebView) NewHttpView(proto *proto.Http) *WebHttpView {
+	return newWebHttpView(wv.ctl, wv, proto)
+}
+
+func (wv *WebView) Shutdown() {
 }

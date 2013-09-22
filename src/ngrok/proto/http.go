@@ -24,11 +24,12 @@ type HttpResponse struct {
 }
 
 type HttpTxn struct {
-	Req      *HttpRequest
-	Resp     *HttpResponse
-	Start    time.Time
-	Duration time.Duration
-	UserData interface{}
+	Req         *HttpRequest
+	Resp        *HttpResponse
+	Start       time.Time
+	Duration    time.Duration
+	UserCtx     interface{}
+	ConnUserCtx interface{}
 }
 
 type Http struct {
@@ -55,15 +56,15 @@ func extractBody(r io.Reader) ([]byte, io.ReadCloser, error) {
 
 func (h *Http) GetName() string { return "http" }
 
-func (h *Http) WrapConn(c conn.Conn) conn.Conn {
+func (h *Http) WrapConn(c conn.Conn, ctx interface{}) conn.Conn {
 	tee := conn.NewTee(c)
 	lastTxn := make(chan *HttpTxn)
-	go h.readRequests(tee, lastTxn)
+	go h.readRequests(tee, lastTxn, ctx)
 	go h.readResponses(tee, lastTxn)
 	return tee
 }
 
-func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn) {
+func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn, connCtx interface{}) {
 	for {
 		req, err := http.ReadRequest(tee.WriteBuffer())
 		if err != nil {
@@ -84,7 +85,7 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		req.URL.Scheme = "http"
 		req.URL.Host = req.Host
 
-		txn := &HttpTxn{Start: time.Now()}
+		txn := &HttpTxn{Start: time.Now(), ConnUserCtx: connCtx}
 		txn.Req = &HttpRequest{Request: req}
 		txn.Req.BodyBytes, txn.Req.Body, err = extractBody(req.Body)
 

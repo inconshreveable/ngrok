@@ -2,6 +2,7 @@ package term
 
 import (
 	termbox "github.com/nsf/termbox-go"
+	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
@@ -12,12 +13,13 @@ const (
 )
 
 type HttpView struct {
+	log.Logger
+	*area
+
 	httpProto    *proto.Http
 	HttpRequests *util.Ring
 	shutdown     chan int
-	flush        chan int
-	*area
-	log.Logger
+	termView     *TermView
 }
 
 func colorFor(status string) termbox.Attribute {
@@ -33,19 +35,16 @@ func colorFor(status string) termbox.Attribute {
 	return termbox.ColorWhite
 }
 
-func NewHttp(proto *proto.Http, flush, shutdown chan int, x, y int) *HttpView {
+func newTermHttpView(ctl mvc.Controller, termView *TermView, proto *proto.Http, x, y int) *HttpView {
 	v := &HttpView{
 		httpProto:    proto,
 		HttpRequests: util.NewRing(size),
 		area:         NewArea(x, y, 70, size+5),
-		shutdown:     shutdown,
-		flush:        flush,
-		Logger:       log.NewPrefixLogger(),
+		shutdown:     make(chan int),
+		termView:     termView,
+		Logger:       log.NewPrefixLogger("view", "term", "http"),
 	}
-	v.AddLogPrefix("view")
-	v.AddLogPrefix("term")
-	v.AddLogPrefix("http")
-	go v.Run()
+	ctl.Go(v.Run)
 	return v
 }
 
@@ -54,9 +53,6 @@ func (v *HttpView) Run() {
 
 	for {
 		select {
-		case <-v.shutdown:
-			return
-
 		case txn := <-updates:
 			v.Debug("Got HTTP update")
 			if txn.(*proto.HttpTxn).Resp == nil {
@@ -78,5 +74,9 @@ func (v *HttpView) Render() {
 			v.APrintf(colorFor(txn.Resp.Status), 30, 3+i, "%s", txn.Resp.Status)
 		}
 	}
-	v.flush <- 1
+	v.termView.Flush()
+}
+
+func (v *HttpView) Shutdown() {
+	close(v.shutdown)
 }
