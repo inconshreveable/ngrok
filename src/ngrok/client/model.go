@@ -49,6 +49,7 @@ type ClientModel struct {
 	authToken     string
 	tlsConfig     *tls.Config
 	tunnelConfig  map[string]*TunnelConfiguration
+	configPath    string
 }
 
 func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
@@ -107,6 +108,9 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// tunnel configuration
 		tunnelConfig: config.Tunnels,
+
+		// config path
+		configPath: config.Path,
 	}
 }
 
@@ -240,6 +244,9 @@ func (c *ClientModel) control() {
 	c.serverVersion = authResp.MmVersion
 	c.Info("Authenticated with server, client id: %v", c.id)
 	c.update()
+	if err = SaveAuthToken(c.configPath, c.authToken); err != nil {
+		c.Error("Failed to save auth token: %v", err)
+	}
 
 	// request tunnels
 	reqIdToTunnelConfig := make(map[string]*TunnelConfiguration)

@@ -16,20 +16,21 @@ import (
 )
 
 type Configuration struct {
-	HttpProxy          string                          `yaml:"http_proxy"`
-	ServerAddr         string                          `yaml:"server_addr"`
-	InspectAddr        string                          `yaml:"inspect_addr"`
-	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs"`
-	AuthToken          string                          `yaml:"auth_token"`
-	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels"`
-	LogTo              string
+	HttpProxy          string                          `yaml:"http_proxy,omitempty"`
+	ServerAddr         string                          `yaml:"server_addr,omitempty"`
+	InspectAddr        string                          `yaml:"inspect_addr,omitempty"`
+	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs,omitempty"`
+	AuthToken          string                          `yaml:"auth_token,omitempty"`
+	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
+	LogTo              string                          `yaml:"-"`
+	Path               string                          `yaml:"-"`
 }
 
 type TunnelConfiguration struct {
-	Subdomain string            `yaml:"subdomain"`
-	Hostname  string            `yaml:"hostname"`
-	Protocols map[string]string `yaml:"proto"`
-	HttpAuth  string            `yaml:"auth"`
+	Subdomain string            `yaml:"subdomain,omitempty"`
+	Hostname  string            `yaml:"hostname,omitempty"`
+	Protocols map[string]string `yaml:"proto,omitempty"`
+	HttpAuth  string            `yaml:"auth,omitempty"`
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
@@ -130,6 +131,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 
 	// override configuration with command-line options
 	config.LogTo = opts.logto
+	config.Path = configPath
 	if opts.authtoken != "" {
 		config.AuthToken = opts.authtoken
 	}
@@ -226,5 +228,35 @@ func validateProtocol(proto, propName string) (err error) {
 		err = fmt.Errorf("Invalid protocol for %s: %s", propName, proto)
 	}
 
+	return
+}
+
+func SaveAuthToken(configPath, authtoken string) (err error) {
+	// read the configuration
+	oldConfigBytes, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return
+	}
+
+	c := new(Configuration)
+	if err = goyaml.Unmarshal(oldConfigBytes, c); err != nil {
+		return
+	}
+
+	// no need to save, the authtoken is already the correct value
+	if c.AuthToken == authtoken {
+		return
+	}
+
+	// update auth token
+	c.AuthToken = authtoken
+
+	// rewrite configuration
+	newConfigBytes, err := goyaml.Marshal(c)
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile(configPath, newConfigBytes, 0600)
 	return
 }
