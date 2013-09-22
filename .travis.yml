@@ -2,6 +2,7 @@ script:
 - make release-all
 install: true
 before_install: 
+- export PYTHONPATH=/usr/local/lib/python2.7/site-packages
 - brew install bazaar
 - export CGO_CFLAGS="-mmacosx-version-min=10.4"
 - export CGO_LDFLAGS="-mmacosx-version-min=10.4"
