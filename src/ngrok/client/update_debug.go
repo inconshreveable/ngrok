@@ -3,9 +3,9 @@
 package client
 
 import (
-	"ngrok/client/ui"
+	"ngrok/client/mvc"
 )
 
 // no auto-updating in debug mode
-func autoUpdate(s *State, ctl *ui.Controller, token string) {
+func autoUpdate(state mvc.State, token string) {
 }

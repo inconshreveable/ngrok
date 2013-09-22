@@ -48,7 +48,12 @@
                 <div class="span6 offset3">
                     <div class="well" style="padding: 20px 50px;">
                         <h4>No requests to display yet</h4>
-                        <p class="lead">Make a request to <a target="_blank" href="{{ publicUrl }}">{{ publicUrl }}</a> to get started!</p>
+			<hr />
+                        <h5>To get started, make a request to one of your tunnel URLs:</h5>
+                            <ul>
+                                <li ng-repeat="t in tunnels"><p class="lead"><a target="_blank" href="{{ t.PublicUrl }}">{{ t.PublicUrl }}</a></p></li>
+                            </ul>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -76,7 +81,7 @@
                         </div>
                         <div  class="span4">
                             <i class="icon-user"></i> IP
-                            <span style="margin-left: 8px;" class="muted">{{Txn.Req.Header['X-Real-Ip'][0]}}</span>
+                            <span style="margin-left: 8px;" class="muted">{{Txn.ConnCtx.ClientAddr.split(":")[0]}}</span>
                         </div>
                     </div>
                     <hr />

@@ -12,6 +12,6 @@ func NewTcp() *Tcp {
 
 func (h *Tcp) GetName() string { return "tcp" }
 
-func (h *Tcp) WrapConn(c conn.Conn) conn.Conn {
+func (h *Tcp) WrapConn(c conn.Conn, ctx interface{}) conn.Conn {
 	return c
 }

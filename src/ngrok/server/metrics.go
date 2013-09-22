@@ -94,7 +94,7 @@ func NewLocalMetrics(reportInterval time.Duration) *LocalMetrics {
 func (m *LocalMetrics) OpenTunnel(t *Tunnel) {
 	m.tunnelMeter.Mark(1)
 
-	switch t.regMsg.OS {
+	switch t.ctl.auth.OS {
 	case "windows":
 		m.windowsCounter.Inc(1)
 	case "linux":
@@ -105,7 +105,7 @@ func (m *LocalMetrics) OpenTunnel(t *Tunnel) {
 		m.otherCounter.Inc(1)
 	}
 
-	switch t.regMsg.Protocol {
+	switch t.req.Protocol {
 	case "tcp":
 		m.tcpTunnelMeter.Mark(1)
 	case "http":
@@ -236,14 +236,14 @@ func (k *KeenIoMetrics) CloseConnection(t *Tunnel, c conn.Conn, start time.Time,
 		Keen: KeenStruct{
 			Timestamp: start.UTC().Format("2006-01-02T15:04:05.000Z"),
 		},
-		OS:                 t.regMsg.OS,
-		ClientId:           t.regMsg.ClientId,
-		Protocol:           t.regMsg.Protocol,
+		OS:                 t.ctl.auth.OS,
+		ClientId:           t.ctl.id,
+		Protocol:           t.req.Protocol,
 		Url:                t.url,
-		User:               t.regMsg.User,
-		Version:            t.regMsg.MmVersion,
-		HttpAuth:           t.regMsg.HttpAuth != "",
-		Subdomain:          t.regMsg.Subdomain != "",
+		User:               t.ctl.auth.User,
+		Version:            t.ctl.auth.MmVersion,
+		HttpAuth:           t.req.HttpAuth != "",
+		Subdomain:          t.req.Subdomain != "",
 		TunnelDuration:     time.Since(t.start).Seconds(),
 		ConnectionDuration: time.Since(start).Seconds(),
 		BytesIn:            in,
@@ -281,16 +281,16 @@ func (k *KeenIoMetrics) CloseTunnel(t *Tunnel) {
 		Keen: KeenStruct{
 			Timestamp: t.start.UTC().Format("2006-01-02T15:04:05.000Z"),
 		},
-		OS:       t.regMsg.OS,
-		ClientId: t.regMsg.ClientId,
-		Protocol: t.regMsg.Protocol,
+		OS:       t.ctl.auth.OS,
+		ClientId: t.ctl.id,
+		Protocol: t.req.Protocol,
 		Url:      t.url,
-		User:     t.regMsg.User,
-		Version:  t.regMsg.MmVersion,
+		User:     t.ctl.auth.User,
+		Version:  t.ctl.auth.MmVersion,
 		//Reason: reason,
 		Duration:  time.Since(t.start).Seconds(),
-		HttpAuth:  t.regMsg.HttpAuth != "",
-		Subdomain: t.regMsg.Subdomain != "",
+		HttpAuth:  t.req.HttpAuth != "",
+		Subdomain: t.req.Subdomain != "",
 	})
 
 	if err != nil {

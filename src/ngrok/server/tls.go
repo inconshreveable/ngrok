@@ -4,40 +4,40 @@ import (
 	"crypto/tls"
 	"io/ioutil"
 	"ngrok/server/assets"
-	"os"
 )
 
-var (
-	tlsConfig *tls.Config
-)
-
-func init() {
-	readOrBytes := func(envVar string, default_path string) []byte {
-		f := os.Getenv(envVar)
-		if f == "" {
-			b, err := assets.ReadAsset(default_path)
-			if err != nil {
-				panic(err)
-			}
-			return b
-		} else {
-			if b, err := ioutil.ReadFile(f); err != nil {
-				panic(err)
-			} else {
-				return b
-			}
+func LoadTLSConfig(crtPath string, keyPath string) (tlsConfig *tls.Config, err error) {
+	fileOrAsset := func(path string, default_path string) ([]byte, error) {
+		loadFn := ioutil.ReadFile
+		if path == "" {
+			loadFn = assets.ReadAsset
+			path = default_path
 		}
+
+		return loadFn(path)
 	}
 
-	crt := readOrBytes("TLS_CRT_FILE", "assets/server/tls/snakeoil.crt")
-	key := readOrBytes("TLS_KEY_FILE", "assets/server/tls/snakeoil.key")
-	cert, err := tls.X509KeyPair(crt, key)
+	var (
+		crt  []byte
+		key  []byte
+		cert tls.Certificate
+	)
 
-	if err != nil {
-		panic(err)
+	if crt, err = fileOrAsset(crtPath, "assets/server/tls/snakeoil.crt"); err != nil {
+		return
+	}
+
+	if key, err = fileOrAsset(keyPath, "assets/server/tls/snakeoil.key"); err != nil {
+		return
+	}
+
+	if cert, err = tls.X509KeyPair(crt, key); err != nil {
+		return
 	}
 
 	tlsConfig = &tls.Config{
 		Certificates: []tls.Certificate{cert},
 	}
+
+	return
 }

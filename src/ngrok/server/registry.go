@@ -32,7 +32,7 @@ func NewTunnelRegistry(cacheSize uint64, cacheFile string) *TunnelRegistry {
 	registry := &TunnelRegistry{
 		tunnels:  make(map[string]*Tunnel),
 		affinity: cache.NewLRUCache(cacheSize),
-		Logger:   log.NewPrefixLogger("registry"),
+		Logger:   log.NewPrefixLogger("registry", "tun"),
 	}
 
 	// LRUCache uses Gob encoding. Unfortunately, Gob is fickle and will fail
@@ -42,14 +42,13 @@ func NewTunnelRegistry(cacheSize uint64, cacheFile string) *TunnelRegistry {
 	var urlobj cacheUrl
 	gob.Register(urlobj)
 
+	// try to load and then periodically save the affinity cache to file, if specified
 	if cacheFile != "" {
-		// load cache entries from file
 		err := registry.affinity.LoadItemsFromFile(cacheFile)
 		if err != nil {
 			registry.Error("Failed to load affinity cache %s: %v", cacheFile, err)
 		}
 
-		// save cache periodically to file
 		registry.SaveCacheThread(cacheFile, cacheSaveInterval)
 	} else {
 		registry.Info("No affinity cache specified")
@@ -93,10 +92,10 @@ func (r *TunnelRegistry) Register(url string, t *Tunnel) error {
 
 func (r *TunnelRegistry) cacheKeys(t *Tunnel) (ip string, id string) {
 	clientIp := t.ctl.conn.RemoteAddr().(*net.TCPAddr).IP.String()
-	clientId := t.regMsg.ClientId
+	clientId := t.ctl.id
 
-	ipKey := fmt.Sprintf("client-ip-%s:%s", t.regMsg.Protocol, clientIp)
-	idKey := fmt.Sprintf("client-id-%s:%s", t.regMsg.Protocol, clientId)
+	ipKey := fmt.Sprintf("client-ip-%s:%s", t.req.Protocol, clientIp)
+	idKey := fmt.Sprintf("client-id-%s:%s", t.req.Protocol, clientId)
 	return ipKey, idKey
 }
 
@@ -159,4 +158,43 @@ func (r *TunnelRegistry) Get(url string) *Tunnel {
 	r.RLock()
 	defer r.RUnlock()
 	return r.tunnels[url]
+}
+
+// ControlRegistry maps a client ID to Control structures
+type ControlRegistry struct {
+	controls map[string]*Control
+	log.Logger
+	sync.RWMutex
+}
+
+func NewControlRegistry() *ControlRegistry {
+	return &ControlRegistry{
+		controls: make(map[string]*Control),
+		Logger:   log.NewPrefixLogger("registry", "ctl"),
+	}
+}
+
+func (r *ControlRegistry) Get(clientId string) *Control {
+	r.RLock()
+	defer r.RUnlock()
+	return r.controls[clientId]
+}
+
+func (r *ControlRegistry) Add(clientId string, ctl *Control) {
+	r.Lock()
+	defer r.Unlock()
+	r.controls[clientId] = ctl
+	r.Info("Registered control with id %s", clientId)
+}
+
+func (r *ControlRegistry) Del(clientId string) error {
+	r.Lock()
+	defer r.Unlock()
+	if r.controls[clientId] == nil {
+		return fmt.Errorf("No control found for client id: %s", clientId)
+	} else {
+		r.Info("Removed control registry id %s", clientId)
+		delete(r.controls, clientId)
+		return nil
+	}
 }
