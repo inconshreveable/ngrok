@@ -23,7 +23,14 @@
                 background-color: #ff9999;
                 background-color: #000000;
                 color:white;
-
+            }
+            .path {
+              width: 300px;
+            }
+            .wrapped {
+              word-wrap: break-word;
+              word-break: break-word;
+              overflow: hidden;
             }
         </style>
     </head>
@@ -62,7 +69,7 @@
                     <h4>All Requests</h4>
                     <table class="table txn-selector">
                         <tr ng-controller="TxnNavItem" ng-class="{'selected':isActive()}" ng-repeat="txn in txns" ng-click="makeActive()">
-                            <td>{{ txn.Req.MethodPath }}</td>
+                            <td class="wrapped"><div class="path">{{ txn.Req.MethodPath }}</div></td>
                             <td>{{ txn.Resp.Status }}</td>
                             <td><span class="pull-right">{{ txn.Duration }}</span></td>
                         </tr>
@@ -86,7 +93,7 @@
                     </div>
                     <hr />
                     <div ng-show="!!Req" ng-controller="HttpRequest">
-                        <h3>{{ Req.MethodPath }}</h3>
+                        <h3 class="wrapped">{{ Req.MethodPath }}</h3>
                         <div onbtnclick="replay()" btn="Replay" tabs="Summary,Headers,Raw,Binary">
                         </div>
 
