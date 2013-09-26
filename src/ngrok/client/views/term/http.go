@@ -6,10 +6,13 @@ import (
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
+	"strings"
+	"unicode/utf8"
 )
 
 const (
-	size = 10
+	size          = 10
+	pathMaxLength = 25
 )
 
 type HttpView struct {
@@ -69,7 +72,11 @@ func (v *HttpView) Render() {
 	v.Printf(0, 1, "-------------")
 	for i, obj := range v.HttpRequests.Slice() {
 		txn := obj.(*proto.HttpTxn)
-		v.Printf(0, 3+i, "%s %v", txn.Req.Method, txn.Req.URL.Path)
+		path := txn.Req.URL.Path
+		if utf8.RuneCountInString(path) > pathMaxLength {
+			path = strings.Join(strings.SplitAfterN(path, "", pathMaxLength+1)[:pathMaxLength], "")
+		}
+		v.Printf(0, 3+i, "%s %v", txn.Req.Method, path)
 		if txn.Resp != nil {
 			v.APrintf(colorFor(txn.Resp.Status), 30, 3+i, "%s", txn.Resp.Status)
 		}
