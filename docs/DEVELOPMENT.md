@@ -16,6 +16,8 @@ There are Makefile targets for compiling just the client or server.
     make client
     make server
 
+**NB: You must compile with Go1.1+! ngrok will fail to compile with older versions of Go (such as 1.0.x)**
+
 ### Compiling release versions
 Both the client and the server contain static asset files.
 These include TLS/SSL certificates and the html/css/js for the client's web interface.
