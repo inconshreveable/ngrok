@@ -93,6 +93,9 @@ func truncatePath(path string) string {
 	// By this point, len(path) should be < pathMaxLength if we're dealing with single-byte runes.
 	// Otherwise, we have a multi-byte string and need to calculate the size of each rune and
 	// truncate manually.
+	//
+	// This is a workaround for a bug in termbox-go. Remove it when this issue is fixed:
+	// https://github.com/nsf/termbox-go/pull/21
 	if len(path) > pathMaxLength {
 		out := make([]byte, pathMaxLength, pathMaxLength)
 		length := 0
