@@ -6,10 +6,12 @@ import (
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
+	"unicode/utf8"
 )
 
 const (
-	size = 10
+	size          = 10
+	pathMaxLength = 25
 )
 
 type HttpView struct {
@@ -69,7 +71,8 @@ func (v *HttpView) Render() {
 	v.Printf(0, 1, "-------------")
 	for i, obj := range v.HttpRequests.Slice() {
 		txn := obj.(*proto.HttpTxn)
-		v.Printf(0, 3+i, "%s %v", txn.Req.Method, txn.Req.URL.Path)
+		path := truncatePath(txn.Req.URL.Path)
+		v.Printf(0, 3+i, "%s %v", txn.Req.Method, path)
 		if txn.Resp != nil {
 			v.APrintf(colorFor(txn.Resp.Status), 30, 3+i, "%s", txn.Resp.Status)
 		}
@@ -79,4 +82,38 @@ func (v *HttpView) Render() {
 
 func (v *HttpView) Shutdown() {
 	close(v.shutdown)
+}
+
+func truncatePath(path string) string {
+	// Truncate all long strings based on rune count
+	if utf8.RuneCountInString(path) > pathMaxLength {
+		path = string([]rune(path)[:pathMaxLength])
+	}
+
+	// By this point, len(path) should be < pathMaxLength if we're dealing with single-byte runes.
+	// Otherwise, we have a multi-byte string and need to calculate the size of each rune and
+	// truncate manually.
+	//
+	// This is a workaround for a bug in termbox-go. Remove it when this issue is fixed:
+	// https://github.com/nsf/termbox-go/pull/21
+	if len(path) > pathMaxLength {
+		out := make([]byte, pathMaxLength, pathMaxLength)
+		length := 0
+		for {
+			r, size := utf8.DecodeRuneInString(path[length:])
+			if r == utf8.RuneError && size == 1 {
+				break
+			}
+
+			// utf8.EncodeRune expects there to be enough room to store the full size of the rune
+			if length+size <= pathMaxLength {
+				utf8.EncodeRune(out[length:], r)
+				length += size
+			} else {
+				break
+			}
+		}
+		path = string(out[:length])
+	}
+	return path
 }
