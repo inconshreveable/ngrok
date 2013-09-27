@@ -54,8 +54,9 @@ Then, just run ngrok as usual to connect securely to your own ngrokd server!
 
 	ngrok 80
 
+## FAQ
 #### Do I really need a wildcard certificate?
-If you don't need to run https tunnels or you can add your own root certificates then you don't need one.
+If you don't need to run https tunnels, then you don't need a wildcard cert.
 
 #### I don't want to pay for an SSL certificate, can I use a self-signed one?
 Yes, it's possible to use a self-signed certificate, but you'll need to recompile ngrok with your signing CA.
