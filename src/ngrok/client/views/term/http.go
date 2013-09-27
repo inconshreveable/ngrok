@@ -6,7 +6,6 @@ import (
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -74,7 +73,7 @@ func (v *HttpView) Render() {
 		txn := obj.(*proto.HttpTxn)
 		path := txn.Req.URL.Path
 		if utf8.RuneCountInString(path) > pathMaxLength {
-			path = strings.Join(strings.SplitAfterN(path, "", pathMaxLength+1)[:pathMaxLength], "")
+			path = string([]rune(path)[:pathMaxLength])
 		}
 		v.Printf(0, 3+i, "%s %v", txn.Req.Method, path)
 		if txn.Resp != nil {
