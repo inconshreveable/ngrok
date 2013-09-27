@@ -71,10 +71,7 @@ func (v *HttpView) Render() {
 	v.Printf(0, 1, "-------------")
 	for i, obj := range v.HttpRequests.Slice() {
 		txn := obj.(*proto.HttpTxn)
-		path := txn.Req.URL.Path
-		if utf8.RuneCountInString(path) > pathMaxLength {
-			path = string([]rune(path)[:pathMaxLength])
-		}
+		path := truncatePath(txn.Req.URL.Path)
 		v.Printf(0, 3+i, "%s %v", txn.Req.Method, path)
 		if txn.Resp != nil {
 			v.APrintf(colorFor(txn.Resp.Status), 30, 3+i, "%s", txn.Resp.Status)
@@ -85,4 +82,35 @@ func (v *HttpView) Render() {
 
 func (v *HttpView) Shutdown() {
 	close(v.shutdown)
+}
+
+func truncatePath(path string) string {
+	// Truncate all long strings based on rune count
+	if utf8.RuneCountInString(path) > pathMaxLength {
+		path = string([]rune(path)[:pathMaxLength])
+	}
+
+	// By this point, len(path) should be < pathMaxLength if we're dealing with single-byte runes.
+	// Otherwise, we have a multi-byte string and need to calculate the size of each rune and
+	// truncate manually.
+	if len(path) > pathMaxLength {
+		out := make([]byte, pathMaxLength, pathMaxLength)
+		length := 0
+		for {
+			r, size := utf8.DecodeRuneInString(path[length:])
+			if r == utf8.RuneError && size == 1 {
+				break
+			}
+
+			// utf8.EncodeRune expects there to be enough room to store the full size of the rune
+			if length+size <= pathMaxLength {
+				utf8.EncodeRune(out[length:], r)
+				length += size
+			} else {
+				break
+			}
+		}
+		path = string(out[:length])
+	}
+	return path
 }
