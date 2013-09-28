@@ -67,7 +67,7 @@ func tunnelListener(addr string, tlsConfig *tls.Config) {
 			tunnelConn.SetReadDeadline(time.Now().Add(connReadTimeout))
 			var rawMsg msg.Message
 			if rawMsg, err = msg.ReadMsg(tunnelConn); err != nil {
-				tunnelConn.Error("Failed to read message: %v", err)
+				tunnelConn.Warn("Failed to read message: %v", err)
 				tunnelConn.Close()
 				return
 			}

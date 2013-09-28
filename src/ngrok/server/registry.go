@@ -180,11 +180,18 @@ func (r *ControlRegistry) Get(clientId string) *Control {
 	return r.controls[clientId]
 }
 
-func (r *ControlRegistry) Add(clientId string, ctl *Control) {
+func (r *ControlRegistry) Add(clientId string, ctl *Control) (oldCtl *Control) {
 	r.Lock()
 	defer r.Unlock()
+
+	oldCtl = r.controls[clientId]
+	if oldCtl != nil {
+		oldCtl.Replaced(ctl)
+	}
+
 	r.controls[clientId] = ctl
 	r.Info("Registered control with id %s", clientId)
+	return
 }
 
 func (r *ControlRegistry) Del(clientId string) error {
