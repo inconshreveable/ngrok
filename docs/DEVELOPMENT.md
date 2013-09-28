@@ -16,7 +16,7 @@ There are Makefile targets for compiling just the client or server.
     make client
     make server
 
-**NB: You must compile with Go1.1+! ngrok will fail to compile with older versions of Go (such as 1.0.x)**
+**NB: You must compile with Go 1.1+!**
 
 ### Compiling release versions
 Both the client and the server contain static asset files.
@@ -38,15 +38,25 @@ The strategy I use for developing on ngrok is to do the following:
 Add the following lines to /etc/hosts:
 
     127.0.0.1 ngrok.me
-    127.0.0.1 tunnel.ngrok.me
+    127.0.0.1 test.ngrok.me
 
 Run ngrokd with the following options:
 
     ./bin/ngrokd -domain ngrok.me
 
-Run ngrok with the following options
+Create an ngrok configuration file, "debug.yml" with the following contents:
 
-    ./bin/ngrok -server=ngrok.me:4443 -subdomain=tunnel -log=ngrok.log 8080
+    server_addr: ngrok.me:4443
+    tunnels:
+      test:
+        proto:
+	  http: 8080
+
+
+Then run ngrok with either of these commands:
+
+    ./bin/ngrok -log=ngrok.log start test
+    ./bin/ngrok -log=ngrok.log -subdomain=test 8080
 
 This will get you setup with an ngrok client talking to an ngrok server all locally under your control. Happy hacking!
 
@@ -54,18 +64,23 @@ This will get you setup with an ngrok client talking to an ngrok server all loca
 ## Network protocol and tunneling
 At a high level, ngrok's tunneling works as follows:
 
-### Setup
+### Connection Setup and Authentication
 1. The client initiates a long-lived TCP connection to the server over which they will pass JSON instruction messages. This connection is called the *Control Connection*.
-1. After the connection is established, the client sends a registration message.
-1. The server registers the tunnel and then sends a registration ACK message with information about the created tunnel.
+1. After the connection is established, the client sends an *Auth* message with authentication and version information.
+1. The server validates the client's *Auth* message and sends an *AuthResp* message indicating either success or failure.
+
+### Tunnel creation
+1. The client may then ask the server to create tunnels for it by sending *ReqTunnel* messages. 
+1. When the server receives a *ReqTunnel* message, it will send 1 or more *NewTunnel* messages that indicate successful tunnel creation or indicate failure.
 
 ### Tunneling connections
-1. When the server receives a new public connection, it locates the approriate tunnel by examing the HTTP host header (or the port number for TCP tunnels). This connection from the public internet is called a *Public Connection*.
-1. The server sends a proxy request message to the client over the control connection.
+1. When the server receives a new public connection, it locates the approriate tunnel by examining the HTTP host header (or the port number for TCP tunnels). This connection from the public internet is called a *Public Connection*.
+1. The server sends a *ReqProxy* message to the client over the control connection.
 1. The client initiates a new TCP connection to the server called a *Proxy Connection*.
-1. The client sends a proxy registration message over the proxy connection so the server can associate it to the public connection that caused the request for the proxy connection to be initiated.
+1. The client sends a *RegProxy* message over the proxy connection so the server can associate it to a control connection (and thus the tunnels it's responsible for).
+1. The server sends a *StartProxy* message over the proxy connection with metadata information about the connection (the client IP and name of the tunnel).
 1. The server begins copying the traffic byte-for-byte from the public connection to the proxy connection and vice-versa.
-1. The client opens a connection to the local port that was specified at startup. This is called the *Private Connection*.
+1. The client opens a connection to the local address configured for that tunnel. This is called the *Private Connection*.
 1. The client begins copying the traffic byte-for-byte from the proxied connection to the private connection and vice-versa.
 
 ### Detecting dead tunnels
@@ -83,7 +98,7 @@ The message length is sent as a 64-bit little endian integer.
 The definitions and shared protocol routines lives under _src/ngrok/msg_
 
 #### src/ngrok/msg/msg.go
-All of the different message types (Reg, PxyReq, Ping, etc) are defined here. This is a good place to go to understand exactly what messages are sent between the client and server.
+All of the different message types (Auth, AuthResp, ReqTunnel, RegProxy, StartProxy, etc) are defined here and their fields documented. This is a good place to go to understand exactly what messages are sent between the client and server.
     
 ## ngrokd - the server
 ### Code

@@ -31,11 +31,4 @@ are only available by creating an account on ngrok.com. If you need them, [creat
 
 
 ## Developing on ngrok
-### Compiling ngrok
-
-    git clone git@github.com:inconshreveable/ngrok.git
-    cd ngrok && make
-    bin/ngrok [LOCAL PORT]
-
-### Further Reading
 [ngrok developer's guide](docs/DEVELOPMENT.md)
