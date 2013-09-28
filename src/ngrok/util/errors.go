@@ -14,7 +14,6 @@ panic: %v
 
 %s`
 
-
 func MakePanicTrace(err interface{}) string {
 	stackBuf := make([]byte, 4096)
 	n := runtime.Stack(stackBuf, false)
@@ -32,4 +31,3 @@ func PanicToError(fn func()) (err error) {
 	fn()
 	return
 }
-

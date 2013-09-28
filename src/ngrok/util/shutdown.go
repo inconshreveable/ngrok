@@ -8,13 +8,13 @@ import (
 type Shutdown struct {
 	sync.Mutex
 	inProgress bool
-	begin chan int    // closed when the shutdown begins
-	complete chan int // closed when the shutdown completes
+	begin      chan int // closed when the shutdown begins
+	complete   chan int // closed when the shutdown completes
 }
 
 func NewShutdown() *Shutdown {
 	return &Shutdown{
-		begin: make(chan int),
+		begin:    make(chan int),
 		complete: make(chan int),
 	}
 }
