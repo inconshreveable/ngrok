@@ -8,6 +8,7 @@ import (
 	"ngrok/msg"
 	"ngrok/util"
 	"os"
+	"runtime/debug"
 	"time"
 )
 
@@ -64,6 +65,13 @@ func tunnelListener(addr string, tlsConfig *tls.Config) {
 	log.Info("Listening for control and proxy connections on %s", listener.Addr.String())
 	for c := range listener.Conns {
 		go func(tunnelConn conn.Conn) {
+			// don't crash on panics
+			defer func() {
+				if r := recover(); r != nil {
+					tunnelConn.Info("Control::manager failed with error %v: %s", r, debug.Stack())
+				}
+			}()
+
 			tunnelConn.SetReadDeadline(time.Now().Add(connReadTimeout))
 			var rawMsg msg.Message
 			if rawMsg, err = msg.ReadMsg(tunnelConn); err != nil {

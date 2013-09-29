@@ -103,11 +103,8 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	// set logging prefix
 	ctlConn.SetType("ctl")
 
-	// manage the connection
-	go c.manager()
-	go c.reader()
+	// start the writer first so that the follow messages get sent
 	go c.writer()
-	go c.stopper()
 
 	// Respond to authentication
 	c.out <- &msg.AuthResp{
@@ -118,6 +115,11 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 
 	// As a performance optimization, ask for a proxy connection up front
 	c.out <- &msg.ReqProxy{}
+
+	// manage the connection
+	go c.manager()
+	go c.reader()
+	go c.stopper()
 }
 
 // Register a new tunnel on this control connection
