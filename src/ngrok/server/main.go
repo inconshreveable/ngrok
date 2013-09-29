@@ -68,7 +68,7 @@ func tunnelListener(addr string, tlsConfig *tls.Config) {
 			// don't crash on panics
 			defer func() {
 				if r := recover(); r != nil {
-					tunnelConn.Info("Control::manager failed with error %v: %s", r, debug.Stack())
+					tunnelConn.Info("tunnelListener failed with error %v: %s", r, debug.Stack())
 				}
 			}()
 
