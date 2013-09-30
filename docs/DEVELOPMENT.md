@@ -55,8 +55,8 @@ Create an ngrok configuration file, "debug.yml" with the following contents:
 
 Then run ngrok with either of these commands:
 
-    ./bin/ngrok -log=ngrok.log start test
-    ./bin/ngrok -log=ngrok.log -subdomain=test 8080
+    ./bin/ngrok -config=debug.yml -log=ngrok.log start test
+    ./bin/ngrok -config=debug.yml -log=ngrok.log -subdomain=test 8080
 
 This will get you setup with an ngrok client talking to an ngrok server all locally under your control. Happy hacking!
 
