@@ -262,11 +262,6 @@ func (c *Control) stopper() {
 	// remove ourself from the control registry
 	controlRegistry.Del(c.id)
 
-	// close the connection's read side so that reader() stops
-	// XXX: disabled since this doesn't seem to play nicely with SO_LINGER
-	// c.conn.CloseRead()
-	// c.readerShutdown.WaitComplete()
-
 	// shutdown manager() so that we have no more work to do
 	close(c.in)
 	c.managerShutdown.WaitComplete()

@@ -163,7 +163,7 @@ func (c *loggedConn) StartTLS(tlsCfg *tls.Config) {
 }
 
 func (c *loggedConn) Close() (err error) {
-	if err := c.Conn.Close(); err != nil {
+	if err := c.Conn.Close(); err == nil {
 		c.Debug("Closing")
 	}
 	return
@@ -182,6 +182,10 @@ func (c *loggedConn) SetType(typ string) {
 }
 
 func (c *loggedConn) CloseRead() error {
+	// XXX: use CloseRead() in Conn.Join() and in Control.shutdown() for cleaner
+	// connection termination. Unfortunately, when I've tried that, I've observed
+	// failures where the connection was closed *before* flushing its write buffer,
+	// set with SetLinger() set properly (which it is by default).
 	return c.tcp.CloseRead()
 }
 
