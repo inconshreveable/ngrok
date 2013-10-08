@@ -202,7 +202,7 @@ func Join(c Conn, c2 Conn) (int64, int64) {
 		if err != nil {
 			from.Warn("Copied %d bytes to %s before failing with error %v", *bytesCopied, to.Id(), err)
 		} else {
-			from.Debug("Copied %d bytes from to %s", *bytesCopied, to.Id())
+			from.Debug("Copied %d bytes to %s", *bytesCopied, to.Id())
 		}
 	}
 

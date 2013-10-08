@@ -90,6 +90,10 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		}
 	}
 
+	// set logging prefix
+	ctlConn.SetType("ctl")
+	ctlConn.AddLogPrefix(c.id)
+
 	if authMsg.Version != version.Proto {
 		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
 		return
@@ -99,9 +103,6 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	if replaced := controlRegistry.Add(c.id, c); replaced != nil {
 		replaced.shutdown.WaitComplete()
 	}
-
-	// set logging prefix
-	ctlConn.SetType("ctl")
 
 	// start the writer first so that the follow messages get sent
 	go c.writer()
@@ -289,11 +290,13 @@ func (c *Control) stopper() {
 }
 
 func (c *Control) RegisterProxy(conn conn.Conn) {
+	conn.AddLogPrefix(c.id)
+
 	select {
 	case c.proxies <- conn:
-		c.conn.Info("Registered proxy connection %s", conn.Id())
+		conn.Info("Registered")
 	default:
-		// c.proxies buffer is full, discard this one
+		conn.Info("Proxies buffer is full, discarding.")
 		conn.Close()
 	}
 }
