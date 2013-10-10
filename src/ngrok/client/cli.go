@@ -41,6 +41,8 @@ type Options struct {
 	protocol  string
 	subdomain string
 	command   string
+	serve     bool
+	serveDir  string
 	args      []string
 }
 
@@ -86,6 +88,16 @@ func parseArgs() (opts *Options, err error) {
 		"http+https",
 		"The protocol of the traffic over the tunnel {'http', 'https', 'tcp'} (default: 'http+https')")
 
+	serve := flag.Bool(
+		"serve",
+		false,
+		"Should ngrok start a webserver in this directory? (default: no)")
+
+	serveDir := flag.String(
+		"serveDir",
+		".",
+		"The directory that should be served (default: current directory)")
+
 	flag.Parse()
 
 	opts = &Options{
@@ -96,6 +108,8 @@ func parseArgs() (opts *Options, err error) {
 		protocol:  *protocol,
 		authtoken: *authtoken,
 		hostname:  *hostname,
+		serve:     *serve,
+		serveDir:  *serveDir,
 		command:   flag.Arg(0),
 	}
 

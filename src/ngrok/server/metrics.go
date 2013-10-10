@@ -156,7 +156,7 @@ func (m *LocalMetrics) Report() {
 
 type KeenIoMetric struct {
 	Collection string
-	Event interface{}
+	Event      interface{}
 }
 
 type KeenIoMetrics struct {

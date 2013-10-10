@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"net/http"
 	"ngrok/client/mvc"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
@@ -146,6 +147,8 @@ func (ctl *Controller) Run(config *Configuration) {
 		ctl.addView(webView)
 	}
 
+	ctl.initFileServer(config)
+
 	// init term ui
 	var termView *term.TermView
 	if config.LogTo != "stdout" {
@@ -196,6 +199,31 @@ func (ctl *Controller) Run(config *Configuration) {
 		case ctl.state <- state:
 		case <-done:
 			return
+		}
+	}
+}
+
+func (ctl *Controller) initFileServer(config *Configuration) {
+	// Using a map as a set
+	seen := make(map[string]struct{})
+	for _, tunnel := range config.Tunnels {
+		if tunnel.Serve {
+			for _, addr := range tunnel.Protocols {
+				// We have already seen this address, break
+				if _, ok := seen[addr]; ok {
+					break
+				}
+
+				// Don't want sharing between iterations
+				address, directory := addr, tunnel.ServeDir
+				ctl.Go(func() {
+					panic(http.ListenAndServe(address, http.FileServer(http.Dir(directory))))
+				})
+				seen[addr] = struct{}{}
+
+				// We only need the first address (they're the same for each protocol)
+				break
+			}
 		}
 	}
 }

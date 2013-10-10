@@ -31,6 +31,8 @@ type TunnelConfiguration struct {
 	Hostname  string            `yaml:"hostname,omitempty"`
 	Protocols map[string]string `yaml:"proto,omitempty"`
 	HttpAuth  string            `yaml:"auth,omitempty"`
+	Serve     bool              `yaml:"serve,omitempty"`
+	ServeDir  string            `yaml:"serve_dir,omitempty"`
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
@@ -127,6 +129,12 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 				t.Subdomain = name
 			}
 		}
+
+		// override configuration with command-line options
+		if opts.serve {
+			t.Serve = opts.serve
+			t.ServeDir = opts.serveDir
+		}
 	}
 
 	// override configuration with command-line options
@@ -144,6 +152,8 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			Subdomain: opts.subdomain,
 			Hostname:  opts.hostname,
 			HttpAuth:  opts.httpauth,
+			Serve:     opts.serve,
+			ServeDir:  opts.serveDir,
 			Protocols: make(map[string]string),
 		}
 
