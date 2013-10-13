@@ -104,50 +104,58 @@ func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 	proto := t.req.Protocol
 	switch proto {
 	case "tcp":
-		var port int = 0
+		bindTcp := func(port int) error {
+			if t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: port}); err != nil {
+				err = t.ctl.conn.Error("Error binding TCP listener: %v", err)
+				return err
+			}
+
+			// create the url
+			addr := t.listener.Addr().(*net.TCPAddr)
+			t.url = fmt.Sprintf("tcp://%s:%d", opts.domain, addr.Port)
+
+			// register it
+			if err = tunnelRegistry.RegisterAndCache(t.url, t); err != nil {
+				// This should never be possible because the OS will
+				// only assign available ports to us.
+				t.listener.Close()
+				err = fmt.Errorf("TCP listener bound, but failed to register %s", t.url)
+				return err
+			}
+
+			go t.listenTcp(t.listener)
+			return nil
+		}
+
+		// use the custom remote port you asked for
+		if t.req.RemotePort != 0 {
+			bindTcp(int(t.req.RemotePort))
+			return
+		}
 
 		// try to return to you the same port you had before
 		cachedUrl := tunnelRegistry.GetCachedRegistration(t)
 		if cachedUrl != "" {
+			var port int
 			parts := strings.Split(cachedUrl, ":")
 			portPart := parts[len(parts)-1]
 			port, err = strconv.Atoi(portPart)
 			if err != nil {
 				t.ctl.conn.Error("Failed to parse cached url port as integer: %s", portPart)
-				// continue with zero
-				port = 0
+			} else {
+				// we have a valid, cached port, let's try to bind with it
+				if bindTcp(port) != nil {
+					t.ctl.conn.Warn("Failed to get custom port %d: %v, trying a random one", port, err)
+				} else {
+					// success, we're done
+					return
+				}
 			}
 		}
 
 		// Bind for TCP connections
-		t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: port})
-
-		// If we failed with a custom port, try with a random one
-		if err != nil && port != 0 {
-			t.ctl.conn.Warn("Failed to get custom port %d: %v, trying a random one", port, err)
-			t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: 0})
-		}
-
-		// we tried to bind with a random port and failed (no more ports available?)
-		if err != nil {
-			err = t.ctl.conn.Error("Error binding TCP listener: %v", err)
-			return
-		}
-
-		// create the url
-		addr := t.listener.Addr().(*net.TCPAddr)
-		t.url = fmt.Sprintf("tcp://%s:%d", opts.domain, addr.Port)
-
-		// register it
-		if err = tunnelRegistry.RegisterAndCache(t.url, t); err != nil {
-			// This should never be possible because the OS will
-			// only assign available ports to us.
-			t.listener.Close()
-			err = fmt.Errorf("TCP listener bound, but failed to register %s", t.url)
-			return
-		}
-
-		go t.listenTcp(t.listener)
+		bindTcp(0)
+		return
 
 	case "http", "https":
 		l, ok := listeners[proto]
