@@ -80,7 +80,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	}
 
 	// validate and normalize configuration
-	if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil {
+	if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil && config.InspectAddr != "disabled" {
 		return
 	}
 
