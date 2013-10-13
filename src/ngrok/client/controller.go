@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"ngrok/client/mvc"
 	"ngrok/client/views/term"
@@ -9,6 +10,7 @@ import (
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
+	"os"
 	"sync"
 )
 
@@ -135,6 +137,8 @@ func (ctl *Controller) Run(config *Configuration) {
 	// Save the configuration
 	ctl.config = config
 
+	ctl.initFileServer(config)
+
 	// init the model
 	model := newClientModel(config, ctl)
 	ctl.model = model
@@ -146,8 +150,6 @@ func (ctl *Controller) Run(config *Configuration) {
 		webView = web.NewWebView(ctl, config.InspectAddr)
 		ctl.addView(webView)
 	}
-
-	ctl.initFileServer(config)
 
 	// init term ui
 	var termView *term.TermView
@@ -206,24 +208,35 @@ func (ctl *Controller) Run(config *Configuration) {
 func (ctl *Controller) initFileServer(config *Configuration) {
 	// Using a map as a set
 	seen := make(map[string]struct{})
-	for _, tunnel := range config.Tunnels {
-		if tunnel.Serve {
-			for _, addr := range tunnel.Protocols {
-				// We have already seen this address, break
-				if _, ok := seen[addr]; ok {
-					break
-				}
-
-				// Don't want sharing between iterations
-				address, directory := addr, tunnel.ServeDir
-				ctl.Go(func() {
-					panic(http.ListenAndServe(address, http.FileServer(http.Dir(directory))))
-				})
-				seen[addr] = struct{}{}
-
-				// We only need the first address (they're the same for each protocol)
-				break
+	var addr string
+	for name, tunnelConfig := range config.Tunnels {
+		for proto, path := range tunnelConfig.Protocols {
+			if !isPath(path) {
+				continue
 			}
+
+			if _, ok := seen[path]; !ok {
+				// Don't want sharing between iterations
+				filePath := path
+				listener, err := net.Listen("tcp", ":0")
+				if err != nil {
+					return
+				}
+				addr = listener.Addr().String()
+				ctl.Go(func() {
+					defer listener.Close()
+					panic(http.Serve(listener, http.FileServer(http.Dir(filePath))))
+				})
+				seen[path] = struct{}{}
+			}
+			// Intentionally outside the if block above
+			// Will assign the address correctly (single webserver) for duplicate paths
+			ctl.config.Tunnels[name].Protocols[proto] = addr
 		}
 	}
+}
+
+func isPath(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

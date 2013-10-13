@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,8 +32,6 @@ type TunnelConfiguration struct {
 	Hostname  string            `yaml:"hostname,omitempty"`
 	Protocols map[string]string `yaml:"proto,omitempty"`
 	HttpAuth  string            `yaml:"auth,omitempty"`
-	Serve     bool              `yaml:"serve,omitempty"`
-	ServeDir  string            `yaml:"serve_dir,omitempty"`
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
@@ -111,7 +110,9 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		for k, addr := range t.Protocols {
 			tunnelName := fmt.Sprintf("for tunnel %s[%s]", name, k)
 			if t.Protocols[k], err = normalizeAddress(addr, tunnelName); err != nil {
-				return
+				if t.Protocols[k], err = normalizePath(addr, tunnelName); err != nil {
+					return
+				}
 			}
 
 			if err = validateProtocol(k, tunnelName); err != nil {
@@ -128,12 +129,6 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			} else {
 				t.Subdomain = name
 			}
-		}
-
-		// override configuration with command-line options
-		if opts.serve {
-			t.Serve = opts.serve
-			t.ServeDir = opts.serveDir
 		}
 	}
 
@@ -152,8 +147,6 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			Subdomain: opts.subdomain,
 			Hostname:  opts.hostname,
 			HttpAuth:  opts.httpauth,
-			Serve:     opts.serve,
-			ServeDir:  opts.serveDir,
 			Protocols: make(map[string]string),
 		}
 
@@ -162,8 +155,11 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 				return
 			}
 
+			// Assume we're getting a port. If parsing that fails, attempt to parse as path
 			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
-				return
+				if config.Tunnels["default"].Protocols[proto], err = normalizePath(opts.args[0], ""); err != nil {
+					return
+				}
 			}
 		}
 
@@ -211,6 +207,34 @@ func defaultPath() string {
 	}
 
 	return path.Join(homeDir, ".ngrok")
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func normalizePath(path string, propName string) (string, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("Can't get absolute path to serve %s '%s': %s", propName, path, err.Error())
+	}
+
+	exists, err := pathExists(absPath)
+	if err != nil {
+		return "", fmt.Errorf("Invalid path to serve %s '%s': %s", propName, absPath, err.Error())
+	}
+	if !exists {
+		return "", fmt.Errorf("Invalid path to serve %s '%s': it doesn't exist", propName, absPath)
+	}
+
+	return absPath, nil
 }
 
 func normalizeAddress(addr string, propName string) (string, error) {

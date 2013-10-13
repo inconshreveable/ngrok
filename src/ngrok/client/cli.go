@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const usage1 string = `Usage: %s [OPTIONS] <local port or address>
+const usage1 string = `Usage: %s [OPTIONS] <local port or address or directory to serve>
 Options:
 `
 
@@ -17,6 +17,8 @@ Examples:
 	ngrok -subdomain=example 8080
 	ngrok -proto=tcp 22
 	ngrok -hostname="example.com" -httpauth="user:password" 10.0.0.1
+	ngrok ~/share
+	ngrok -httpauth="user:password" /tmp/dir
 
 
 Advanced usage: ngrok [OPTIONS] <command> [command args] [...]
@@ -41,8 +43,6 @@ type Options struct {
 	protocol  string
 	subdomain string
 	command   string
-	serve     bool
-	serveDir  string
 	args      []string
 }
 
@@ -88,16 +88,6 @@ func parseArgs() (opts *Options, err error) {
 		"http+https",
 		"The protocol of the traffic over the tunnel {'http', 'https', 'tcp'} (default: 'http+https')")
 
-	serve := flag.Bool(
-		"serve",
-		false,
-		"Should ngrok start a webserver in this directory? (default: no)")
-
-	serveDir := flag.String(
-		"serveDir",
-		".",
-		"The directory that should be served (default: current directory)")
-
 	flag.Parse()
 
 	opts = &Options{
@@ -108,8 +98,6 @@ func parseArgs() (opts *Options, err error) {
 		protocol:  *protocol,
 		authtoken: *authtoken,
 		hostname:  *hostname,
-		serve:     *serve,
-		serveDir:  *serveDir,
 		command:   flag.Arg(0),
 	}
 
@@ -128,7 +116,7 @@ func parseArgs() (opts *Options, err error) {
 
 	default:
 		if len(flag.Args()) > 1 {
-			err = fmt.Errorf("You may only specify one port to tunnel to on the command line, got %d: %v",
+			err = fmt.Errorf("You may only specify one port or directory to tunnel to on the command line, got %d: %v",
 				len(flag.Args()),
 				flag.Args())
 			return

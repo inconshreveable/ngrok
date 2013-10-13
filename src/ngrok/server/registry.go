@@ -89,7 +89,7 @@ func (r *TunnelRegistry) Register(url string, t *Tunnel) error {
 	return nil
 }
 
-func (r *TunnelRegistry) cacheKeys(t *Tunnel) (string) {
+func (r *TunnelRegistry) cacheKeys(t *Tunnel) string {
 	return fmt.Sprintf("client-id-%s:%s", t.req.Protocol, t.ctl.id)
 }
 
