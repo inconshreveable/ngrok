@@ -8,6 +8,7 @@ import (
 	"ngrok/conn"
 	"ngrok/log"
 	"ngrok/msg"
+	"ngrok/util"
 	"os"
 	"strconv"
 	"strings"
@@ -253,9 +254,8 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 	metrics.OpenConnection(t, publicConn)
 
 	var proxyConn conn.Conn
-	var attempts int
 	var err error
-	for {
+	for i := 0; i < (2 * proxyMaxPoolSize); i++ {
 		// get a proxy connection
 		if proxyConn, err = t.ctl.GetProxy(); err != nil {
 			t.Warn("Failed to get proxy connection: %v", err)
@@ -270,19 +270,28 @@ func (t *Tunnel) HandlePublicConnection(publicConn conn.Conn) {
 			Url:        t.url,
 			ClientAddr: publicConn.RemoteAddr().String(),
 		}
+
 		if err = msg.WriteMsg(proxyConn, startPxyMsg); err != nil {
-			attempts += 1
-			proxyConn.Warn("Failed to write StartProxyMessage: %v, attempt %d", err, attempts)
-			if attempts > 3 {
-				// give up
-				publicConn.Error("Too many failures starting proxy connection")
-				return
-			}
+			proxyConn.Warn("Failed to write StartProxyMessage: %v, attempt %d", err, i)
+			proxyConn.Close()
 		} else {
 			// success
 			break
 		}
 	}
+
+	if err != nil {
+		// give up
+		publicConn.Error("Too many failures starting proxy connection")
+		return
+	}
+
+	// To reduce latency handling tunnel connections, we employ the following curde heuristic:
+	// Whenever we take a proxy connection from the pool, replace it with a new one
+	util.PanicToError(func() { t.ctl.out <- &msg.ReqProxy{} })
+
+	// no timeouts while connections are joined
+	proxyConn.SetDeadline(time.Time{})
 
 	// join the public and proxy connections
 	bytesIn, bytesOut := conn.Join(publicConn, proxyConn)
