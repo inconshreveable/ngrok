@@ -9,13 +9,15 @@ import (
 	"ngrok/version"
 	"runtime/debug"
 	"strings"
-	"sync/atomic"
 	"time"
 )
 
 const (
 	pingTimeoutInterval = 30 * time.Second
 	connReapInterval    = 10 * time.Second
+	controlWriteTimeout = 10 * time.Second
+	proxyStaleDuration  = 60 * time.Second
+	proxyMaxPoolSize    = 10
 )
 
 type Control struct {
@@ -33,11 +35,6 @@ type Control struct {
 	// to us over conn by the client
 	in chan (msg.Message)
 
-	// put a message in this channel to send it over
-	// conn to the client and then terminate this
-	// control connection and all of its tunnels
-	stop chan (msg.Message)
-
 	// the last time we received a ping from the client - for heartbeats
 	lastPing time.Time
 
@@ -47,27 +44,37 @@ type Control struct {
 	// proxy connections
 	proxies chan conn.Conn
 
-	// closing indicator
-	closing int32
-
 	// identifier
 	id string
+
+	// synchronizer for controlled shutdown of writer()
+	writerShutdown *util.Shutdown
+
+	// synchronizer for controlled shutdown of reader()
+	readerShutdown *util.Shutdown
+
+	// synchronizer for controlled shutdown of manager()
+	managerShutdown *util.Shutdown
+
+	// synchronizer for controller shutdown of entire Control
+	shutdown *util.Shutdown
 }
 
 func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	var err error
 
 	// create the object
-	// channels are buffered because we read and write to them
-	// from the same goroutine in managerThread()
 	c := &Control{
-		auth:     authMsg,
-		conn:     ctlConn,
-		out:      make(chan msg.Message, 5),
-		in:       make(chan msg.Message, 5),
-		stop:     make(chan msg.Message, 5),
-		proxies:  make(chan conn.Conn, 10),
-		lastPing: time.Now(),
+		auth:            authMsg,
+		conn:            ctlConn,
+		out:             make(chan msg.Message),
+		in:              make(chan msg.Message),
+		proxies:         make(chan conn.Conn, 10),
+		lastPing:        time.Now(),
+		writerShutdown:  util.NewShutdown(),
+		readerShutdown:  util.NewShutdown(),
+		managerShutdown: util.NewShutdown(),
+		shutdown:        util.NewShutdown(),
 	}
 
 	failAuth := func(e error) {
@@ -85,14 +92,24 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		}
 	}
 
+	// set logging prefix
+	ctlConn.SetType("ctl")
+	ctlConn.AddLogPrefix(c.id)
+
 	if authMsg.Version != version.Proto {
 		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
 		return
 	}
 
 	// register the control
-	controlRegistry.Add(c.id, c)
+	if replaced := controlRegistry.Add(c.id, c); replaced != nil {
+		replaced.shutdown.WaitComplete()
+	}
 
+	// start the writer first so that the following messages get sent
+	go c.writer()
+
+	// Respond to authentication
 	c.out <- &msg.AuthResp{
 		Version:   version.Proto,
 		MmVersion: version.MajorMinor(),
@@ -102,12 +119,10 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	// As a performance optimization, ask for a proxy connection up front
 	c.out <- &msg.ReqProxy{}
 
-	// set logging prefix
-	ctlConn.SetType("ctl")
-
 	// manage the connection
-	go c.managerThread()
-	go c.readThread()
+	go c.manager()
+	go c.reader()
+	go c.stopper()
 }
 
 // Register a new tunnel on this control connection
@@ -119,14 +134,9 @@ func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
 		c.conn.Debug("Registering new tunnel")
 		t, err := NewTunnel(&tunnelReq, c)
 		if err != nil {
-			ack := &msg.NewTunnel{Error: err.Error()}
+			c.out <- &msg.NewTunnel{Error: err.Error()}
 			if len(c.tunnels) == 0 {
-				// you can't fail your first tunnel registration
-				// terminate the control connection
-				c.stop <- ack
-			} else {
-				// inform client of failure
-				c.out <- ack
+				c.shutdown.Begin()
 			}
 
 			// we're done
@@ -147,61 +157,38 @@ func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
 	}
 }
 
-func (c *Control) managerThread() {
-	reap := time.NewTicker(connReapInterval)
-
-	// all shutdown functionality in here
+func (c *Control) manager() {
+	// don't crash on panics
 	defer func() {
 		if err := recover(); err != nil {
-			c.conn.Info("Control::managerThread failed with error %v: %s", err, debug.Stack())
+			c.conn.Info("Control::manager failed with error %v: %s", err, debug.Stack())
 		}
-
-		// remove from the control registry
-		controlRegistry.Del(c.id)
-
-		// mark that we're shutting down
-		atomic.StoreInt32(&c.closing, 1)
-
-		// stop the reaping timer
-		reap.Stop()
-
-		// close the connection
-		c.conn.Close()
-
-		// shutdown all of the tunnels
-		for _, t := range c.tunnels {
-			t.Shutdown()
-		}
-
-		// we're safe to close(c.proxies) because c.closing
-		// protects us inside of RegisterProxy
-		close(c.proxies)
-
-		// shut down all of the proxy connections
-		for p := range c.proxies {
-			p.Close()
-		}
-
 	}()
+
+	// kill everything if the control manager stops
+	defer c.shutdown.Begin()
+
+	// notify that manager() has shutdown
+	defer c.managerShutdown.Complete()
+
+	// reaping timer for detecting heartbeat failure
+	reap := time.NewTicker(connReapInterval)
+	defer reap.Stop()
 
 	for {
 		select {
-		case m := <-c.out:
-			msg.WriteMsg(c.conn, m)
-
-		case m := <-c.stop:
-			if m != nil {
-				msg.WriteMsg(c.conn, m)
-			}
-			return
-
 		case <-reap.C:
 			if time.Since(c.lastPing) > pingTimeoutInterval {
 				c.conn.Info("Lost heartbeat")
+				c.shutdown.Begin()
+			}
+
+		case mRaw, ok := <-c.in:
+			// c.in closes to indicate shutdown
+			if !ok {
 				return
 			}
 
-		case mRaw := <-c.in:
 			switch m := mRaw.(type) {
 			case *msg.ReqTunnel:
 				c.registerTunnel(m)
@@ -214,13 +201,40 @@ func (c *Control) managerThread() {
 	}
 }
 
-func (c *Control) readThread() {
+func (c *Control) writer() {
 	defer func() {
 		if err := recover(); err != nil {
-			c.conn.Info("Control::readThread failed with error %v: %s", err, debug.Stack())
+			c.conn.Info("Control::writer failed with error %v: %s", err, debug.Stack())
 		}
-		c.stop <- nil
 	}()
+
+	// kill everything if the writer() stops
+	defer c.shutdown.Begin()
+
+	// notify that we've flushed all messages
+	defer c.writerShutdown.Complete()
+
+	// write messages to the control channel
+	for m := range c.out {
+		c.conn.SetWriteDeadline(time.Now().Add(controlWriteTimeout))
+		if err := msg.WriteMsg(c.conn, m); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (c *Control) reader() {
+	defer func() {
+		if err := recover(); err != nil {
+			c.conn.Warn("Control::reader failed with error %v: %s", err, debug.Stack())
+		}
+	}()
+
+	// kill everything if the reader stops
+	defer c.shutdown.Begin()
+
+	// notify that we're done
+	defer c.readerShutdown.Complete()
 
 	// read messages from the control channel
 	for {
@@ -232,23 +246,60 @@ func (c *Control) readThread() {
 				panic(err)
 			}
 		} else {
+			// this can also panic during shutdown
 			c.in <- msg
 		}
 	}
 }
 
-func (c *Control) RegisterProxy(conn conn.Conn) {
-	if atomic.LoadInt32(&c.closing) == 1 {
-		c.conn.Debug("Can't register proxies for a control that is closing")
-		conn.Close()
-		return
+func (c *Control) stopper() {
+	defer func() {
+		if r := recover(); r != nil {
+			c.conn.Error("Failed to shut down control: %v", r)
+		}
+	}()
+
+	// wait until we're instructed to shutdown
+	c.shutdown.WaitBegin()
+
+	// remove ourself from the control registry
+	controlRegistry.Del(c.id)
+
+	// shutdown manager() so that we have no more work to do
+	close(c.in)
+	c.managerShutdown.WaitComplete()
+
+	// shutdown writer()
+	close(c.out)
+	c.writerShutdown.WaitComplete()
+
+	// close connection fully
+	c.conn.Close()
+
+	// shutdown all of the tunnels
+	for _, t := range c.tunnels {
+		t.Shutdown()
 	}
 
+	// shutdown all of the proxy connections
+	close(c.proxies)
+	for p := range c.proxies {
+		p.Close()
+	}
+
+	c.shutdown.Complete()
+	c.conn.Info("Shutdown complete")
+}
+
+func (c *Control) RegisterProxy(conn conn.Conn) {
+	conn.AddLogPrefix(c.id)
+
+	conn.SetDeadline(time.Now().Add(proxyStaleDuration))
 	select {
 	case c.proxies <- conn:
-		c.conn.Info("Registered proxy connection %s", conn.Id())
+		conn.Info("Registered")
 	default:
-		// c.proxies buffer is full, discard this one
+		conn.Info("Proxies buffer is full, discarding.")
 		conn.Close()
 	}
 }
@@ -259,37 +310,47 @@ func (c *Control) RegisterProxy(conn conn.Conn) {
 // Returns an error if we couldn't get a proxy because it took too long
 // or the tunnel is closing
 func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
-	// initial timeout is zero to try to get a proxy connection without asking for one
-	timeout := time.NewTimer(0)
+	var ok bool
 
-	// get a proxy connection. if we timeout, request one over the control channel
-	for proxyConn == nil {
-		var ok bool
+	// get a proxy connection from the pool
+	select {
+	case proxyConn, ok = <-c.proxies:
+		if !ok {
+			err = fmt.Errorf("No proxy connections available, control is closing")
+			return
+		}
+	default:
+		// no proxy available in the pool, ask for one over the control channel
+		c.conn.Debug("No proxy in pool, requesting proxy from control . . .")
+		if err = util.PanicToError(func() { c.out <- &msg.ReqProxy{} }); err != nil {
+			return
+		}
+
 		select {
 		case proxyConn, ok = <-c.proxies:
 			if !ok {
 				err = fmt.Errorf("No proxy connections available, control is closing")
 				return
 			}
-			continue
-		case <-timeout.C:
-			c.conn.Debug("Requesting new proxy connection")
-			// request a proxy connection
-			c.out <- &msg.ReqProxy{}
-			// timeout after 1 second if we don't get one
-			timeout.Reset(1 * time.Second)
+
+		case <-time.After(pingTimeoutInterval):
+			err = fmt.Errorf("Timeout trying to get proxy connection")
+			return
 		}
 	}
-
-	// To try to reduce latency hanndling tunnel connections, we employ
-	// the following curde heuristic:
-	// If the proxy connection pool is empty, request a new one.
-	// The idea is to always have at least one proxy connection available for immediate use.
-	// There are two major issues with this strategy: it's not thread safe and it's not predictive.
-	// It should be a good start though.
-	if len(c.proxies) == 0 {
-		c.out <- &msg.ReqProxy{}
-	}
-
 	return
+}
+
+// Called when this control is replaced by another control
+// this can happen if the network drops out and the client reconnects
+// before the old tunnel has lost its heartbeat
+func (c *Control) Replaced(replacement *Control) {
+	c.conn.Info("Replaced by control: %s", replacement.conn.Id())
+
+	// set the control id to empty string so that when stopper()
+	// calls registry.Del it won't delete the replacement
+	c.id = ""
+
+	// tell the old one to shutdown
+	c.shutdown.Begin()
 }

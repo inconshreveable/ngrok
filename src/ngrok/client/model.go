@@ -258,11 +258,12 @@ func (c *ClientModel) control() {
 		}
 
 		reqTunnel := &msg.ReqTunnel{
-			ReqId:     util.RandId(8),
-			Protocol:  strings.Join(protocols, "+"),
-			Hostname:  config.Hostname,
-			Subdomain: config.Subdomain,
-			HttpAuth:  config.HttpAuth,
+			ReqId:      util.RandId(8),
+			Protocol:   strings.Join(protocols, "+"),
+			Hostname:   config.Hostname,
+			Subdomain:  config.Subdomain,
+			HttpAuth:   config.HttpAuth,
+			RemotePort: config.RemotePort,
 		}
 
 		// send the tunnel request
@@ -339,20 +340,20 @@ func (c *ClientModel) proxy() {
 
 	err = msg.WriteMsg(remoteConn, &msg.RegProxy{ClientId: c.id})
 	if err != nil {
-		log.Error("Failed to write RegProxy: %v", err)
+		remoteConn.Error("Failed to write RegProxy: %v", err)
 		return
 	}
 
 	// wait for the server to ack our register
 	var startPxy msg.StartProxy
 	if err = msg.ReadMsgInto(remoteConn, &startPxy); err != nil {
-		log.Error("Server failed to write StartProxy: %v", err)
+		remoteConn.Error("Server failed to write StartProxy: %v", err)
 		return
 	}
 
 	tunnel, ok := c.tunnels[startPxy.Url]
 	if !ok {
-		c.Error("Couldn't find tunnel for proxy: %s", startPxy.Url)
+		remoteConn.Error("Couldn't find tunnel for proxy: %s", startPxy.Url)
 		return
 	}
 
