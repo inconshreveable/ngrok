@@ -17,5 +17,6 @@ env:
   - GOOS=linux GOARCH=arm
   - GOOS=linux GOARCH=386
   - GOOS=windows GOARCH=386
+  - GOOS=darwin GOARCH=amd64
 go: 
 - 1.1
