@@ -110,17 +110,22 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			return
 		}
 
+		var addressErr, pathErr error
 		for k, addr := range t.Protocols {
-			tunnelName := fmt.Sprintf("for tunnel %s[%s]", name, k)
-			if t.Protocols[k], err = normalizeAddress(addr, tunnelName); err != nil {
-				if t.Protocols[k], err = normalizePath(addr, tunnelName); err != nil {
+			for _, proto := range strings.Split(k, "+") {
+				tunnelName := fmt.Sprintf("for tunnel %s[%s]", name, k)
+				if t.Protocols[proto], addressErr = normalizeAddress(addr, tunnelName); addressErr != nil {
+					if t.Protocols[proto], pathErr = normalizePath(addr, tunnelName); pathErr != nil {
+						err = fmt.Errorf("%v is not a valid port number, network address, or file path:\n%v\n%v", addr, addressErr, pathErr)
+						return
+					}
+				}
+
+				if err = validateProtocol(proto, tunnelName); err != nil {
 					return
 				}
 			}
-
-			if err = validateProtocol(k, tunnelName); err != nil {
-				return
-			}
+			delete(t.Protocols, "http+https")
 		}
 
 		// use the name of the tunnel as the subdomain if none is specified
@@ -153,14 +158,16 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			Protocols: make(map[string]string),
 		}
 
+		var addressErr, pathErr error
 		for _, proto := range strings.Split(opts.protocol, "+") {
 			if err = validateProtocol(proto, "default"); err != nil {
 				return
 			}
 
 			// Assume we're getting a port. If parsing that fails, attempt to parse as path
-			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
-				if config.Tunnels["default"].Protocols[proto], err = normalizePath(opts.args[0], ""); err != nil {
+			if config.Tunnels["default"].Protocols[proto], addressErr = normalizeAddress(opts.args[0], "\b"); addressErr != nil {
+				if config.Tunnels["default"].Protocols[proto], pathErr = normalizePath(opts.args[0], "\b"); pathErr != nil {
+					err = fmt.Errorf("%v is not a valid port number, network address, or file path:\n%v\n%v", opts.args[0], addressErr, pathErr)
 					return
 				}
 			}

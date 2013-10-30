@@ -206,32 +206,24 @@ func (ctl *Controller) Run(config *Configuration) {
 }
 
 func (ctl *Controller) initFileServer(config *Configuration) {
-	// Using a map as a set
-	seen := make(map[string]struct{})
-	var addr string
 	for name, tunnelConfig := range config.Tunnels {
-		for proto, path := range tunnelConfig.Protocols {
-			if !isPath(path) {
+		for proto, filePath := range tunnelConfig.Protocols {
+			if !isPath(filePath) {
 				continue
 			}
-
-			if _, ok := seen[path]; !ok {
-				// Don't want sharing between iterations
-				filePath := path
-				listener, err := net.Listen("tcp", ":0")
-				if err != nil {
-					return
-				}
-				addr = listener.Addr().String()
-				ctl.Go(func() {
-					defer listener.Close()
-					panic(http.Serve(listener, http.FileServer(http.Dir(filePath))))
-				})
-				seen[path] = struct{}{}
+			listener, err := net.Listen("tcp", ":0")
+			if err != nil {
+				return
 			}
-			// Intentionally outside the if block above
-			// Will assign the address correctly (single webserver) for duplicate paths
-			ctl.config.Tunnels[name].Protocols[proto] = addr
+			// Don't want sharing between iterations
+			path := filePath
+			port := listener.Addr().String()
+			ctl.Go(func() {
+				defer listener.Close()
+				log.Info("Starting web server on port '%v' serving path '%v'", port, path)
+				panic(http.Serve(listener, http.FileServer(http.Dir(path))))
+			})
+			ctl.config.Tunnels[name].Protocols[proto] = port
 		}
 	}
 }

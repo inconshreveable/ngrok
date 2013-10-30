@@ -16,7 +16,7 @@ Examples:
 	ngrok 80
 	ngrok -subdomain=example 8080
 	ngrok -proto=tcp 22
-	ngrok -hostname="example.com" -httpauth="user:password" 10.0.0.1
+	ngrok -hostname="example.com" -httpauth="user:password" 10.0.0.1:80
 	ngrok ~/share
 	ngrok -httpauth="user:password" /tmp/dir
 
