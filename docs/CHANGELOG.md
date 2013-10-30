@@ -1,4 +1,24 @@
 # Changelog
+## 1.6 -  10/25/2013
+- BUGFIX: Fixed a goroutine/memory leak in ngrok/proto's parsing of http traffic
+- IMPROVEMENT: The web inspection API can now be disabled again by setting inspect_addr: disabled in the config file
+
+## 1.5 - 10/20/2013
+- FEATURE: Added support a "remote_port" configuration parameter that lets you request a specific remote port for TCP tunnels
+- IMPROVEMENT: Upload instructions on crash reports are displayed after the dump where it is more likely to be seen
+- IMPROVEMENT: Improvements to ngrok's logging for easier debugging
+- IMPROVEMENT: Batch metric reporting to Keen to not be limited by the speed of their API at high request loads
+- IMPROVEMENT: Added additional safety to ensure the server doesn't crash on panics()
+- BUGFIX: Fixed an issue with prefetching tunnel connections that could hang tunnel connections when behind an aggresive NAT
+- BUGFIX: Fixed a race condition where ngrokd could send back a different message instead of AuthResp first
+- BUGFIX: Fixed an issue where under some circumstances, reconnecting would fail and tell the client the tunnels were still in use
+- BUGFIX: Fixed an issue where a race-condition with handling pings could cause a tunnel to hang forever and stop handling requests
+
+## 1.4 - 09/27/2013
+- BUGFIX: Fixed an issue where long URL paths were not truncated in the terminal UI
+- BUGFIX: Fixed an issue where long URL paths ruined the web UI's formatting
+- BUGFIX: Fixed an issue where authtokens would not be remembered if an existing configuration file didn't exist
+
 ## 0.23 - 09/06/2013
 - BUGFIX: Fixed a bug which caused some important HTTP headers to be omitted from request introspection and replay
 

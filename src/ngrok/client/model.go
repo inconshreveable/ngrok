@@ -258,11 +258,12 @@ func (c *ClientModel) control() {
 		}
 
 		reqTunnel := &msg.ReqTunnel{
-			ReqId:     util.RandId(8),
-			Protocol:  strings.Join(protocols, "+"),
-			Hostname:  config.Hostname,
-			Subdomain: config.Subdomain,
-			HttpAuth:  config.HttpAuth,
+			ReqId:      util.RandId(8),
+			Protocol:   strings.Join(protocols, "+"),
+			Hostname:   config.Hostname,
+			Subdomain:  config.Subdomain,
+			HttpAuth:   config.HttpAuth,
+			RemotePort: config.RemotePort,
 		}
 
 		// send the tunnel request

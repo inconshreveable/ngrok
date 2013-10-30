@@ -16,6 +16,8 @@ const (
 	pingTimeoutInterval = 30 * time.Second
 	connReapInterval    = 10 * time.Second
 	controlWriteTimeout = 10 * time.Second
+	proxyStaleDuration  = 60 * time.Second
+	proxyMaxPoolSize    = 10
 )
 
 type Control struct {
@@ -104,7 +106,7 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		replaced.shutdown.WaitComplete()
 	}
 
-	// start the writer first so that the follow messages get sent
+	// start the writer first so that the following messages get sent
 	go c.writer()
 
 	// Respond to authentication
@@ -292,6 +294,7 @@ func (c *Control) stopper() {
 func (c *Control) RegisterProxy(conn conn.Conn) {
 	conn.AddLogPrefix(c.id)
 
+	conn.SetDeadline(time.Now().Add(proxyStaleDuration))
 	select {
 	case c.proxies <- conn:
 		conn.Info("Registered")
@@ -307,35 +310,34 @@ func (c *Control) RegisterProxy(conn conn.Conn) {
 // Returns an error if we couldn't get a proxy because it took too long
 // or the tunnel is closing
 func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
-	// initial timeout is zero to try to get a proxy connection without asking for one
-	timeout := time.NewTimer(0)
+	var ok bool
 
-	// get a proxy connection. if we timeout, request one over the control channel
-	for proxyConn == nil {
-		var ok bool
+	// get a proxy connection from the pool
+	select {
+	case proxyConn, ok = <-c.proxies:
+		if !ok {
+			err = fmt.Errorf("No proxy connections available, control is closing")
+			return
+		}
+	default:
+		// no proxy available in the pool, ask for one over the control channel
+		c.conn.Debug("No proxy in pool, requesting proxy from control . . .")
+		if err = util.PanicToError(func() { c.out <- &msg.ReqProxy{} }); err != nil {
+			return
+		}
+
 		select {
 		case proxyConn, ok = <-c.proxies:
 			if !ok {
 				err = fmt.Errorf("No proxy connections available, control is closing")
 				return
 			}
-			continue
-		case <-timeout.C:
-			c.conn.Debug("Requesting new proxy connection")
-			// request a proxy connection
-			if err = util.PanicToError(func() { c.out <- &msg.ReqProxy{} }); err != nil {
-				return
-			}
 
-			// timeout after 1 second if we don't get one
-			timeout.Reset(1 * time.Second)
+		case <-time.After(pingTimeoutInterval):
+			err = fmt.Errorf("Timeout trying to get proxy connection")
+			return
 		}
 	}
-
-	// To try to reduce latency hanndling tunnel connections, we employ
-	// the following curde heuristic:
-	// Whenever we take a proxy connection from the pool, replace it with a new one
-	err = util.PanicToError(func() { c.out <- &msg.ReqProxy{} })
 	return
 }
 

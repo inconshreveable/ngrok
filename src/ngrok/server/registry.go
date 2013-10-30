@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/gob"
 	"fmt"
+	"net"
 	"ngrok/cache"
 	"ngrok/log"
 	"sync"
@@ -89,18 +90,26 @@ func (r *TunnelRegistry) Register(url string, t *Tunnel) error {
 	return nil
 }
 
-func (r *TunnelRegistry) cacheKeys(t *Tunnel) string {
-	return fmt.Sprintf("client-id-%s:%s", t.req.Protocol, t.ctl.id)
+func (r *TunnelRegistry) cacheKeys(t *Tunnel) (ip string, id string) {
+	clientIp := t.ctl.conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	clientId := t.ctl.id
+
+	ipKey := fmt.Sprintf("client-ip-%s:%s", t.req.Protocol, clientIp)
+	idKey := fmt.Sprintf("client-id-%s:%s", t.req.Protocol, clientId)
+	return ipKey, idKey
 }
 
 func (r *TunnelRegistry) GetCachedRegistration(t *Tunnel) (url string) {
-	idCacheKey := r.cacheKeys(t)
+	ipCacheKey, idCacheKey := r.cacheKeys(t)
 
 	// check cache for ID first, because we prefer that over IP which might
 	// not be specific to a user because of NATs
 	if v, ok := r.affinity.Get(idCacheKey); ok {
 		url = string(v.(cacheUrl))
 		t.Debug("Found registry affinity %s for %s", url, idCacheKey)
+	} else if v, ok := r.affinity.Get(ipCacheKey); ok {
+		url = string(v.(cacheUrl))
+		t.Debug("Found registry affinity %s for %s", url, ipCacheKey)
 	}
 	return
 }
@@ -108,10 +117,12 @@ func (r *TunnelRegistry) GetCachedRegistration(t *Tunnel) (url string) {
 func (r *TunnelRegistry) RegisterAndCache(url string, t *Tunnel) (err error) {
 	if err = r.Register(url, t); err == nil {
 		// we successfully assigned a url, cache it
-		idCacheKey := r.cacheKeys(t)
+		ipCacheKey, idCacheKey := r.cacheKeys(t)
+		r.affinity.Set(ipCacheKey, cacheUrl(url))
 		r.affinity.Set(idCacheKey, cacheUrl(url))
 	}
 	return
+
 }
 
 // Register a tunnel with the following process:
