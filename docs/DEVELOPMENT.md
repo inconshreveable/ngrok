@@ -50,7 +50,7 @@ Create an ngrok configuration file, "debug.yml" with the following contents:
     tunnels:
       test:
         proto:
-	  http: 8080
+          http: 8080
 
 
 Then run ngrok with either of these commands:
