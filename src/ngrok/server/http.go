@@ -3,7 +3,8 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
-	"net"
+	vhost "github.com/inconshreveable/go-vhost"
+	//"net"
 	"ngrok/conn"
 	"ngrok/log"
 	"strings"
@@ -55,53 +56,57 @@ func startHttpListener(addr string, tlsCfg *tls.Config) (listener *conn.Listener
 }
 
 // Handles a new http connection from the public internet
-func httpHandler(tcpConn net.Conn, proto string) {
-	// wrap up the connection for logging
-	conn := conn.NewHttp(tcpConn, "pub")
-
-	defer conn.Close()
+func httpHandler(c conn.Conn, proto string) {
+	defer c.Close()
 	defer func() {
 		// recover from failures
 		if r := recover(); r != nil {
-			conn.Warn("httpHandler failed with error %v", r)
+			c.Warn("httpHandler failed with error %v", r)
 		}
 	}()
 
 	// Make sure we detect dead connections while we decide how to multiplex
-	conn.SetDeadline(time.Now().Add(connReadTimeout))
+	c.SetDeadline(time.Now().Add(connReadTimeout))
 
-	// read out the http request
-	req, err := conn.ReadRequest()
+	// multiplex by extracting the Host header, the vhost library
+	vhostConn, err := vhost.HTTP(c)
 	if err != nil {
-		conn.Warn("Failed to read valid %s request: %v", proto, err)
-		conn.Write([]byte(BadRequest))
+		c.Warn("Failed to read valid %s request: %v", proto, err)
+		c.Write([]byte(BadRequest))
 		return
 	}
 
-	// read out the Host header from the request
-	host := strings.ToLower(req.Host)
-	conn.Debug("Found hostname %s in request", host)
+	// read out the Host header and auth from the request
+	host := strings.ToLower(vhostConn.Host())
+	auth := vhostConn.Request.Header.Get("Autorization")
+
+	// done reading mux data, free up the request memory
+	vhostConn.Free()
+
+	// We need to read from the vhost conn now since it mucked around reading the stream
+	c = conn.Wrap(vhostConn, "pub")
 
 	// multiplex to find the right backend host
+	c.Debug("Found hostname %s in request", host)
 	tunnel := tunnelRegistry.Get(fmt.Sprintf("%s://%s", proto, host))
 	if tunnel == nil {
-		conn.Info("No tunnel found for hostname %s", host)
-		conn.Write([]byte(fmt.Sprintf(NotFound, len(host)+18, host)))
+		c.Info("No tunnel found for hostname %s", host)
+		c.Write([]byte(fmt.Sprintf(NotFound, len(host)+18, host)))
 		return
 	}
 
 	// If the client specified http auth and it doesn't match this request's auth
 	// then fail the request with 401 Not Authorized and request the client reissue the
 	// request with basic authdeny the request
-	if tunnel.req.HttpAuth != "" && req.Header.Get("Authorization") != tunnel.req.HttpAuth {
-		conn.Info("Authentication failed: %s", req.Header.Get("Authorization"))
-		conn.Write([]byte(NotAuthorized))
+	if tunnel.req.HttpAuth != "" && auth != tunnel.req.HttpAuth {
+		c.Info("Authentication failed: %s", auth)
+		c.Write([]byte(NotAuthorized))
 		return
 	}
 
 	// dead connections will now be handled by tunnel heartbeating and the client
-	conn.SetDeadline(time.Time{})
+	c.SetDeadline(time.Time{})
 
 	// let the tunnel handle the connection now
-	tunnel.HandlePublicConnection(conn)
+	tunnel.HandlePublicConnection(c)
 }

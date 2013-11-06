@@ -2,10 +2,10 @@ package conn
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	vhost "github.com/inconshreveable/go-vhost"
 	"io"
 	"math/rand"
 	"net"
@@ -33,11 +33,14 @@ type loggedConn struct {
 
 type Listener struct {
 	net.Addr
-	Conns chan Conn
+	Conns chan *loggedConn
 }
 
 func wrapConn(conn net.Conn, typ string) *loggedConn {
 	switch c := conn.(type) {
+	case *vhost.HTTPConn:
+		wrapped := c.Conn.(*loggedConn)
+		return &loggedConn{wrapped.tcp, conn, wrapped.Logger, wrapped.id, wrapped.typ}
 	case *loggedConn:
 		return c
 	case *net.TCPConn:
@@ -58,7 +61,7 @@ func Listen(addr, typ string, tlsCfg *tls.Config) (l *Listener, err error) {
 
 	l = &Listener{
 		Addr:  listener.Addr(),
-		Conns: make(chan Conn),
+		Conns: make(chan *loggedConn),
 	}
 
 	go func() {
@@ -213,36 +216,4 @@ func Join(c Conn, c2 Conn) (int64, int64) {
 	c.Info("Joined with connection %s", c2.Id())
 	wait.Wait()
 	return fromBytes, toBytes
-}
-
-type httpConn struct {
-	*loggedConn
-	reqBuf *bytes.Buffer
-}
-
-func NewHttp(conn net.Conn, typ string) *httpConn {
-	return &httpConn{
-		wrapConn(conn, typ),
-		bytes.NewBuffer(make([]byte, 0, 1024)),
-	}
-}
-
-func (c *httpConn) ReadRequest() (*http.Request, error) {
-	r := io.TeeReader(c.loggedConn, c.reqBuf)
-	return http.ReadRequest(bufio.NewReader(r))
-}
-
-func (c *loggedConn) ReadFrom(r io.Reader) (n int64, err error) {
-	// special case when we're reading from an http request where
-	// we had to parse the request and consume bytes from the socket
-	// and store them in a temporary request buffer
-	if httpConn, ok := r.(*httpConn); ok {
-		if n, err = httpConn.reqBuf.WriteTo(c); err != nil {
-			return
-		}
-	}
-
-	nCopied, err := io.Copy(c.Conn, r)
-	n += nCopied
-	return
 }
