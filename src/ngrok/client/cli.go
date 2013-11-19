@@ -32,8 +32,6 @@ Examples:
 
 `
 
-const stdout = 1
-
 type Options struct {
 	config    string
 	logto     string
