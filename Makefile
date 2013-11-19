@@ -1,4 +1,4 @@
-.PHONY: default server client deps fmt clean all release-client release-server release-all client-assets server-assets
+.PHONY: default server client deps fmt clean all release-client release-server release-all client-assets server-assets contributors
 export GOPATH:=$(shell pwd)
 
 default: all
@@ -37,3 +37,7 @@ all: fmt client server
 
 clean:
 	go clean -i -r ngrok/...
+
+contributors:
+	echo "Contributors to ngrok, both large and small:\n" > CONTRIBUTORS
+	git log --raw | grep "^Author: " | sort | uniq | cut -d ' ' -f2- | sed 's/^/- /' | cut -d '<' -f1 >> CONTRIBUTORS
