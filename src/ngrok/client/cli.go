@@ -32,6 +32,8 @@ Examples:
 
 `
 
+const stdout = 1
+
 type Options struct {
 	config    string
 	logto     string
@@ -109,7 +111,9 @@ func parseArgs() (opts *Options, err error) {
 		flag.Usage()
 		os.Exit(0)
 	case "":
-		err = fmt.Errorf("You must specify a local port to tunnel or an ngrok command.")
+		err = fmt.Errorf("Error: Specify a local port to tunnel to, or " +
+			"an ngrok command.\n\nExample: To expose port 5555, run " +
+			"'ngrok 5555'")
 		return
 
 	default:
