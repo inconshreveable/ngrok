@@ -27,10 +27,11 @@ type Configuration struct {
 }
 
 type TunnelConfiguration struct {
-	Subdomain string            `yaml:"subdomain,omitempty"`
-	Hostname  string            `yaml:"hostname,omitempty"`
-	Protocols map[string]string `yaml:"proto,omitempty"`
-	HttpAuth  string            `yaml:"auth,omitempty"`
+	Subdomain  string            `yaml:"subdomain,omitempty"`
+	Hostname   string            `yaml:"hostname,omitempty"`
+	Protocols  map[string]string `yaml:"proto,omitempty"`
+	HttpAuth   string            `yaml:"auth,omitempty"`
+	RemotePort uint16            `yaml:"remote_port,omitempty"`
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
@@ -80,8 +81,10 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	}
 
 	// validate and normalize configuration
-	if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil {
-		return
+	if config.InspectAddr != "disabled" {
+		if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil {
+			return
+		}
 	}
 
 	if config.ServerAddr, err = normalizeAddress(config.ServerAddr, "server_addr"); err != nil {

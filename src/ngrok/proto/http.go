@@ -65,6 +65,8 @@ func (h *Http) WrapConn(c conn.Conn, ctx interface{}) conn.Conn {
 }
 
 func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn, connCtx interface{}) {
+	defer close(lastTxn)
+
 	for {
 		req, err := http.ReadRequest(tee.WriteBuffer())
 		if err != nil {
@@ -95,9 +97,7 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn, connCtx interf
 }
 
 func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
-	for {
-		var err error
-		txn := <-lastTxn
+	for txn := range lastTxn {
 		resp, err := http.ReadResponse(tee.ReadBuffer(), txn.Req.Request)
 		txn.Duration = time.Since(txn.Start)
 		h.reqTimer.Update(txn.Duration)
