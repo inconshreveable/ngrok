@@ -6,7 +6,7 @@ before_install:
 - brew install bazaar
 - export CGO_CFLAGS="-mmacosx-version-min=10.4"
 - export CGO_LDFLAGS="-mmacosx-version-min=10.4"
-- wget https://go.googlecode.com/files/go1.1.2.src.tar.gz
+- wget https://go.googlecode.com/files/go1.2.src.tar.gz
 - tar xzf go1.1.2.src.tar.gz
 - pushd go/src
 - ./make.bash
