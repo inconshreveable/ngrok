@@ -194,7 +194,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 func defaultPath() string {
 	user, err := user.Current()
 
-	// user.Current() does not work on linux when cross compilling because
+	// user.Current() does not work on linux when cross compiling because
 	// it requires CGO; use os.Getenv("HOME") hack until we compile natively
 	homeDir := os.Getenv("HOME")
 	if err != nil {

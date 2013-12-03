@@ -1,4 +1,4 @@
-// interative web user interface
+// interactive web user interface
 package web
 
 import (
@@ -144,7 +144,7 @@ func makeBody(h http.Header, body []byte) SerializedBody {
 
 func (whv *WebHttpView) updateHttp() {
 	// open channels for incoming http state changes
-	// and broadbasts
+	// and broadcasts
 	txnUpdates := whv.httpProto.Txns.Reg()
 	for txn := range txnUpdates {
 		// XXX: it's not safe for proto.Http and this code
