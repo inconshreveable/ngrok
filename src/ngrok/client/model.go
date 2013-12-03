@@ -175,7 +175,7 @@ func (c *ClientModel) Run() {
 		// run the control channel
 		c.control()
 
-		// control oonly returns when a failure has occurred, so we're going to try to reconnect
+		// control only returns when a failure has occurred, so we're going to try to reconnect
 		if c.connStatus == mvc.ConnOnline {
 			wait = 1 * time.Second
 		}

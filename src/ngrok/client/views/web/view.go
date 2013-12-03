@@ -1,4 +1,4 @@
-// interative web user interface
+// interactive web user interface
 package web
 
 import (
@@ -17,7 +17,7 @@ type WebView struct {
 
 	ctl mvc.Controller
 
-	// messages sent over this broadcast are sent too all websocket connections
+	// messages sent over this broadcast are sent to all websocket connections
 	wsMessages *util.Broadcast
 }
 
