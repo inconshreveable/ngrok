@@ -2,12 +2,15 @@ package client
 
 import (
 	"fmt"
+	"net"
+	"net/http"
 	"ngrok/client/mvc"
 	"ngrok/client/views/term"
 	"ngrok/client/views/web"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
+	"os"
 	"sync"
 )
 
@@ -134,6 +137,8 @@ func (ctl *Controller) Run(config *Configuration) {
 	// Save the configuration
 	ctl.config = config
 
+	ctl.initFileServer(config)
+
 	// init the model
 	model := newClientModel(config, ctl)
 	ctl.model = model
@@ -198,4 +203,32 @@ func (ctl *Controller) Run(config *Configuration) {
 			return
 		}
 	}
+}
+
+func (ctl *Controller) initFileServer(config *Configuration) {
+	for name, tunnelConfig := range config.Tunnels {
+		for proto, filePath := range tunnelConfig.Protocols {
+			if !isPath(filePath) {
+				continue
+			}
+			listener, err := net.Listen("tcp", ":0")
+			if err != nil {
+				return
+			}
+			// Don't want sharing between iterations
+			path := filePath
+			port := listener.Addr().String()
+			ctl.Go(func() {
+				defer listener.Close()
+				log.Info("Starting web server on port '%v' serving path '%v'", port, path)
+				panic(http.Serve(listener, http.FileServer(http.Dir(path))))
+			})
+			ctl.config.Tunnels[name].Protocols[proto] = port
+		}
+	}
+}
+
+func isPath(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

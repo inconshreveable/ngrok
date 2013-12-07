@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const usage1 string = `Usage: %s [OPTIONS] <local port or address>
+const usage1 string = `Usage: %s [OPTIONS] <local port or address or directory to serve>
 Options:
 `
 
@@ -16,7 +16,9 @@ Examples:
 	ngrok 80
 	ngrok -subdomain=example 8080
 	ngrok -proto=tcp 22
-	ngrok -hostname="example.com" -httpauth="user:password" 10.0.0.1
+	ngrok -hostname="example.com" -httpauth="user:password" 10.0.0.1:80
+	ngrok ~/share
+	ngrok -httpauth="user:password" /tmp/dir
 
 
 Advanced usage: ngrok [OPTIONS] <command> [command args] [...]
@@ -116,7 +118,7 @@ func parseArgs() (opts *Options, err error) {
 
 	default:
 		if len(flag.Args()) > 1 {
-			err = fmt.Errorf("You may only specify one port to tunnel to on the command line, got %d: %v",
+			err = fmt.Errorf("You may only specify one port or directory to tunnel to on the command line, got %d: %v",
 				len(flag.Args()),
 				flag.Args())
 			return

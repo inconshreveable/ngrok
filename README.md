@@ -11,6 +11,7 @@ ngrok captures and analyzes all traffic over the tunnel for later inspection and
 - Expose any tcp service behind a NAT or firewall to the internet on a random port of ngrok.com
 - Inspect all http requests/resposes that are transmitted over the tunnel
 - Replay any request that was transmitted over the tunnel
+- Serve static files/sites without having your own webserver
 
 
 ## What is ngrok useful for?
