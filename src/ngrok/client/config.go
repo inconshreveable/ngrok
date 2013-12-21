@@ -212,16 +212,16 @@ func normalizeAddress(addr string, propName string) (string, error) {
 		addr = ":" + addr
 	}
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
+	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
 		return "", fmt.Errorf("Invalid address %s '%s': %s", propName, addr, err.Error())
 	}
 
-	if tcpAddr.IP == nil {
-		tcpAddr.IP = net.ParseIP("127.0.0.1")
+	if host == "" {
+		host = "127.0.0.1"
 	}
 
-	return tcpAddr.String(), nil
+	return fmt.Sprintf("%s:%s", host, port), nil
 }
 
 func validateProtocol(proto, propName string) (err error) {

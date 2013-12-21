@@ -30,8 +30,5 @@ func LoadTLSConfig(rootCertPaths []string) (*tls.Config, error) {
 		pool.AddCert(certs[0])
 	}
 
-	return &tls.Config{
-		RootCAs:    pool,
-		ServerName: "ngrokd.ngrok.com",
-	}, nil
+	return &tls.Config{RootCAs: pool}, nil
 }
