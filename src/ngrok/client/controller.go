@@ -40,7 +40,7 @@ type Controller struct {
 	// the views
 	views []mvc.View
 
-	// interal structure to issue commands to the controller
+	// internal structure to issue commands to the controller
 	cmds chan command
 
 	// internal structure to synchronize access to State object
