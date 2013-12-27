@@ -22,7 +22,7 @@ your target server. Then copy the binary over to your server.
 You'll run the server with the following command.
 
 
-	./ngrokd -tlsKey="/path/to/tls.key" -tlsCert="/path/to/tls.crt" -domain="example.com"
+	./ngrokd -tlsKey="/path/to/tls.key" -tlsCrt="/path/to/tls.crt" -domain="example.com"
 
 ### Specifying your TLS certificate and key
 ngrok only makes TLS-encrypted connections. When you run ngrokd, you'll need to instruct it
