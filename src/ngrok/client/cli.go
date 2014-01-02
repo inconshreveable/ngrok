@@ -44,7 +44,7 @@ type Options struct {
 	args      []string
 }
 
-func parseArgs() (opts *Options, err error) {
+func ParseArgs() (opts *Options, err error) {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, usage1, os.Args[0])
 		flag.PrintDefaults()

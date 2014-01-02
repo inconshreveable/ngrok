@@ -122,7 +122,7 @@ func (ctl *Controller) doShutdown() {
 	wg.Wait()
 }
 
-func (ctl *Controller) addView(v mvc.View) {
+func (ctl *Controller) AddView(v mvc.View) {
 	ctl.views = append(ctl.views, v)
 }
 
@@ -143,25 +143,25 @@ func (ctl *Controller) Run(config *Configuration) {
 	var webView *web.WebView
 	if config.InspectAddr != "disabled" {
 		webView = web.NewWebView(ctl, config.InspectAddr)
-		ctl.addView(webView)
+		ctl.AddView(webView)
 	}
 
 	// init term ui
 	var termView *term.TermView
 	if config.LogTo != "stdout" {
 		termView = term.NewTermView(ctl)
-		ctl.addView(termView)
+		ctl.AddView(termView)
 	}
 
 	for _, protocol := range model.GetProtocols() {
 		switch p := protocol.(type) {
 		case *proto.Http:
 			if termView != nil {
-				ctl.addView(termView.NewHttpView(p))
+				ctl.AddView(termView.NewHttpView(p))
 			}
 
 			if webView != nil {
-				ctl.addView(webView.NewHttpView(p))
+				ctl.AddView(webView.NewHttpView(p))
 			}
 		default:
 		}
