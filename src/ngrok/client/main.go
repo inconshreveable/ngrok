@@ -10,7 +10,7 @@ import (
 
 func Main() {
 	// parse options
-	opts, err := parseArgs()
+	opts, err := ParseArgs()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
