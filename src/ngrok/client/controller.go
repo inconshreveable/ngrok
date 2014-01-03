@@ -130,13 +130,29 @@ func (ctl *Controller) GetWebInspectAddr() string {
 	return ctl.config.InspectAddr
 }
 
+func (ctl *Controller) SetupModel(config *Configuration) *ClientModel {
+	model := newClientModel(config, ctl)
+	ctl.model = model
+	return model
+}
+
+func (ctl *Controller) GetModel() *ClientModel {
+	return ctl.model.(*ClientModel)
+}
+
 func (ctl *Controller) Run(config *Configuration) {
 	// Save the configuration
 	ctl.config = config
 
+	var model *ClientModel
+
+	if ctl.model == nil {
+		model = ctl.SetupModel(config)
+	} else {
+		model = ctl.model.(*ClientModel)
+	}
+
 	// init the model
-	model := newClientModel(config, ctl)
-	ctl.model = model
 	var state mvc.State = model
 
 	// init web ui
