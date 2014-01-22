@@ -307,7 +307,7 @@ ngrok.controller({
         $scope.txns = txnSvc.all();
 
         if (!!window.WebSocket) {
-            var ws = new WebSocket("ws://localhost:4040/_ws");
+            var ws = new WebSocket("ws://" + location.host + "/_ws");
             ws.onopen = function() {
                 console.log("connected websocket for real-time updates");
             };
@@ -319,7 +319,8 @@ ngrok.controller({
             };
 
             ws.onerror = function(err) {
-                console.log("Web socket error:" + err);
+                console.log("Web socket error:")
+                console.log(err);
             };
 
             ws.onclose = function(cls) {
