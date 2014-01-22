@@ -2,7 +2,7 @@ package proto
 
 import (
 	"bytes"
-	metrics "github.com/inconshreveable/go-metrics"
+	metrics "github.com/rcrowley/go-metrics"
 	"io"
 	"io/ioutil"
 	"net/http"

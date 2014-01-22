@@ -3,7 +3,7 @@ package client
 import (
 	"crypto/tls"
 	"fmt"
-	metrics "github.com/inconshreveable/go-metrics"
+	metrics "github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"math"
 	"ngrok/client/mvc"
