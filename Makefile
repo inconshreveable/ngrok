@@ -1,9 +1,10 @@
-.PHONY: default server client deps fmt clean all release-client release-server release-all client-assets server-assets contributors
+.PHONY: default server client deps fmt clean all release-all assets client-assets server-assets contributors
 export GOPATH:=$(shell pwd)
 
+BUILDTAGS=debug
 default: all
 
-deps:
+deps: assets
 	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
 
 server: deps
@@ -15,28 +16,32 @@ fmt:
 client: deps
 	go install -gcflags "-N -l" -tags '$(BUILDTAGS)' ngrok/main/ngrok
 
+assets: client-assets server-assets
+
 client-assets:
-	go get github.com/inconshreveable/go-bindata
-	GOOS="" GOARCH="" go install github.com/inconshreveable/go-bindata
-	bin/go-bindata -o src/ngrok/client/assets assets/client
+	go get github.com/jteeuwen/go-bindata
+	GOOS="" GOARCH="" go install github.com/jteeuwen/go-bindata/go-bindata
+	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
+		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
+		-o=src/ngrok/client/assets/assets_$(BUILDTAGS).go \
+		assets/client/...
 
 server-assets:
-	go get github.com/inconshreveable/go-bindata
-	GOOS="" GOARCH="" go install github.com/inconshreveable/go-bindata
-	bin/go-bindata -o src/ngrok/server/assets assets/server
+	go get github.com/jteeuwen/go-bindata
+	GOOS="" GOARCH="" go install github.com/jteeuwen/go-bindata/go-bindata
+	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
+		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
+		-o=src/ngrok/server/assets/assets_$(BUILDTAGS).go \
+		assets/server/...
 
-release-client: BUILDTAGS=release
-release-client: client-assets client
-
-release-server: BUILDTAGS=release
-release-server: server-assets server
-
-release-all: release-client release-server
+release-all: BUILDTAGS=release
+release-all: all
 
 all: fmt client server
 
 clean:
 	go clean -i -r ngrok/...
+	rm -rf src/ngrok/client/assets/ src/ngrok/server/assets/
 
 contributors:
 	echo "Contributors to ngrok, both large and small:\n" > CONTRIBUTORS
