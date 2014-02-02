@@ -10,7 +10,7 @@ func LoadTLSConfig(crtPath string, keyPath string) (tlsConfig *tls.Config, err e
 	fileOrAsset := func(path string, default_path string) ([]byte, error) {
 		loadFn := ioutil.ReadFile
 		if path == "" {
-			loadFn = assets.ReadAsset
+			loadFn = assets.Asset
 			path = default_path
 		}
 

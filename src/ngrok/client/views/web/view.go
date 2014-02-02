@@ -56,7 +56,7 @@ func NewWebView(ctl mvc.Controller, addr string) *WebView {
 
 	// serve static assets
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
-		buf, err := assets.ReadAsset(path.Join("assets", "client", r.URL.Path[1:]))
+		buf, err := assets.Asset(path.Join("assets", "client", r.URL.Path[1:]))
 		if err != nil {
 			wv.Warn("Error serving static file: %s", err.Error())
 			http.NotFound(w, r)
