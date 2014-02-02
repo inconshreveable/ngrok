@@ -1,8 +1,12 @@
-.PHONY: default server client deps fmt clean all release-all assets client-assets server-assets contributors
+.PHONY: default server client deps fmt clean all assets client-assets server-assets contributors
 export GOPATH:=$(shell pwd)
 
 BUILDTAGS=debug
 default: all
+
+release-%: BUILDTAGS=release
+release-%: %
+	@
 
 deps: assets
 	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
@@ -33,9 +37,6 @@ server-assets:
 		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
 		-o=src/ngrok/server/assets/assets_$(BUILDTAGS).go \
 		assets/server/...
-
-release-all: BUILDTAGS=release
-release-all: all
 
 all: fmt client server
 
