@@ -34,8 +34,13 @@ server-assets:
 		-o=src/ngrok/server/assets/assets_$(BUILDTAGS).go \
 		assets/server/...
 
-release-all: BUILDTAGS=release
-release-all: all
+release-client: BUILDTAGS=release
+release-client: client
+
+release-server: BUILDTAGS=release
+release-server: server
+
+release-all: fmt release-client release-server
 
 all: fmt client server
 
