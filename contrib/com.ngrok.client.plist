@@ -15,10 +15,14 @@ Unfortunetly I was unable to get any environment variables working in the launch
 	<array>
 		<string>/usr/local/bin/ngrok</string>
 		<string>-log</string>
-		<string>/Users/djimenez/Library/Logs/ngrok.log</string>
+		<string>stdout</string>
 		<string>-subdomain</string>
 		<string>mySubDomain</string>
 		<string>80</string>
 	</array>
+	<key>StandardOutPath</key>
+	<string>/tmp/ngrok.log</string>
+	<key>StandardErrorPath</key>
+	<string>/tmp/ngrok.log</string>
 </dict>
 </plist>
