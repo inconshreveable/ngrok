@@ -38,6 +38,7 @@ type Options struct {
 	authtoken string
 	httpauth  string
 	hostname  string
+	rport     uint16
 	protocol  string
 	subdomain string
 	command   string
@@ -81,18 +82,24 @@ func ParseArgs() (opts *Options, err error) {
 		"",
 		"Request a custom hostname from the ngrok server. (HTTP only) (requires CNAME of your DNS)")
 
+	rport := flag.Int(
+		"remoteport",
+		0,
+		"Request a custom port from the ngrok server (above 50000).")
+		
 	protocol := flag.String(
 		"proto",
 		"http+https",
 		"The protocol of the traffic over the tunnel {'http', 'https', 'tcp'} (default: 'http+https')")
 
 	flag.Parse()
-
+	
 	opts = &Options{
 		config:    *config,
 		logto:     *logto,
 		httpauth:  *httpauth,
 		subdomain: *subdomain,
+		rport:     uint16(*rport),
 		protocol:  *protocol,
 		authtoken: *authtoken,
 		hostname:  *hostname,
