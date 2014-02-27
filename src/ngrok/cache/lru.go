@@ -188,7 +188,7 @@ func (lru *LRUCache) LoadItems(r io.Reader) error {
 	}
 
 	lru.mu.Lock()
-	lru.mu.Unlock()
+	defer lru.mu.Unlock()
 	for _, item := range items {
 		// XXX: copied from Set()
 		if element := lru.table[item.Key]; element != nil {
