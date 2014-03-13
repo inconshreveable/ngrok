@@ -2,8 +2,8 @@ package client
 
 import (
 	"fmt"
+	"github.com/go-yaml/go-yaml-v1"
 	"io/ioutil"
-	"launchpad.net/goyaml"
 	"net"
 	"net/url"
 	"ngrok/log"
@@ -53,7 +53,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 
 	// deserialize/parse the config
 	config = new(Configuration)
-	if err = goyaml.Unmarshal(configBuf, &config); err != nil {
+	if err = yaml.Unmarshal(configBuf, &config); err != nil {
 		err = fmt.Errorf("Error parsing configuration file %s: %v", configPath, err)
 		return
 	}
@@ -242,7 +242,7 @@ func SaveAuthToken(configPath, authtoken string) (err error) {
 	oldConfigBytes, err := ioutil.ReadFile(configPath)
 	if err == nil {
 		// unmarshal if we successfully read the configuration file
-		if err = goyaml.Unmarshal(oldConfigBytes, c); err != nil {
+		if err = yaml.Unmarshal(oldConfigBytes, c); err != nil {
 			return
 		}
 	}
@@ -256,7 +256,7 @@ func SaveAuthToken(configPath, authtoken string) (err error) {
 	c.AuthToken = authtoken
 
 	// rewrite configuration
-	newConfigBytes, err := goyaml.Marshal(c)
+	newConfigBytes, err := yaml.Marshal(c)
 	if err != nil {
 		return
 	}
