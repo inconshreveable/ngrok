@@ -28,7 +28,7 @@ You'll run the server with the following command.
 ngrok only makes TLS-encrypted connections. When you run ngrokd, you'll need to instruct it
 where to find your TLS certificate and private key. Specify the paths with the following switches:
 
-	-tlsKey="/path/to/tls.key" -tlsCert="/path/to/tls.crt"
+	-tlsKey="/path/to/tls.key" -tlsCrt="/path/to/tls.crt"
 
 ### Setting the server's domain
 When you run your own ngrokd server, you need to tell ngrokd the domain it's running on so that it
