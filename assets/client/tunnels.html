@@ -1,0 +1,85 @@
+<html>
+    <head>
+        <title>ngrok</title>
+        <link href="/static/css/highlight.min.css" rel="stylesheet">
+        <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+        <script src="/static/js/highlight.min.js"></script>
+        <script src="/static/js/vkbeautify.js"></script>
+        <script src="/static/js/jquery-1.9.1.min.js"></script>
+        <script src="/static/js/jquery.timeago.js"></script>
+        <script src="/static/js/angular.js"></script>
+        <script src="/static/js/angular-sanitize.min.js"></script>
+        <script src="/static/js/base64.js"></script>
+        <script src="/static/js/ngrok.js"></script>
+        <script type="text/javascript">
+            window.data = JSON.parse({% . %});
+        </script>
+        <style type="text/css">
+            body { margin-top: 50px; }
+            table.params { font-size: 12px; font-family: Courier, monospace; }
+            .txn-selector tr { cursor: pointer; }
+            .txn-selector tr:hover { background-color: #ddd; }
+            tr.selected, tr.selected:hover {
+                background-color: #ff9999;
+                background-color: #000000;
+                color:white;
+            }
+            .path {
+              width: 300px;
+            }
+            .wrapped {
+              word-wrap: break-word;
+              word-break: break-word;
+              overflow: hidden;
+            }
+        </style>
+    </head>
+
+    <body ng-app="ngrok">
+        <div class="container" ng-controller="Tunnels">
+            <div class="navbar navbar-inverse navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <a class="brand" href="#">ngrok</a>
+                        <ul class="nav">
+                            <li class="active"><a href="/http/in">Inbound Requests</a></li>
+                            <li class="active"><a href="#">Tunnels</a></li>
+                            <!--
+                            <li><a href="#">Outbound Requests</a></li>
+                            <li><a href="#">Configuration</a></li>
+                            -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="span6 offset3">
+                    <div class="well" style="padding: 20px 50px;">
+                        <h4>Your tunnel URLs:</h4>
+                            <ul>
+                                <li ng-repeat="t in tunnels"><p class="lead"><a target="_blank" href="{{ t.PublicUrl }}">{{ t.PublicUrl }}</a></p></li>
+                            </ul>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- UserVoice JavaScript SDK (only needed once on a page) -->
+        <script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/4KUmdF6WZd302MfwoayMw.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
+
+        <!-- A tab to launch the Classic Widget -->
+        <script>
+        UserVoice = window.UserVoice || [];
+        UserVoice.push(['showTab', 'classic_widget', {
+          mode: 'feedback',
+          primary_color: '#cc6d00',
+          link_color: '#007dbf',
+          forum_id: 211925,
+          tab_label: 'Feedback',
+          tab_color: '#cc6d00',
+          tab_position: 'middle-left',
+          tab_inverted: false
+        }]);
+        </script>
+    </body>
+</html>
