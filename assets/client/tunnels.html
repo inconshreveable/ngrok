@@ -57,7 +57,7 @@
                     <div class="well" style="padding: 20px 50px;">
                         <h4>Your tunnel URLs:</h4>
                             <ul>
-                                <li ng-repeat="t in tunnels"><p class="lead"><a target="_blank" href="{{ t.PublicUrl }}">{{ t.PublicUrl }}</a></p></li>
+                                <li ng-repeat="t in tunnels"><p class="lead"><a target="_blank" href="{{ t.PublicUrl }}">{{ t.PublicUrl }}</a> → {{ t.LocalAddr }}</p></li>
                             </ul>
                         </p>
                     </div>
