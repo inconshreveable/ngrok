@@ -2,7 +2,7 @@ package client
 
 import (
 	"fmt"
-	"github.com/go-yaml/go-yaml-v1"
+	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"net"
 	"net/url"
