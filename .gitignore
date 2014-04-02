@@ -5,5 +5,6 @@ src/code.google.com
 src/github.com
 src/bitbucket.org
 src/launchpad.net
+src/gopkg.in
 src/ngrok/client/assets/
 src/ngrok/server/assets/
