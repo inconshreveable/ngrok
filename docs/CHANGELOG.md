@@ -9,7 +9,7 @@
 - IMPROVEMENT: Improvements to ngrok's logging for easier debugging
 - IMPROVEMENT: Batch metric reporting to Keen to not be limited by the speed of their API at high request loads
 - IMPROVEMENT: Added additional safety to ensure the server doesn't crash on panics()
-- BUGFIX: Fixed an issue with prefetching tunnel connections that could hang tunnel connections when behind an aggresive NAT
+- BUGFIX: Fixed an issue with prefetching tunnel connections that could hang tunnel connections when behind an aggressive NAT
 - BUGFIX: Fixed a race condition where ngrokd could send back a different message instead of AuthResp first
 - BUGFIX: Fixed an issue where under some circumstances, reconnecting would fail and tell the client the tunnels were still in use
 - BUGFIX: Fixed an issue where a race-condition with handling pings could cause a tunnel to hang forever and stop handling requests
@@ -74,4 +74,4 @@
 ## 0.12 - 06/30/2013
 - IMPROVEMENT: Improved developer documentation
 - IMPROVEMENT: Simplified build process with custom version of go-bindata that compiles assets into binary releases
-- BUGFIX: Github issue #4: Raw/Binary requests bodies are no longer truncated at 8192 bytes.
+- BUGFIX: GitHub issue #4: Raw/Binary requests bodies are no longer truncated at 8192 bytes.

@@ -9,7 +9,7 @@ ngrok captures and analyzes all traffic over the tunnel for later inspection and
 ## What can I do with ngrok?
 - Expose any http service behind a NAT or firewall to the internet on a subdomain of ngrok.com
 - Expose any tcp service behind a NAT or firewall to the internet on a random port of ngrok.com
-- Inspect all http requests/resposes that are transmitted over the tunnel
+- Inspect all http requests/responses that are transmitted over the tunnel
 - Replay any request that was transmitted over the tunnel
 
 
