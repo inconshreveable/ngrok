@@ -74,7 +74,7 @@ At a high level, ngrok's tunneling works as follows:
 1. When the server receives a *ReqTunnel* message, it will send 1 or more *NewTunnel* messages that indicate successful tunnel creation or indicate failure.
 
 ### Tunneling connections
-1. When the server receives a new public connection, it locates the approriate tunnel by examining the HTTP host header (or the port number for TCP tunnels). This connection from the public internet is called a *Public Connection*.
+1. When the server receives a new public connection, it locates the appropriate tunnel by examining the HTTP host header (or the port number for TCP tunnels). This connection from the public internet is called a *Public Connection*.
 1. The server sends a *ReqProxy* message to the client over the control connection.
 1. The client initiates a new TCP connection to the server called a *Proxy Connection*.
 1. The client sends a *RegProxy* message over the proxy connection so the server can associate it to a control connection (and thus the tunnels it's responsible for).

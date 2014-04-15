@@ -17,7 +17,7 @@ func unpack(buffer []byte, msgIn Message) (msg Message, err error) {
 		t, ok := TypeMap[env.Type]
 
 		if !ok {
-			err = errors.New(fmt.Sprintf("Unsupposted message type %s", env.Type))
+			err = errors.New(fmt.Sprintf("Unsupported message type %s", env.Type))
 			return
 		}
 

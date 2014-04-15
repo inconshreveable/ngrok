@@ -45,7 +45,7 @@ options.
 	server_addr: example.com:4443
 	trust_host_root_certs: true
 
-Subsitute the address of your ngrokd server for "example.com:4443". The "trust_host_root_certs" parameter instructs
+Substitute the address of your ngrokd server for "example.com:4443". The "trust_host_root_certs" parameter instructs
 ngrok to trust the root certificates on your computer when establishing TLS connections to the server. By default, ngrok
 only trusts the root certificate for ngrok.com.
 
