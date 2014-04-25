@@ -2,11 +2,25 @@ package client
 
 import (
 	"fmt"
+	"github.com/inconshreveable/mousetrap"
 	"math/rand"
 	"ngrok/log"
 	"ngrok/util"
 	"os"
+	"runtime"
+	"time"
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		if ok, err := mousetrap.InvokedFromCommandLine(); err == nil && !ok {
+			fmt.Println("Don't double-click ngrok!")
+			fmt.Println("You need to open cmd.exe and run it from the command line!")
+			time.Sleep(5 * time.Second)
+			os.Exit(1)
+		}
+	}
+}
 
 func Main() {
 	// parse options
