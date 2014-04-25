@@ -3,6 +3,7 @@
 package client
 
 import (
+	"fmt"
 	update "github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 	"ngrok/client/mvc"
@@ -11,10 +12,7 @@ import (
 	"time"
 )
 
-const (
-	//updateEndpoint = "https://api.equinox.io/1/Applications/%s/Update"
-	updateEndpoint = "http://localhost:8889/1/Applications/%s/Update"
-)
+const appId = ""
 
 var publicKey []byte = []byte(
 	`-----BEGIN PUBLIC KEY-----
@@ -27,6 +25,7 @@ d/hHfAl567YhlkQMNz8dawxBjQwCHHekgC8gAvTO7kmXkAm6YAbpa9kjwgnorPEP
 ywIDAQAB
 -----END PUBLIC KEY-----`)
 var u *update.Update
+var updateEndpoint = fmt.Sprintf("http://localhost:8889/1/Applications/%s/Update", appId)
 
 func init() {
 	var err error
@@ -40,8 +39,8 @@ func autoUpdate(s mvc.State, token string) {
 	update := func() (tryAgain bool) {
 		log.Info("Checking for update")
 		params := check.Params{
-			Version: 1,
-			// XXX AppId: appId,
+			Version:    1,
+			AppId:      appId,
 			AppVersion: version.MajorMinor(),
 			UserId:     token,
 		}
