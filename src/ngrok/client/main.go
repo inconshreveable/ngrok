@@ -13,7 +13,7 @@ import (
 
 func init() {
 	if runtime.GOOS == "windows" {
-		if ok, err := mousetrap.InvokedFromCommandLine(); err == nil && !ok {
+		if mousetrap.StartedByExplorer() {
 			fmt.Println("Don't double-click ngrok!")
 			fmt.Println("You need to open cmd.exe and run it from the command line!")
 			time.Sleep(5 * time.Second)
