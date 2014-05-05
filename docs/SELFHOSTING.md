@@ -60,4 +60,8 @@ If you don't need to run https tunnels, then you don't need a wildcard cert.
 
 #### I don't want to pay for an SSL certificate, can I use a self-signed one?
 Yes, it's possible to use a self-signed certificate, but you'll need to recompile ngrok with your signing CA.
+If you do choose to use a self-signed cert, please note that you must either remove the configuration value for
+trust_host_root_certs or set it to false:
+
+    trust_host_root_certs: false
 
