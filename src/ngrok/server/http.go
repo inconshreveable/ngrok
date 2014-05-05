@@ -78,7 +78,7 @@ func httpHandler(c conn.Conn, proto string) {
 
 	// read out the Host header and auth from the request
 	host := strings.ToLower(vhostConn.Host())
-	auth := vhostConn.Request.Header.Get("Autorization")
+	auth := vhostConn.Request.Header.Get("Authorization")
 
 	// done reading mux data, free up the request memory
 	vhostConn.Free()
