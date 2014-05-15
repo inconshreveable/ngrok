@@ -24,12 +24,12 @@ fnkR9boUaMr6S1w8OeInjWdiab9sUr87GmEo/3tVxrHVCzHB8pzzoZceCkjgI551
 d/hHfAl567YhlkQMNz8dawxBjQwCHHekgC8gAvTO7kmXkAm6YAbpa9kjwgnorPEP
 ywIDAQAB
 -----END PUBLIC KEY-----`)
-var u *update.Update
+var up *update.Update
 var updateEndpoint = fmt.Sprintf("http://localhost:8889/1/Applications/%s/Update", appId)
 
 func init() {
 	var err error
-	u, err = update.New().VerifySignatureWithPEM(publicKey)
+	up, err = update.New().VerifySignatureWithPEM(publicKey)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +45,7 @@ func autoUpdate(s mvc.State, token string) {
 			UserId:     token,
 		}
 
-		result, err := params.CheckForUpdate(updateEndpoint)
+		result, err := params.CheckForUpdate(updateEndpoint, up)
 		if err == check.NoUpdateAvailable {
 			log.Info("No update available")
 			return true
@@ -82,7 +82,7 @@ func autoUpdate(s mvc.State, token string) {
 }
 
 func applyUpdate(s mvc.State, result *check.Result) {
-	err, errRecover := result.Update(u)
+	err, errRecover := result.Update()
 	if err == nil {
 		log.Info("Update ready!")
 		s.SetUpdateStatus(mvc.UpdateReady)
