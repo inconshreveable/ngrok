@@ -8,13 +8,13 @@ deps: assets
 	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
 
 server: deps
-	go install -gcflags "-N -l" -tags '$(BUILDTAGS)' ngrok/main/ngrokd
+	go install -tags '$(BUILDTAGS)' ngrok/main/ngrokd
 
 fmt:
 	go fmt ngrok/...
 
 client: deps
-	go install -gcflags "-N -l" -tags '$(BUILDTAGS)' ngrok/main/ngrok
+	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
 
 assets: client-assets server-assets
 
