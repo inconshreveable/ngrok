@@ -3,7 +3,6 @@
 package client
 
 import (
-	"fmt"
 	update "github.com/inconshreveable/go-update"
 	"github.com/inconshreveable/go-update/check"
 	"ngrok/client/mvc"
@@ -12,10 +11,12 @@ import (
 	"time"
 )
 
-const appId = ""
+const (
+	appId          = "ap_pJSFC5wQYkAyI0FIVwKYs9h1hW"
+	updateEndpoint = "https://api.equinox.io/1/Updates"
+)
 
-var publicKey []byte = []byte(
-	`-----BEGIN PUBLIC KEY-----
+const publicKey = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Gx8r9no1QBtCruJW2tu
 082MJJ5ZA7k803GisR2c6WglPOD1b/+kUg+dx5Y0TKXz+uNlR3GrCxLh8WkoA95M
 T38CQldIjoVN/bWP6jzFxL+6BRoKy5L1TcaIf3xb9B8OhwEq60cvFy7BBrLKEHJN
@@ -23,23 +24,22 @@ ua/D1S5axgNOAJ8tQ2w8gISICd84ng+U9tNMqIcEjUN89h3Z4zablfNIfVkbqbSR
 fnkR9boUaMr6S1w8OeInjWdiab9sUr87GmEo/3tVxrHVCzHB8pzzoZceCkjgI551
 d/hHfAl567YhlkQMNz8dawxBjQwCHHekgC8gAvTO7kmXkAm6YAbpa9kjwgnorPEP
 ywIDAQAB
------END PUBLIC KEY-----`)
-var up *update.Update
-var updateEndpoint = fmt.Sprintf("http://localhost:8889/1/Applications/%s/Update", appId)
-
-func init() {
-	var err error
-	up, err = update.New().VerifySignatureWithPEM(publicKey)
-	if err != nil {
-		panic(err)
-	}
-}
+-----END PUBLIC KEY-----`
 
 func autoUpdate(s mvc.State, token string) {
+	up, err := update.New().VerifySignatureWithPEM([]byte(publicKey))
+	if err != nil {
+		log.Error("Failed to create update with signature: %v", err)
+		return
+	}
+
+	if err := up.CanUpdate(); err != nil {
+		log.Error("Can't update: insufficient permissions: %v", err)
+	}
+
 	update := func() (tryAgain bool) {
 		log.Info("Checking for update")
 		params := check.Params{
-			Version:    1,
 			AppId:      appId,
 			AppVersion: version.MajorMinor(),
 			UserId:     token,
