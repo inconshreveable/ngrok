@@ -63,7 +63,8 @@ trust_host_root_certs or set it to false:
 
     trust_host_root_certs: false
 
-Special thanks to everyone in the thread https://github.com/inconshreveable/ngrok/issues/84 and @lyoshenka for
-writing up this explaination on how to do it:
+Special thanks @kk86bioinfo, @lyoshenka and everyone in the thread https://github.com/inconshreveable/ngrok/issues/84 for help in writing up instructions on how to do it:
 
 https://gist.github.com/lyoshenka/002b7fbd801d0fd21f2f
+https://github.com/inconshreveable/ngrok/issues/84
+
