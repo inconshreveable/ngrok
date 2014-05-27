@@ -111,9 +111,12 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		_, _ = httputil.DumpResponse(resp, true)
 
 		txn.Resp = &HttpResponse{Response: resp}
-		txn.Resp.BodyBytes, txn.Resp.Body, err = extractBody(resp.Body)
-		if err != nil {
-			tee.Warn("Failed to extract response body: %v", err)
+		// apparently, Body can be nil in some cases
+		if resp.Body != nil {
+			txn.Resp.BodyBytes, txn.Resp.Body, err = extractBody(resp.Body)
+			if err != nil {
+				tee.Warn("Failed to extract response body: %v", err)
+			}
 		}
 
 		h.Txns.In() <- txn
