@@ -2,6 +2,8 @@
 export GOPATH:=$(shell pwd)
 
 BUILDTAGS=debug
+
+
 default: all
 
 deps: assets

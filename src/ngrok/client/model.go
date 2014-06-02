@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultServerAddr   = "ngrokd.ngrok.com:443"
+	defaultServerAddr   = "proxy.euroneves.pt:443"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
@@ -285,6 +285,7 @@ func (c *ClientModel) control() {
 
 	// main control loop
 	for {
+
 		var rawMsg msg.Message
 		if rawMsg, err = msg.ReadMsg(ctlConn); err != nil {
 			panic(err)
