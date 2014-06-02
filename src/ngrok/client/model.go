@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultServerAddr   = "proxy.euroneves.pt:443"
+	defaultServerAddr   = "proxy.euroneves.pt:4443"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
