@@ -154,7 +154,7 @@ func (whv *WebHttpView) updateHttp() {
 		// we haven't processed this transaction yet if we haven't set the
 		// user data
 		if htxn.UserCtx == nil {
-			rawReq, err := httputil.DumpRequestOut(htxn.Req.Request, true)
+			rawReq, err := proto.DumpRequestOut(htxn.Req.Request, true)
 			if err != nil {
 				whv.Error("Failed to dump request: %v", err)
 				continue
