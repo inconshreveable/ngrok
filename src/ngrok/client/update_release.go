@@ -33,10 +33,6 @@ func autoUpdate(s mvc.State, token string) {
 		return
 	}
 
-	if err := up.CanUpdate(); err != nil {
-		log.Error("Can't update: insufficient permissions: %v", err)
-	}
-
 	update := func() (tryAgain bool) {
 		log.Info("Checking for update")
 		params := check.Params{
@@ -55,7 +51,13 @@ func autoUpdate(s mvc.State, token string) {
 		}
 
 		if result.Initiative == check.INITIATIVE_AUTO {
-			applyUpdate(s, result)
+			if err := up.CanUpdate(); err != nil {
+				log.Error("Can't update: insufficient permissions: %v", err)
+				// tell the user to update manually
+				s.SetUpdateStatus(mvc.UpdateAvailable)
+			} else {
+				applyUpdate(s, result)
+			}
 		} else if result.Initiative == check.INITIATIVE_MANUAL {
 			// this is the way the server tells us to update manually
 			log.Info("Server wants us to update manually")
