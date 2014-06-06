@@ -1,4 +1,18 @@
 # Changelog
+## 1.7 - 6/6/2014
+- IMPROVEMENT: Print a better help message when run without any arguments
+- IMPROVEMENT: Display useful help message and instructions when double-clicked from explorer on Windows
+- IMPROVEMENT: ngrok now uses the specified server_addr to set the SNI header instead of forcing ngrokd.ngrok.com
+- IMPROVEMENT: ngrok now uses equinox.io for automatic updates with greater speed and safety
+- IMPROVEMENT: Many documentation improvements
+- IMPROVEMENT: Added example plist file for autostart on OS X
+- BUGFIX: Fixed an issue where ngrok could crash when parsing some websocket requests
+- BUGFIX: Fixed an issue where the web UI would truncate the raw request to 8192 bytes
+- BUGFIX: Fixed an issue where ngrok could not replay requests where the request was larger than 8192 bytes
+- BUGFIX: Fixed an issue where the web UI would not update in realtime when not accessed over localhost
+- BUGFIX: Fixed an unlikely race condition in ngrokd when loading the tunnel URL cache
+- BUGFIX: Check for a valid server address without trying to resolve for less confusing errors
+
 ## 1.6 -  10/25/2013
 - BUGFIX: Fixed a goroutine/memory leak in ngrok/proto's parsing of http traffic
 - IMPROVEMENT: The web inspection API can now be disabled again by setting inspect_addr: disabled in the config file
