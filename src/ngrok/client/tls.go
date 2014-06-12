@@ -1,6 +1,7 @@
 package client
 
 import (
+	_ "crypto/sha512"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
