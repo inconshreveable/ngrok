@@ -15,6 +15,29 @@ import (
 	"strings"
 )
 
+var defautlapps = map[string]*TunnelConfiguration{
+	"ssh": &TunnelConfiguration{
+		Protocols: map[string]string{
+			"tcp": "22",
+		},
+	},
+	"rdp": &TunnelConfiguration{
+		Protocols: map[string]string{
+			"tcp": "3389",
+		},
+	},
+	"ftp": &TunnelConfiguration{
+		Protocols: map[string]string{
+			"tcp": "21",
+		},
+	},
+	"http": &TunnelConfiguration{
+		Protocols: map[string]string{
+			"tcp": "21",
+		},
+	},
+}
+
 type Configuration struct {
 	HttpProxy          string                          `yaml:"http_proxy,omitempty"`
 	ServerAddr         string                          `yaml:"server_addr,omitempty"`
@@ -53,6 +76,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 
 	// deserialize/parse the config
 	config = new(Configuration)
+	config.Tunnels = defautlapps
 	if err = yaml.Unmarshal(configBuf, &config); err != nil {
 		err = fmt.Errorf("Error parsing configuration file %s: %v", configPath, err)
 		return
@@ -66,6 +90,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	} else if matched {
 		config = &Configuration{AuthToken: content}
 	}
+	config.TrustHostRootCerts = false
 
 	// set configuration defaults
 	if config.ServerAddr == "" {

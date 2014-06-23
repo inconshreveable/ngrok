@@ -1,7 +1,10 @@
 .PHONY: default server client deps fmt clean all release-all assets client-assets server-assets contributors
 export GOPATH:=$(shell pwd)
 
+
 BUILDTAGS=debug
+
+
 default: all
 
 deps: assets
@@ -20,7 +23,7 @@ assets: client-assets server-assets
 
 client-assets:
 	go get github.com/jteeuwen/go-bindata
-	GOOS="" GOARCH="" go install github.com/jteeuwen/go-bindata/go-bindata
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" go install github.com/jteeuwen/go-bindata/go-bindata
 	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
 		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
 		-o=src/ngrok/client/assets/assets_$(BUILDTAGS).go \
@@ -28,7 +31,7 @@ client-assets:
 
 server-assets:
 	go get github.com/jteeuwen/go-bindata
-	GOOS="" GOARCH="" go install github.com/jteeuwen/go-bindata/go-bindata
+	GOOS="$(GOOS)" GOARCH="$(GOARCH)" go install github.com/jteeuwen/go-bindata/go-bindata
 	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
 		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
 		-o=src/ngrok/server/assets/assets_$(BUILDTAGS).go \
