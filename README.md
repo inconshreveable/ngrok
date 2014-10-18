@@ -3,7 +3,7 @@
 ![](https://ngrok.com/static/img/overview.png)
 
 ## What is ngrok?
-ngrok is a reverse proxy that creates a secure tunnel between from a public endpoint to a locally running web service.
+ngrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
 ngrok captures and analyzes all traffic over the tunnel for later inspection and replay.
 
 ## What can I do with ngrok?
