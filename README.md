@@ -3,7 +3,7 @@
 ![](https://ngrok.com/static/img/overview.png)
 
 ## What is ngrok?
-ngrok is a reverse proxy that creates a secure tunnel between from a public endpoint to a locally running web service.
+ngrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
 ngrok captures and analyzes all traffic over the tunnel for later inspection and replay.
 
 ## What can I do with ngrok?
@@ -25,10 +25,7 @@ ngrok captures and analyzes all traffic over the tunnel for later inspection and
 ngrok has _no_ runtime dependencies. Just download a single binary for your platform and run it. Some premium features
 are only available by creating an account on ngrok.com. If you need them, [create an account on ngrok.com](https://ngrok.com/signup).
 
-- [Linux](https://dl.ngrok.com/linux_386/ngrok.zip)
-- [Mac OSX](https://dl.ngrok.com/darwin_386/ngrok.zip)
-- [Windows](https://dl.ngrok.com/windows_386/ngrok.zip)
-
+#### [Download ngrok for your platform](https://ngrok.com/download)
 
 ## Developing on ngrok
 [ngrok developer's guide](docs/DEVELOPMENT.md)

@@ -22,6 +22,7 @@ Examples:
 Advanced usage: ngrok [OPTIONS] <command> [command args] [...]
 Commands:
 	ngrok start [tunnel] [...]    Start tunnels by name from config file
+	ngrok list                    List tunnel names from config file
 	ngrok help                    Print help
 	ngrok version                 Print ngrok version
 
@@ -100,6 +101,8 @@ func ParseArgs() (opts *Options, err error) {
 	}
 
 	switch opts.command {
+	case "list":
+		opts.args = flag.Args()[1:]
 	case "start":
 		opts.args = flag.Args()[1:]
 	case "version":
