@@ -160,6 +160,13 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			}
 		}
 
+	// list tunnels
+	case "list":
+		for name, _ := range config.Tunnels {
+			fmt.Println(name)
+		}
+		os.Exit(0)
+
 	// start tunnels
 	case "start":
 		if len(opts.args) == 0 {
