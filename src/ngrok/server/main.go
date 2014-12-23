@@ -103,7 +103,7 @@ func Main() {
 	opts = parseArgs()
 
 	// init logging
-	log.LogTo(opts.logto)
+	log.LogTo(opts.logto, opts.loglevel)
 
 	// seed random number generator
 	seed, err := util.RandomSeed()

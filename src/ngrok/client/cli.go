@@ -36,6 +36,7 @@ Examples:
 type Options struct {
 	config    string
 	logto     string
+	loglevel  string
 	authtoken string
 	httpauth  string
 	hostname  string
@@ -61,6 +62,11 @@ func ParseArgs() (opts *Options, err error) {
 		"log",
 		"none",
 		"Write log messages to this file. 'stdout' and 'none' have special meanings")
+
+	loglevel := flag.String(
+		"logLevel",
+		"DEBUG",
+		"The level of messages to log. One of: FINEST, FINE, DEBUG, TRACE, INFO, WARNING, ERROR, CRITICAL")
 
 	authtoken := flag.String(
 		"authtoken",
@@ -92,6 +98,7 @@ func ParseArgs() (opts *Options, err error) {
 	opts = &Options{
 		config:    *config,
 		logto:     *logto,
+		loglevel:  *loglevel,
 		httpauth:  *httpauth,
 		subdomain: *subdomain,
 		protocol:  *protocol,
