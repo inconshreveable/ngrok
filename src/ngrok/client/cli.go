@@ -64,9 +64,9 @@ func ParseArgs() (opts *Options, err error) {
 		"Write log messages to this file. 'stdout' and 'none' have special meanings")
 
 	loglevel := flag.String(
-		"logLevel",
+		"log-level",
 		"DEBUG",
-		"The level of messages to log. One of: FINEST, FINE, DEBUG, TRACE, INFO, WARNING, ERROR, CRITICAL")
+		"The level of messages to log. One of: DEBUG, INFO, WARNING, ERROR")
 
 	authtoken := flag.String(
 		"authtoken",

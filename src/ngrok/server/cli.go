@@ -23,7 +23,7 @@ func parseArgs() *Options {
 	tlsCrt := flag.String("tlsCrt", "", "Path to a TLS certificate file")
 	tlsKey := flag.String("tlsKey", "", "Path to a TLS key file")
 	logto := flag.String("log", "stdout", "Write log messages to this file. 'stdout' and 'none' have special meanings")
-	loglevel := flag.String("logLevel", "DEBUG", "The level of messages to log. One of: FINEST, FINE, DEBUG, TRACE, INFO, WARNING, ERROR, CRITICAL")
+	loglevel := flag.String("log-level", "DEBUG", "The level of messages to log. One of: DEBUG, INFO, WARNING, ERROR")
 	flag.Parse()
 
 	return &Options{
