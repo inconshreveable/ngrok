@@ -1,0 +1,224 @@
+<jsp:include page="header.jsp" >        
+    <jsp:param name="menu" value="dashboard"/>                                 
+</jsp:include>
+<%@taglib prefix="s" uri="/struts-tags" %>
+<!-- Right side column. Contains the navbar and content of the page -->
+<title>Home</title>
+<aside class="right-side">                
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            DashBoard
+            <!--                        <small>advanced tables</small>-->
+        </h1> 
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa"></i> Home</a></li>
+            <!--<li><a href="#">Tables</a></li>-->
+            <li class="active">DashBoard</li>
+        </ol>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+
+        <!-- Small boxes (Stat box) -->
+        <div class="row">
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-red">
+                    <div class="inner">
+                        <h3>
+                            <s:property value="serviceRequestList.{? #this.statusId == 3}.size()"  default="0"/>
+                        </h3>
+                        <p>
+                            Client Referrals
+                        </p>
+                    </div>
+                    <div class="icon"> 
+                        <i class="ion ion-person-add"></i>
+                    </div> 
+                    <a href="getBillPayments.action?statusId=3" class="small-box-footer">
+                        More info <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div><!-- ./col -->
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-aqua">
+                    <div class="inner">
+                        <h3>
+                            <s:property value="serviceRequestList.{? #this.statusId == 3}.size()"  default="0"/>
+                        </h3>
+                        <p>
+                            Referral Partner
+                        </p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-person-stalker"></i>
+                    </div>
+                    <a href="request.action?statusId=3" class="small-box-footer">
+                        More info <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div><!-- ./col -->
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-green">
+                    <div class="inner">
+                        <h3>
+                            <s:property value="facilityBookingList.{? #this.statusId == 3}.size()"  default="0"/>
+                            <!--                            <sup style="font-size: 20px">%</sup>-->
+                        </h3>
+                        <p>
+                            Last Month Referral
+                        </p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-person-stalker"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        More info <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div><!-- ./col -->
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-yellow">
+                    <div class="inner">
+                        <h3>
+                            <s:property value="complaintseList.{? #this.statusId == 3}.size()"  default="0"/>
+                        </h3>
+                        <p>
+                            Remuneration
+                        </p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-stats-bars"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        More info <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div><!-- ./col -->
+        </div><!-- ./row -->
+            <div class="row">
+            <div class="col-lg-3 col-xs-6">
+                <!-- small box -->
+                <div class="small-box bg-blu">
+                    <div class="inner">
+                        <h3>
+                            <s:property value="complaintseList.{? #this.statusId == 3}.size()"  default="0"/>
+                        </h3>
+                        <p>
+                            Notification
+                        </p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-android-information"></i>
+                    </div>
+                    <a href="#" class="small-box-footer">
+                        More info <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div><!-- ./col -->
+            <!--<div class="col-lg-3 col-xs-6">
+                
+                <div class="small-box bg-gry">
+                    <div class="inner">
+                        <br><Br><Br><br>
+                        <%--<h3>
+                            <s:property value="complaintseList.{? #this.statusId == 3}.size()"  default="0"/>
+                        </h3>--%>
+                        <p>
+                            Preferences
+                        </p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-person"></i>
+                    </div>
+                    <a href="incident.action?statusId=3" class="small-box-footer">
+                        More info <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div><!-- ./col -->
+
+        </div><!-- /.row -->
+        <div class="alert1">
+            <p class="font">Alerts!</p>
+            <div class="box-body table-responsive">
+                        <table id="example2" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Action name</th>
+                                    <th>Waiting for comments</th>
+                                    <th>Client</th>
+                                    <th>Action date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>name</td>
+                                    <td>name1</td>
+                                    <td>client name</td>
+                                    <td>03/02/2015</td>
+                                    <td><a data-toggle="modal" data-target="#updateProjmodal">Enter comments</a>&nbsp;&nbsp;&nbsp;&nbsp;<a data-toggle="modal" data-target="#update">View comments</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+            
+            </div>
+        <div class="modal fade" id="updateProjmodal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog  big">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-envelope-o"></i> Update project details</h4>
+            </div>
+                <div class="modal-body">
+                    <div class="row"> 
+                        <div>
+                            Comments:<br>
+                            <textarea style="width: 100%"></textarea>
+                        </div>
+                        <div class="modal-footer clearfix">
+                            
+                            <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-envelope"></i> Comment</button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+        </div>
+        
+        <div class="modal fade" id="update" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog  big">
+            <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-envelope-o"></i> Update project details</h4>
+            </div>
+                <div class="modal-body">
+                    <div class="row"> 
+                        <div>
+                            <textarea style="width: 100%"></textarea>
+                        </div>
+                        <div class="modal-footer clearfix">
+                            
+                            <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-envelope"></i> Comment</button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+        </div>
+        
+    </aside><!-- /.right-side -->
+    <jsp:include page="footer.jsp"/>
+</body>
+</html>
