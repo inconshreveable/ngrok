@@ -190,6 +190,9 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			}
 		}
 
+	case "start-all":
+		return
+
 	default:
 		err = fmt.Errorf("Unknown command: %s", opts.command)
 		return
