@@ -6,6 +6,9 @@
 ngrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
 ngrok captures and analyzes all traffic over the tunnel for later inspection and replay.
 
+## ngrok 2.0
+**NOTE** This repository contains the code for ngrok 1.0. The code for ngrok 2.0 is not yet open source.
+
 ## What can I do with ngrok?
 - Expose any http service behind a NAT or firewall to the internet on a subdomain of ngrok.com
 - Expose any tcp service behind a NAT or firewall to the internet on a random port of ngrok.com
