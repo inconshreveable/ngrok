@@ -16,7 +16,7 @@ There are Makefile targets for compiling just the client or server.
     make client
     make server
 
-**NB: You must compile with Go 1.1+!**
+**NB: You must compile with Go 1.1+! You must have Mercurial SCM Installed.**
 
 ### Compiling release versions
 Both the client and the server contain static asset files.
