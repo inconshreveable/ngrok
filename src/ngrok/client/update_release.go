@@ -3,12 +3,13 @@
 package client
 
 import (
-	update "github.com/inconshreveable/go-update"
-	"github.com/inconshreveable/go-update/check"
 	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/version"
 	"time"
+
+	"gopkg.in/inconshreveable/go-update.v0"
+	"gopkg.in/inconshreveable/go-update.v0/check"
 )
 
 const (
