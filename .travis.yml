@@ -1,3 +1,4 @@
+sudo: false
 language: go
 script: make release-all
 install: true
