@@ -1,3 +1,6 @@
+[![Build
+status](https://travis-ci.org/inconshreveable/ngrok.svg)](https://travis-ci.org/inconshreveable/ngrok)
+
 # ngrok - Introspected tunnels to localhost ([homepage](https://ngrok.com))
 ### "I want to securely expose a web server to the internet and capture all traffic for detailed inspection and replay"
 ![](https://ngrok.com/static/img/overview.png)
