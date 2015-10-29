@@ -195,9 +195,10 @@ func (c *loggedConn) CloseRead() error {
 func Join(c Conn, c2 Conn) (int64, int64) {
 	var wait sync.WaitGroup
 
+	defer c.Close()
+	defer c2.Close()
+
 	pipe := func(to Conn, from Conn, bytesCopied *int64) {
-		defer to.Close()
-		defer from.Close()
 		defer wait.Done()
 
 		var err error
