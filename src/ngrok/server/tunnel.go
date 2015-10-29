@@ -86,7 +86,7 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 
 	// Register for random URL
 	t.url, err = tunnelRegistry.RegisterRepeat(func() string {
-		return fmt.Sprintf("%s://%x.%s", protocol, rand.Int31(), vhost)
+		return fmt.Sprintf("%s://%s.%s", protocol, RandomChars(5), vhost)
 	}, t)
 
 	return
