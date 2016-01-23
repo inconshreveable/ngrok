@@ -18,6 +18,8 @@ const (
 	controlWriteTimeout = 10 * time.Second
 	proxyStaleDuration  = 60 * time.Second
 	proxyMaxPoolSize    = 10
+
+	myAuthToken         = "myauthtoken"	
 )
 
 type Control struct {
@@ -101,6 +103,11 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		return
 	}
 
+	if authMsg.User != myAuthToken {
+		failAuth(fmt.Errorf("Invalid authtoken %s", authMsg.User))
+		return
+	}
+	
 	// register the control
 	if replaced := controlRegistry.Add(c.id, c); replaced != nil {
 		replaced.shutdown.WaitComplete()
