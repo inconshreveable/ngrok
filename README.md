@@ -46,7 +46,5 @@ ngrok.com ran a pay-what-you-want hosted service of 1.x from early 2013 until Ap
 - Debugging and understanding any web service by inspecting the HTTP traffic
 - Running networked services on machines that are firewalled off from the internet
 
-#### [Pre-compiled ngrok 1.x binaries for your platform](https://ngrok.com/download/1)
-
 ## Developing on ngrok
 [ngrok developer's guide](docs/DEVELOPMENT.md)
