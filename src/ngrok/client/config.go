@@ -73,7 +73,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	}
 
 	if config.InspectAddr == "" {
-		config.InspectAddr = "127.0.0.1:4040"
+		config.InspectAddr = defaultInspectAddr
 	}
 
 	if config.HttpProxy == "" {
