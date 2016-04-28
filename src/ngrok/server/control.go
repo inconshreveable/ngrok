@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"ngrok/conn"
 	"ngrok/msg"
 	"ngrok/util"
@@ -101,6 +102,11 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		return
 	}
 
+	if !isValidAuthToken(authMsg.User) {
+		failAuth(fmt.Errorf("Invalid authtoken %s", authMsg.User))
+		return
+	}
+
 	// register the control
 	if replaced := controlRegistry.Add(c.id, c); replaced != nil {
 		replaced.shutdown.WaitComplete()
@@ -123,6 +129,26 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	go c.manager()
 	go c.reader()
 	go c.stopper()
+}
+
+// Read a whole file into the memory and store it as array of whitespace-delimited text
+func readLinesFromFile(path string) (lines []string) {
+	if content, err := ioutil.ReadFile(path); err == nil {
+		lines = strings.Fields(string(content))
+	}
+	return
+}
+
+func isValidAuthToken(token string) bool {
+	if opts.authTokens == "" {
+		return true
+	}
+	for _, line := range readLinesFromFile(opts.authTokens) {
+		if line == token {
+			return true
+		}
+	}
+	return false
 }
 
 // Register a new tunnel on this control connection
