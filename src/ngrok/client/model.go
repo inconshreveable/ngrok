@@ -6,6 +6,7 @@ import (
 	metrics "github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"math"
+	"net"
 	"ngrok/client/mvc"
 	"ngrok/conn"
 	"ngrok/log"
@@ -113,8 +114,21 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 	// configure TLS SNI
 	m.tlsConfig.ServerName = serverName(m.serverAddr)
+	m.tlsConfig.InsecureSkipVerify = useInsecureSkipVerify()
 
 	return m
+}
+
+// server name in release builds is the host part of the server address
+func serverName(addr string) string {
+	host, _, err := net.SplitHostPort(addr)
+
+	// should never panic because the config parser calls SplitHostPort first
+	if err != nil {
+		panic(err)
+	}
+
+	return host
 }
 
 // mvc.State interface
