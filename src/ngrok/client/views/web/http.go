@@ -263,6 +263,18 @@ func (whv *WebHttpView) register() {
 			panic(err)
 		}
 	})
+
+	http.HandleFunc("/api/tunnels", func(w http.ResponseWriter, r *http.Request) {
+		payloadData := whv.ctl.State().GetTunnels();
+
+		payload, err := json.Marshal(payloadData)
+		if err != nil {
+			panic(err)
+		}
+
+		w.Header().Set("Content-Type", "application/json");
+		w.Write(payload);
+	})
 }
 
 func (whv *WebHttpView) Shutdown() {
