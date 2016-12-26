@@ -146,6 +146,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		config.Tunnels["default"] = &TunnelConfiguration{
 			Subdomain: opts.subdomain,
 			Hostname:  opts.hostname,
+			RemotePort:  opts.rport,
 			HttpAuth:  opts.httpauth,
 			Protocols: make(map[string]string),
 		}
