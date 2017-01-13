@@ -45,7 +45,7 @@ func startHttpListener(addr string, tlsCfg *tls.Config) (listener *conn.Listener
 		proto = "https"
 	}
 
-	log.Info("Listening for public %s connections on %v", proto, listener.Addr.String())
+	log.Info("监听 %s %v", proto, listener.Addr.String())
 	go func() {
 		for conn := range listener.Conns {
 			go httpHandler(conn, proto)

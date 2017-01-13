@@ -51,7 +51,7 @@ func NewTunnelRegistry(cacheSize uint64, cacheFile string) *TunnelRegistry {
 
 		registry.SaveCacheThread(cacheFile, cacheSaveInterval)
 	} else {
-		registry.Info("No affinity cache specified")
+		registry.Info("没有相关的缓存")
 	}
 
 	return registry

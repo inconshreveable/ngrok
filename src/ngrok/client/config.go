@@ -35,10 +35,8 @@ type TunnelConfiguration struct {
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
+	log.Info("Options %+v", opts)
 	configPath := opts.config
-	if configPath == "" {
-		configPath = defaultPath()
-	}
 
 	log.Info("Reading configuration file %s", configPath)
 	configBuf, err := ioutil.ReadFile(configPath)
@@ -155,49 +153,17 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 				return
 			}
 
-			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
+			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.port, ""); err != nil {
 				return
 			}
 		}
-
-	// list tunnels
-	case "list":
-		for name, _ := range config.Tunnels {
-			fmt.Println(name)
-		}
-		os.Exit(0)
-
-	// start tunnels
-	case "start":
-		if len(opts.args) == 0 {
-			err = fmt.Errorf("You must specify at least one tunnel to start")
-			return
-		}
-
-		requestedTunnels := make(map[string]bool)
-		for _, arg := range opts.args {
-			requestedTunnels[arg] = true
-
-			if _, ok := config.Tunnels[arg]; !ok {
-				err = fmt.Errorf("Requested to start tunnel %s which is not defined in the config file.", arg)
-				return
-			}
-		}
-
-		for name, _ := range config.Tunnels {
-			if !requestedTunnels[name] {
-				delete(config.Tunnels, name)
-			}
-		}
-
-	case "start-all":
-		return
 
 	default:
 		err = fmt.Errorf("Unknown command: %s", opts.command)
 		return
 	}
 
+	log.Info("Configuration %+v", config)
 	return
 }
 

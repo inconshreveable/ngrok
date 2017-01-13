@@ -126,7 +126,7 @@ func (m *LocalMetrics) CloseConnection(t *Tunnel, c conn.Conn, start time.Time, 
 }
 
 func (m *LocalMetrics) Report() {
-	m.Info("Reporting every %d seconds", int(m.reportInterval.Seconds()))
+	m.Info("每隔%d秒上报一次", int(m.reportInterval.Seconds()))
 
 	for {
 		time.Sleep(m.reportInterval)
@@ -150,7 +150,7 @@ func (m *LocalMetrics) Report() {
 			continue
 		}
 
-		m.Info("Reporting: %s", buffer)
+		m.Info("报文: %s", buffer)
 	}
 }
 
@@ -200,16 +200,16 @@ func NewKeenIoMetrics(batchInterval time.Duration) *KeenIoMetrics {
 					continue
 				}
 
-				payload, err := json.Marshal(batch)
-				if err != nil {
-					k.Error("Failed to serialize metrics payload: %v, %v", batch, err)
-				} else {
-					for key, val := range batch {
-						k.Debug("Reporting %d metrics for %s", len(val), key)
-					}
-
-					k.AuthedRequest("POST", "/events", bytes.NewReader(payload))
-				}
+				//payload, err := json.Marshal(batch)
+				//if err != nil {
+				//	k.Error("Failed to serialize metrics payload: %v, %v", batch, err)
+				//} else {
+				//	for key, val := range batch {
+				//		k.Debug("Reporting %d metrics for %s", len(val), key)
+				//	}
+				//
+				//	k.AuthedRequest("POST", "/events", bytes.NewReader(payload))
+				//}
 				batch = make(map[string][]interface{})
 			}
 		}
