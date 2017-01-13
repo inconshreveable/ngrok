@@ -1,0 +1,29 @@
+package: .
+import:
+- package: github.com/alecthomas/log4go
+- package: github.com/gorilla/websocket
+  version: ^1.1.0
+- package: github.com/inconshreveable/go-vhost
+- package: github.com/inconshreveable/mousetrap
+- package: github.com/nsf/termbox-go
+- package: github.com/rcrowley/go-metrics
+- package: gopkg.in/inconshreveable/go-update.v0
+  subpackages:
+  - check
+- package: gopkg.in/yaml.v1
+- package: ngrok/cache
+- package: ngrok/client
+  subpackages:
+  - assets
+  - mvc
+  - views/term
+  - views/web
+- package: ngrok/conn
+- package: ngrok/log
+- package: ngrok/msg
+- package: ngrok/proto
+- package: ngrok/server
+  subpackages:
+  - assets
+- package: ngrok/util
+- package: ngrok/version
