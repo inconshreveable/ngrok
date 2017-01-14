@@ -3,8 +3,8 @@ package term
 
 import (
 	"fmt"
-	termbox "github.com/nsf/termbox-go"
 	"github.com/mattn/go-runewidth"
+	termbox "github.com/nsf/termbox-go"
 )
 
 const (
@@ -38,7 +38,7 @@ func (a *area) Clear() {
 func (a *area) APrintf(fg termbox.Attribute, x, y int, arg0 string, args ...interface{}) {
 	s := fmt.Sprintf(arg0, args...)
 	for _, ch := range s {
-		termbox.SetCell(a.x + x, a.y + y, ch, fg, bgColor)
+		termbox.SetCell(a.x+x, a.y+y, ch, fg, bgColor)
 		w := runewidth.RuneWidth(ch)
 		if w == 0 || (w == 2 && runewidth.IsAmbiguousWidth(ch)) {
 			w = 1

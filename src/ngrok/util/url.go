@@ -1,9 +1,9 @@
 package util
 
 import (
-	"net/url"
-	"net"
 	"fmt"
+	"net"
+	"net/url"
 )
 
 func ParseUrl(sourceUrl string) (u string) {

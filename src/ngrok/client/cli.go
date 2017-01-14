@@ -65,7 +65,7 @@ func ParseArgs() (opts *Options, err error) {
 		protocol:  "http",
 		authtoken: "",
 		hostname:  "",
-		port: "",
+		port:      "",
 		command:   flag.Arg(0),
 	}
 

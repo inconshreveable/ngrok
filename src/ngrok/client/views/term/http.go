@@ -74,10 +74,10 @@ func (v *HttpView) Render() {
 	for i, obj := range v.HttpRequests.Slice() {
 		txn := obj.(*proto.HttpTxn)
 		path := truncatePath(txn.Req.URL.Path)
-		v.APrintf(termbox.ColorCyan, 0, 3 + i, "%-10s", txn.Req.Method)
-		v.Printf(11, 3 + i, "%v", path)
+		v.APrintf(termbox.ColorCyan, 0, 3+i, "%-10s", txn.Req.Method)
+		v.Printf(11, 3+i, "%v", path)
 		if txn.Resp != nil {
-			v.APrintf(colorFor(txn.Resp.Status), 71, 3 + i, "%s", txn.Resp.Status)
+			v.APrintf(colorFor(txn.Resp.Status), 71, 3+i, "%s", txn.Resp.Status)
 		}
 	}
 	v.termView.Flush()
