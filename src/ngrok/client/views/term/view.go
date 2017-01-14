@@ -46,13 +46,13 @@ func NewTermView(ctl mvc.Controller) *TermView {
 func connStatusRepr(status mvc.ConnStatus) (string, termbox.Attribute) {
 	switch status {
 	case mvc.ConnConnecting:
-		return "connecting", termbox.ColorCyan
+		return "连接中", termbox.ColorCyan
 	case mvc.ConnReconnecting:
-		return "reconnecting", termbox.ColorRed
+		return "重新连接", termbox.ColorRed
 	case mvc.ConnOnline:
-		return "online", termbox.ColorGreen
+		return "已连接", termbox.ColorGreen
 	}
-	return "unknown", termbox.ColorWhite
+	return "未知", termbox.ColorWhite
 }
 
 func (v *TermView) draw() {
@@ -61,7 +61,7 @@ func (v *TermView) draw() {
 	v.Clear()
 
 	// quit instructions
-	quitMsg := "(Ctrl+C to quit)"
+	quitMsg := "(Ctrl+C 退出)"
 	v.Printf(v.w-len(quitMsg), 0, quitMsg)
 
 	// new version message
@@ -97,23 +97,24 @@ func (v *TermView) draw() {
 		v.APrintf(termbox.ColorYellow, 30, 0, updateMsg)
 	}
 
-	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "ngrok")
+	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "ngrok.lxwgo.com")
 	statusStr, statusColor := connStatusRepr(state.GetConnStatus())
-	v.APrintf(statusColor, 0, 2, "%-30s%s", "Tunnel Status", statusStr)
+	v.APrintf(statusColor, 0, 2, "%-30s%s", "当前状态", statusStr)
 
-	v.Printf(0, 3, "%-30s%s/%s", "Version", state.GetClientVersion(), state.GetServerVersion())
-	var i int = 4
+	v.Printf(0, 3, "%-29s%s", "客户端版本", state.GetClientVersion())
+	v.Printf(0, 4, "%-29s%s", "服务端版本", state.GetServerVersion())
+	var i int = 6
 	for _, t := range state.GetTunnels() {
-		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
+		v.Printf(0, i, "%-30s%s -> %s", "当前转发", t.PublicUrl, t.LocalAddr)
 		i++
 	}
-	v.Printf(0, i+0, "%-30s%s", "Web Interface", v.ctl.GetWebInspectAddr())
+	//v.Printf(0, i + 0, "%-30s%s", "Web Interface", v.ctl.GetWebInspectAddr())
 
 	connMeter, connTimer := state.GetConnectionMetrics()
-	v.Printf(0, i+1, "%-30s%d", "# Conn", connMeter.Count())
+	v.Printf(0, i + 1, "%-31s%d", "连接数", connMeter.Count())
 
 	msec := float64(time.Millisecond)
-	v.Printf(0, i+2, "%-30s%.2fms", "Avg Conn Time", connTimer.Mean()/msec)
+	v.Printf(0, i + 2, "%-28s%.2f ms", "平均连接时间", connTimer.Mean()/msec)
 
 	termbox.Flush()
 }

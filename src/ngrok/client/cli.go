@@ -62,7 +62,7 @@ func ParseArgs() (opts *Options, err error) {
 		loglevel:  "INFO",
 		httpauth:  "",
 		subdomain: "",
-		protocol:  "http",
+		protocol:  "http+https",
 		authtoken: "",
 		hostname:  "",
 		port: "",

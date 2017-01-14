@@ -35,7 +35,7 @@ type TunnelConfiguration struct {
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
-	log.Info("Options %+v", opts)
+	log.Info("Options %#v", opts)
 	configPath := opts.config
 
 	log.Info("Reading configuration file %s", configPath)
@@ -163,7 +163,8 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		return
 	}
 
-	log.Info("Configuration %+v", config)
+	log.Info("Configuration %#v", config)
+	log.Info("Tunnel default %#v", config.Tunnels["default"])
 	return
 }
 

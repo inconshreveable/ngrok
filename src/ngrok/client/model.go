@@ -22,7 +22,7 @@ import (
 
 const (
 	defaultServerAddr   = "ngrok.lxwgo.com:4443"
-	defaultInspectAddr  = "127.0.0.1:4040"
+	defaultInspectAddr  = "disabled"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
@@ -135,7 +135,14 @@ func serverName(addr string) string {
 // mvc.State interface
 func (c ClientModel) GetProtocols() []proto.Protocol { return c.protocols }
 func (c ClientModel) GetClientVersion() string       { return version.MajorMinor() }
-func (c ClientModel) GetServerVersion() string       { return c.serverVersion }
+
+func (c ClientModel) GetServerVersion() string {
+	if c.serverVersion == "" {
+		return "无法获取"
+	}
+	return c.serverVersion
+}
+
 func (c ClientModel) GetTunnels() []mvc.Tunnel {
 	tunnels := make([]mvc.Tunnel, 0)
 	for _, t := range c.tunnels {
@@ -253,7 +260,7 @@ func (c *ClientModel) control() {
 	}
 
 	if authResp.Error != "" {
-		emsg := fmt.Sprintf("Failed to authenticate to server: %s", authResp.Error)
+		emsg := fmt.Sprintf("服务端验证失败: %s", authResp.Error)
 		c.ctl.Shutdown(emsg)
 		return
 	}
