@@ -8,9 +8,6 @@ import (
 	"ngrok/proto"
 	"ngrok/util"
 	"time"
-	"net/url"
-	"fmt"
-	"net"
 )
 
 type TermView struct {
@@ -58,21 +55,6 @@ func connStatusRepr(status mvc.ConnStatus) (string, termbox.Attribute) {
 	return "未知", termbox.ColorWhite
 }
 
-func parseUrl(sourceUrl string) (u string) {
-	URL, err := url.Parse(sourceUrl)
-	if err != nil {
-		panic(err)
-	}
-
-	host, _, err := net.SplitHostPort(URL.Host)
-	if err != nil {
-		panic(err)
-	}
-
-	u = fmt.Sprintf("%s://%s", URL.Scheme, host)
-	return
-}
-
 func (v *TermView) draw() {
 	state := v.ctl.State()
 
@@ -80,7 +62,7 @@ func (v *TermView) draw() {
 
 	// quit instructions
 	quitMsg := "(Ctrl+C 退出)"
-	v.Printf(v.w-len(quitMsg), 0, quitMsg)
+	v.Printf(v.w - len(quitMsg), 0, quitMsg)
 
 	// new version message
 	updateStatus := state.GetUpdateStatus()
@@ -98,14 +80,14 @@ func (v *TermView) draw() {
 		pct := float64(updateStatus) / 100.0
 		const barLength = 25
 		full := int(barLength * pct)
-		bar := make([]byte, barLength+2)
+		bar := make([]byte, barLength + 2)
 		bar[0] = '['
-		bar[barLength+1] = ']'
+		bar[barLength + 1] = ']'
 		for i := 0; i < 25; i++ {
 			if i <= full {
-				bar[i+1] = '#'
+				bar[i + 1] = '#'
 			} else {
-				bar[i+1] = ' '
+				bar[i + 1] = ' '
 			}
 		}
 		updateMsg = "Downloading update: " + string(bar)
@@ -115,7 +97,7 @@ func (v *TermView) draw() {
 		v.APrintf(termbox.ColorYellow, 30, 0, updateMsg)
 	}
 
-	v.APrintf(termbox.ColorBlue|termbox.AttrBold, 0, 0, "ngrok.lxwgo.com")
+	v.APrintf(termbox.ColorBlue | termbox.AttrBold, 0, 0, "ngrok.lxwgo.com")
 	statusStr, statusColor := connStatusRepr(state.GetConnStatus())
 	v.APrintf(statusColor, 0, 2, "%-30s%s", "当前状态", statusStr)
 
@@ -123,7 +105,7 @@ func (v *TermView) draw() {
 	v.Printf(0, 4, "%-29s%s", "服务端版本", state.GetServerVersion())
 	var i int = 6
 	for _, t := range state.GetTunnels() {
-		v.Printf(0, i, "%-30s%s -> %s", "当前转发", parseUrl(t.PublicUrl), t.LocalAddr)
+		v.Printf(0, i, "%-30s%s -> %s", "当前转发", util.ParseUrl(t.PublicUrl), t.LocalAddr)
 		i++
 	}
 
@@ -133,7 +115,7 @@ func (v *TermView) draw() {
 	v.Printf(0, i + 2, "%-31s%d", "连接数", connMeter.Count())
 
 	msec := float64(time.Millisecond)
-	v.Printf(0, i + 3, "%-28s%.2f ms", "平均连接时间", connTimer.Mean()/msec)
+	v.Printf(0, i + 3, "%-28s%.2f ms", "平均连接时间", connTimer.Mean() / msec)
 
 	termbox.Flush()
 }

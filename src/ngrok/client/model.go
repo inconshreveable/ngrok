@@ -27,10 +27,13 @@ const (
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
 	BadGateway          = `<html>
-<body style="background-color: #97a8b9">
-    <div style="margin:auto; width:400px;padding: 20px 60px; background-color: #D3D3D3; border: 5px solid maroon;">
-        <h2>Tunnel %s unavailable</h2>
-        <p>Unable to initiate connection to <strong>%s</strong>. A web server must be running on port <strong>%s</strong> to complete the tunnel.</p>
+<body style="background-color:#FFF; line-height: 1.5;">
+    <div style="margin:auto;width:450px;padding:20px 60px;background-color:#CCC;border:5px solid maroon;">
+        <h2 style="color: #FF0000">出错啦</h2>
+        <p>无法和 %s 建立通信，检查本地 %s 是否可用.</p>
+    </div>
+</body>
+</html>
 `
 )
 
@@ -390,7 +393,7 @@ func (c *ClientModel) proxy() {
 
 		if tunnel.Protocol.GetName() == "http" {
 			// try to be helpful when you're in HTTP mode and a human might see the output
-			badGatewayBody := fmt.Sprintf(BadGateway, tunnel.PublicUrl, tunnel.LocalAddr, tunnel.LocalAddr)
+			badGatewayBody := fmt.Sprintf(BadGateway, tunnel.LocalAddr, tunnel.LocalAddr)
 			remoteConn.Write([]byte(fmt.Sprintf(`HTTP/1.0 502 Bad Gateway
 Content-Type: text/html
 Content-Length: %d
