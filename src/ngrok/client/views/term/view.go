@@ -8,6 +8,9 @@ import (
 	"ngrok/proto"
 	"ngrok/util"
 	"time"
+	"net/url"
+	"fmt"
+	"net"
 )
 
 type TermView struct {
@@ -53,6 +56,21 @@ func connStatusRepr(status mvc.ConnStatus) (string, termbox.Attribute) {
 		return "已连接", termbox.ColorGreen
 	}
 	return "未知", termbox.ColorWhite
+}
+
+func parseUrl(sourceUrl string) (u string) {
+	URL, err := url.Parse(sourceUrl)
+	if err != nil {
+		panic(err)
+	}
+
+	host, _, err := net.SplitHostPort(URL.Host)
+	if err != nil {
+		panic(err)
+	}
+
+	u = fmt.Sprintf("%s://%s", URL.Scheme, host)
+	return
 }
 
 func (v *TermView) draw() {
@@ -105,16 +123,17 @@ func (v *TermView) draw() {
 	v.Printf(0, 4, "%-29s%s", "服务端版本", state.GetServerVersion())
 	var i int = 6
 	for _, t := range state.GetTunnels() {
-		v.Printf(0, i, "%-30s%s -> %s", "当前转发", t.PublicUrl, t.LocalAddr)
+		v.Printf(0, i, "%-30s%s -> %s", "当前转发", parseUrl(t.PublicUrl), t.LocalAddr)
 		i++
 	}
-	//v.Printf(0, i + 0, "%-30s%s", "Web Interface", v.ctl.GetWebInspectAddr())
+
+	v.Printf(0, i + 1, "%-30s%s", "本地Web接口", v.ctl.GetWebInspectAddr())
 
 	connMeter, connTimer := state.GetConnectionMetrics()
-	v.Printf(0, i + 1, "%-31s%d", "连接数", connMeter.Count())
+	v.Printf(0, i + 2, "%-31s%d", "连接数", connMeter.Count())
 
 	msec := float64(time.Millisecond)
-	v.Printf(0, i + 2, "%-28s%.2f ms", "平均连接时间", connTimer.Mean()/msec)
+	v.Printf(0, i + 3, "%-28s%.2f ms", "平均连接时间", connTimer.Mean()/msec)
 
 	termbox.Flush()
 }
@@ -155,7 +174,7 @@ func (v *TermView) Flush() {
 }
 
 func (v *TermView) NewHttpView(p *proto.Http) *HttpView {
-	return newTermHttpView(v.ctl, v, p, 0, 12)
+	return newTermHttpView(v.ctl, v, p, 0, 13)
 }
 
 func (v *TermView) input() {
