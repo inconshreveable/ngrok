@@ -16,14 +16,14 @@ type Options struct {
 }
 
 func parseArgs() *Options {
-	httpAddr := flag.String("httpAddr", ":80", "Public address for HTTP connections, empty string to disable")
-	httpsAddr := flag.String("httpsAddr", ":443", "Public address listening for HTTPS connections, emptry string to disable")
-	tunnelAddr := flag.String("tunnelAddr", ":4443", "Public address listening for ngrok client")
-	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
-	tlsCrt := flag.String("tlsCrt", "", "Path to a TLS certificate file")
-	tlsKey := flag.String("tlsKey", "", "Path to a TLS key file")
-	logto := flag.String("log", "stdout", "Write log messages to this file. 'stdout' and 'none' have special meanings")
-	loglevel := flag.String("log-level", "DEBUG", "The level of messages to log. One of: DEBUG, INFO, WARNING, ERROR")
+	httpAddr := flag.String("httpAddr", ":8081", "监听的HTTP端口,设置空禁用")
+	httpsAddr := flag.String("httpsAddr", "", "监听的HTTPS端口,设置空禁用")
+	tunnelAddr := flag.String("tunnelAddr", ":8089", "客户端监听的端口")
+	domain := flag.String("domain", "ngrok.lxwgo.com", "隧道的域名")
+	tlsCrt := flag.String("tlsCrt", "", "TLS证书文件")
+	tlsKey := flag.String("tlsKey", "", "TLS秘钥文件")
+	logto := flag.String("log", "stdout", "输出日志文件. 'none'为不输出任何内容")
+	loglevel := flag.String("log-level", "INFO", "日志文件级别. 可选值DEBUG, INFO, WARNING, ERROR")
 	flag.Parse()
 
 	return &Options{

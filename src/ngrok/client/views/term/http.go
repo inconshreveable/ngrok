@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	size          = 10
-	pathMaxLength = 25
+	size          = 15
+	pathMaxLength = 58
 )
 
 type HttpView struct {
@@ -26,6 +26,8 @@ type HttpView struct {
 
 func colorFor(status string) termbox.Attribute {
 	switch status[0] {
+	case '2':
+		return termbox.ColorGreen
 	case '3':
 		return termbox.ColorCyan
 	case '4':
@@ -67,14 +69,15 @@ func (v *HttpView) Run() {
 
 func (v *HttpView) Render() {
 	v.Clear()
-	v.Printf(0, 0, "HTTP Requests")
-	v.Printf(0, 1, "-------------")
+	v.Printf(0, 0, "请求详细: (最近的 %d 个)", size)
+	v.Printf(0, 1, "--------------------------------------------------------------------------")
 	for i, obj := range v.HttpRequests.Slice() {
 		txn := obj.(*proto.HttpTxn)
 		path := truncatePath(txn.Req.URL.Path)
-		v.Printf(0, 3+i, "%s %v", txn.Req.Method, path)
+		v.APrintf(termbox.ColorCyan, 0, 3+i, "%-10s", txn.Req.Method)
+		v.Printf(11, 3+i, "%v", path)
 		if txn.Resp != nil {
-			v.APrintf(colorFor(txn.Resp.Status), 30, 3+i, "%s", txn.Resp.Status)
+			v.APrintf(colorFor(txn.Resp.Status), 71, 3+i, "%s", txn.Resp.Status)
 		}
 	}
 	v.termView.Flush()
