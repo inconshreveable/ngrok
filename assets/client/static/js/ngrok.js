@@ -389,4 +389,9 @@ ngrok.controller({
         // this causes angular to update the timestamps
         setInterval(function() { $scope.$apply(function() {}); }, 30000);
     },
+
+    "Tunnels": function($scope) {
+        $scope.tunnels = window.data.UiState.Tunnels;
+    },
+
 });

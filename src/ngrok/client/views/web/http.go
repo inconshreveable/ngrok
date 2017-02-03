@@ -263,6 +263,37 @@ func (whv *WebHttpView) register() {
 			panic(err)
 		}
 	})
+
+	http.HandleFunc("/tunnels", func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				err := util.MakePanicTrace(r)
+				whv.Error("HTTP web view failed: %v", err)
+				http.Error(w, err, 500)
+			}
+		}()
+
+		pageTmpl, err := assets.Asset("assets/client/tunnels.html")
+		if err != nil {
+			panic(err)
+		}
+
+		tmpl := template.Must(template.New("page.html").Delims("{%", "%}").Parse(string(pageTmpl)))
+
+		payloadData := SerializedPayload{
+			UiState: SerializedUiState{Tunnels: whv.ctl.State().GetTunnels()},
+		}
+
+		payload, err := json.Marshal(payloadData)
+		if err != nil {
+			panic(err)
+		}
+
+		// write the response
+		if err := tmpl.Execute(w, string(payload)); err != nil {
+			panic(err)
+		}
+	})
 }
 
 func (whv *WebHttpView) Shutdown() {
