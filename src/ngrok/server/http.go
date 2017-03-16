@@ -80,10 +80,10 @@ func httpHandler(c conn.Conn, proto string) {
 	host := strings.ToLower(vhostConn.Host())
 
 	// try fix Host header with default port
-	if (strings.Contains(host, ":")) {
+	if strings.Contains(host, ":") {
 		// Host header contains a port number
 		parts := strings.Split(host, ":")
-		if ((proto == "http" && parts[1] == "80") || (proto == "https" && parts[1] == "443")) {
+		if (proto == "http" && parts[1] == "80") || (proto == "https" && parts[1] == "443") {
 			host = parts[0]
 		}
 	}
