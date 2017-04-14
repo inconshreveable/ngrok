@@ -54,7 +54,7 @@ func wrapConn(conn net.Conn, typ string) *loggedConn {
 
 func Listen(addr, typ string, tlsCfg *tls.Config) (l *Listener, err error) {
 	// listen for incoming connections
-	listener, err := net.Listen("tcp", addr)
+	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
 		return
 	}

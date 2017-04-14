@@ -106,7 +106,7 @@ func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 	switch proto {
 	case "tcp":
 		bindTcp := func(port int) error {
-			if t.listener, err = net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: port}); err != nil {
+			if t.listener, err = net.ListenTCP("tcp4", &net.TCPAddr{IP: net.ParseIP("0.0.0.0"), Port: port}); err != nil {
 				err = t.ctl.conn.Error("Error binding TCP listener: %v", err)
 				return err
 			}
