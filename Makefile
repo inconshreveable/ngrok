@@ -19,7 +19,7 @@ client: deps
 assets: client-assets server-assets
 
 bin/go-bindata:
-	GOOS="" GOARCH="" go get github.com/jteeuwen/go-bindata/go-bindata
+	GOOS="darwin" GOARCH="386" go get github.com/jteeuwen/go-bindata/go-bindata
 
 client-assets: bin/go-bindata
 	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
@@ -38,6 +38,12 @@ release-client: client
 
 release-server: BUILDTAGS=release
 release-server: server
+
+release-client-gox: BUILDTAGS=release
+release-client-gox: client-gox
+
+client-gox: deps
+	gox -tags '$(BUILDTAGS)' -osarch='windows/386 windows/amd64 linux/386 linux/amd64 darwin/386 darwin/amd64' ngrok/main/ngrok
 
 release-all: fmt release-client release-server
 

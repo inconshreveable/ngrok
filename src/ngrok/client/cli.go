@@ -36,16 +36,17 @@ Examples:
 `
 
 type Options struct {
-	config    string
-	logto     string
-	loglevel  string
-	authtoken string
-	httpauth  string
-	hostname  string
-	protocol  string
-	subdomain string
-	command   string
-	args      []string
+	config      string
+	logto       string
+	loglevel    string
+	authtoken   string
+	httpauth    string
+	hostname    string
+	protocol    string
+	subdomain   string
+	projectname string
+	command     string
+	args        []string
 }
 
 func ParseArgs() (opts *Options, err error) {
@@ -73,7 +74,7 @@ func ParseArgs() (opts *Options, err error) {
 	authtoken := flag.String(
 		"authtoken",
 		"",
-		"Authentication token for identifying an ngrok.com account")
+		"Authentication token for identifying an beta.hasura.io account")
 
 	httpauth := flag.String(
 		"httpauth",
@@ -90,6 +91,11 @@ func ParseArgs() (opts *Options, err error) {
 		"",
 		"Request a custom hostname from the ngrok server. (HTTP only) (requires CNAME of your DNS)")
 
+	projectname := flag.String(
+		"projectname",
+		"",
+		"Request a custom projectname from the bet.hsaura.io server")
+
 	protocol := flag.String(
 		"proto",
 		"http+https",
@@ -98,15 +104,21 @@ func ParseArgs() (opts *Options, err error) {
 	flag.Parse()
 
 	opts = &Options{
-		config:    *config,
-		logto:     *logto,
-		loglevel:  *loglevel,
-		httpauth:  *httpauth,
-		subdomain: *subdomain,
-		protocol:  *protocol,
-		authtoken: *authtoken,
-		hostname:  *hostname,
-		command:   flag.Arg(0),
+		config:      *config,
+		logto:       *logto,
+		loglevel:    *loglevel,
+		httpauth:    *httpauth,
+		subdomain:   *subdomain,
+		protocol:    *protocol,
+		authtoken:   *authtoken,
+		hostname:    *hostname,
+		projectname: *projectname,
+		command:     flag.Arg(0),
+	}
+
+	if opts.projectname == "" {
+		err = fmt.Errorf("Error: Specify projectname from beta.hasura.io console")
+		return
 	}
 
 	switch opts.command {

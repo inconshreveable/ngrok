@@ -63,6 +63,12 @@ type Control struct {
 func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	var err error
 
+	if authMsg.HasuraDomain != "hasura.me" {
+		_ = msg.WriteMsg(ctlConn, &msg.AuthResp{Error: "Domain should be hasura.me"})
+		ctlConn.Close()
+		return
+	}
+
 	// create the object
 	c := &Control{
 		auth:            authMsg,
@@ -82,6 +88,17 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		ctlConn.Close()
 	}
 
+	// Authenticate the token
+
+	authError := ValidateToken(authMsg.User, authMsg.ProjectName)
+
+	/*
+		if err != nil {
+			failAuth(err)
+			return
+		}
+	*/
+
 	// register the clientid
 	c.id = authMsg.ClientId
 	if c.id == "" {
@@ -96,11 +113,6 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	ctlConn.SetType("ctl")
 	ctlConn.AddLogPrefix(c.id)
 
-	if authMsg.Version != version.Proto {
-		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
-		return
-	}
-
 	// register the control
 	if replaced := controlRegistry.Add(c.id, c); replaced != nil {
 		replaced.shutdown.WaitComplete()
@@ -108,6 +120,24 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 
 	// start the writer first so that the following messages get sent
 	go c.writer()
+
+	if authError != nil {
+		c.out <- &msg.AuthResp{
+			Version:   version.Proto,
+			MmVersion: version.MajorMinor(),
+			ClientId:  c.id,
+			Error:     authError.Error(),
+		}
+		return
+	}
+
+	if authMsg.MmVersion != version.MajorMinor() {
+		//failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at https://storage.googleapis.com/hgrok/ngrok", version.MajorMinor(), authMsg.MmVersion))
+		c.out <- &msg.AuthResp{
+			Error: fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at https://storage.googleapis.com/hgrok/ngrok", version.MajorMinor(), authMsg.MmVersion).Error(),
+		}
+		return
+	}
 
 	// Respond to authentication
 	c.out <- &msg.AuthResp{
