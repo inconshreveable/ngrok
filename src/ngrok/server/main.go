@@ -126,15 +126,23 @@ func Main() {
 		panic(err)
 	}
 
+	// Fetch all the server messages
+
+	fetchAllProjects()
+
 	// listen for http
 	if opts.httpAddr != "" {
 		listeners["http"] = startHttpListener(opts.httpAddr, nil)
 	}
 
-	// listen for https
+	// listen for https (We dont support https for hgrok)
+	/*
 	if opts.httpsAddr != "" {
 		listeners["https"] = startHttpListener(opts.httpsAddr, tlsConfig)
 	}
+	*/
+
+	log.Warn("Https protocol not supported")
 
 	// ngrok clients
 	tunnelListener(opts.tunnelAddr, tlsConfig)
