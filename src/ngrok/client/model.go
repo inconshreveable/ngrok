@@ -2,8 +2,8 @@ package client
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
-	metrics "github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"math"
 	"net"
@@ -18,11 +18,14 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 const (
-	defaultServerAddr   = "ngrokd.ngrok.com:443"
+	defaultServerAddr   = "ngrok.hasura.me:4443"
 	defaultInspectAddr  = "127.0.0.1:4040"
+	defaultHasuraDomain = "hasura.me"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
 	updateCheckInterval = 6 * time.Hour
@@ -52,6 +55,8 @@ type ClientModel struct {
 	tlsConfig     *tls.Config
 	tunnelConfig  map[string]*TunnelConfiguration
 	configPath    string
+	ProjectName   string
+	HasuraDomain  string
 }
 
 func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
@@ -99,6 +104,12 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// config path
 		configPath: config.Path,
+
+		// project name
+		ProjectName: config.ProjectName,
+
+		// hasura defaultHasuraDomain
+		HasuraDomain: config.HasuraDomain,
 	}
 
 	// configure TLS
@@ -234,12 +245,14 @@ func (c *ClientModel) control() {
 
 	// authenticate with the server
 	auth := &msg.Auth{
-		ClientId:  c.id,
-		OS:        runtime.GOOS,
-		Arch:      runtime.GOARCH,
-		Version:   version.Proto,
-		MmVersion: version.MajorMinor(),
-		User:      c.authToken,
+		ClientId:     c.id,
+		OS:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		Version:      version.Proto,
+		MmVersion:    version.MajorMinor(),
+		User:         c.authToken,
+		ProjectName:  c.ProjectName,
+		HasuraDomain: c.HasuraDomain,
 	}
 
 	if err = msg.WriteMsg(ctlConn, auth); err != nil {
@@ -249,7 +262,8 @@ func (c *ClientModel) control() {
 	// wait for the server to authenticate us
 	var authResp msg.AuthResp
 	if err = msg.ReadMsgInto(ctlConn, &authResp); err != nil {
-		panic(err)
+		//c.ctl.Shutdown(err.Error())
+		panic(errors.New(err.Error()))
 	}
 
 	if authResp.Error != "" {
@@ -331,6 +345,27 @@ func (c *ClientModel) control() {
 			c.Info("Tunnel established at %v", tunnel.PublicUrl)
 			c.update()
 
+		// New Tunnel Request from the server (Need to fix multiple request for same custom services)
+		case *msg.NewTunnelReq:
+			reqTunnel := &msg.ReqTunnel{
+				ReqId:    util.RandId(8),
+				Protocol: "http",
+				Hostname: m.CustomService,
+			}
+
+			// send the tunnel request
+			if err = msg.WriteMsg(ctlConn, reqTunnel); err != nil {
+				panic(err)
+			}
+
+			// save request id association so we know which local address
+			// to proxy to later
+			tunnelTest := &TunnelConfiguration{
+				Hostname:  m.CustomService,
+				Protocols: make(map[string]string),
+			}
+			tunnelTest.Protocols["http"], err = normalizeAddress(c.tunnelConfig["console"].Protocols["http"], "")
+			reqIdToTunnelConfig[reqTunnel.ReqId] = tunnelTest
 		default:
 			ctlConn.Warn("Ignoring unknown control message %v ", m)
 		}

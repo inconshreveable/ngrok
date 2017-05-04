@@ -22,6 +22,7 @@ func readMsgShared(c conn.Conn) (buffer []byte, err error) {
 	c.Debug("Read message %s", buffer)
 
 	if err != nil {
+		c.Debug("Crashing here")
 		return
 	}
 

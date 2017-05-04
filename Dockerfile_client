@@ -1,0 +1,10 @@
+FROM debian:jessie
+MAINTAINER Aravind Shankar <aravind@hasura.io>
+
+RUN apt-get update && \
+    apt-get install -y build-essential golang git mercurial && \
+    mkdir -p /release
+
+COPY bin/ngrok /ngrok/bin/
+
+CMD ["/ngrok/bin/ngrok", "-hostname=arvi.hasura.me", "-proto=http", "gateway.hasura:80"]

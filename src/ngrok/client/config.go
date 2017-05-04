@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -13,6 +12,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Configuration struct {
@@ -24,6 +25,8 @@ type Configuration struct {
 	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
 	LogTo              string                          `yaml:"-"`
 	Path               string                          `yaml:"-"`
+	ProjectName        string                          `yaml:"-"`
+	HasuraDomain       string                          `yaml:"-"`
 }
 
 type TunnelConfiguration struct {
@@ -142,21 +145,26 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	switch opts.command {
 	// start a single tunnel, the default, simple ngrok behavior
 	case "default":
+		hasuraServices := []string{"console", "data", "auth", "k8s"}
+		// set Hostname to config.Hostname
+		config.ProjectName = opts.projectname
+		config.HasuraDomain = defaultHasuraDomain
 		config.Tunnels = make(map[string]*TunnelConfiguration)
-		config.Tunnels["default"] = &TunnelConfiguration{
-			Subdomain: opts.subdomain,
-			Hostname:  opts.hostname,
-			HttpAuth:  opts.httpauth,
-			Protocols: make(map[string]string),
-		}
-
-		for _, proto := range strings.Split(opts.protocol, "+") {
-			if err = validateProtocol(proto, "default"); err != nil {
-				return
+		for _, service := range hasuraServices {
+			config.Tunnels[service] = &TunnelConfiguration{
+				Hostname:  service + "." + config.ProjectName + "." + config.HasuraDomain,
+				HttpAuth:  opts.httpauth,
+				Protocols: make(map[string]string),
 			}
 
-			if config.Tunnels["default"].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
-				return
+			for _, proto := range strings.Split(opts.protocol, "+") {
+				if err = validateProtocol(proto, service); err != nil {
+					return
+				}
+
+				if config.Tunnels[service].Protocols[proto], err = normalizeAddress(opts.args[0], ""); err != nil {
+					return
+				}
 			}
 		}
 

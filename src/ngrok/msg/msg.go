@@ -20,6 +20,7 @@ func init() {
 	TypeMap["StartProxy"] = t((*StartProxy)(nil))
 	TypeMap["Ping"] = t((*Ping)(nil))
 	TypeMap["Pong"] = t((*Pong)(nil))
+	TypeMap["NewTunnelReq"] = t((*NewTunnelReq)(nil))
 }
 
 type Message interface{}
@@ -32,13 +33,15 @@ type Envelope struct {
 // When a client opens a new control channel to the server
 // it must start by sending an Auth message.
 type Auth struct {
-	Version   string // protocol version
-	MmVersion string // major/minor software version (informational only)
-	User      string
-	Password  string
-	OS        string
-	Arch      string
-	ClientId  string // empty for new sessions
+	Version      string // protocol version
+	MmVersion    string // major/minor software version (informational only)
+	User         string
+	Password     string
+	OS           string
+	Arch         string
+	ClientId     string // empty for new sessions
+	ProjectName  string
+	HasuraDomain string
 }
 
 // A server responds to an Auth message with an
@@ -87,6 +90,10 @@ type NewTunnel struct {
 	Url      string
 	Protocol string
 	Error    string
+}
+
+type NewTunnelReq struct {
+	CustomService string
 }
 
 // When the server wants to initiate a new tunneled connection, it sends
