@@ -43,6 +43,20 @@ release-all: fmt release-client release-server
 
 all: fmt client server
 
+static-server: BUILDTAGS=release
+static-server: deps
+	CGO_ENABLED=0 GOOS=linux go install \
+		-a -ldflags '-extldflags "-static"' \
+		-tags '$(BUILDTAGS)' ngrok/main/ngrokd
+
+static-client: BUILDTAGS=release
+static-client: deps
+	CGO_ENABLED=0 GOOS=linux go install \
+		-a -ldflags '-extldflags "-static"' \
+		-tags '$(BUILDTAGS)' ngrok/main/ngrok
+
+static-all: fmt static-client static-server
+
 clean:
 	go clean -i -r ngrok/...
 	rm -rf src/ngrok/client/assets/ src/ngrok/server/assets/
