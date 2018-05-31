@@ -20,11 +20,9 @@ Authorization required
 `
 
 	NotFound = `HTTP/1.0 200 OK
-Content-Length: 200
+Content-Length: 13
 
-网站建设中!
-
-<a href="http://www.miibeian.gov.cn/" target="_blank" class="ml14">京ICP备18026003号</a>
+waiting......
 `
 
 	BadRequest = `HTTP/1.0 400 Bad Request
