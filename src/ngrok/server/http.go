@@ -24,17 +24,9 @@ Connection: Keep-Alive
 Content-Type: text/html
 Content-Encoding: gzip
 
-<html>
-<head>
-<meta http-equiv="content-type" content="text/html;charset=utf-8">
-<title>爱生活</title>
-</head>
-</body>
 网站建设中!
 
 <a href="http://www.miibeian.gov.cn/" target="_blank" class="ml14">京ICP备18026003号</a>
-</body>
-</html>
 `
 
 	BadRequest = `HTTP/1.0 400 Bad Request
