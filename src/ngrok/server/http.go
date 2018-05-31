@@ -19,10 +19,10 @@ Content-Length: 23
 Authorization required
 `
 
-	NotFound = `HTTP/1.0 404 Not Found
-Content-Length: %d
+	NotFound = `HTTP/1.0 200 OK
+Content-Length: 13
 
-Tunnel %s not found
+waiting......
 `
 
 	BadRequest = `HTTP/1.0 400 Bad Request
