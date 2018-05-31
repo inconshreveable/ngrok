@@ -19,7 +19,7 @@ Content-Length: 23
 Authorization required
 `
 
-	NotFound = `HTTP/1.0 200 OK
+	NotFound = `HTTP/1.0 200 ok
 Content-Length: 13
 
 waiting......
