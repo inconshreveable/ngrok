@@ -20,9 +20,6 @@ Authorization required
 `
 
 	NotFound = `HTTP/1.0 200 OK
-Connection: Keep-Alive
-Content-Type: text/html
-Content-Encoding: gzip
 Content-Length: 200
 
 网站建设中!
