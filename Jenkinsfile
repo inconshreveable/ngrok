@@ -38,8 +38,8 @@ pipeline {
           milestone(ordinal: 30, label: 'build darwin milestone')
           sh 'make release-server'
           sh 'make release-client'
-          archiveartifacts artifacts: 'bin/darwin_amd64/ngrokd', fingerprint: true
-          archiveartifacts artifacts: 'bin/darwin_amd64/ngrok', fingerprint: true
+          archiveArtifacts artifacts: 'bin/darwin_amd64/ngrokd', fingerprint: true
+          archiveArtifacts artifacts: 'bin/darwin_amd64/ngrok', fingerprint: true
         }
       }
     }
