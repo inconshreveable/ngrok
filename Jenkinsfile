@@ -10,7 +10,9 @@ pipeline {
   }
   stages {
     stage('Root CA') {
+      steps {
         sh 'make letsencrypt-root'
+      }
     }
     stage('Build Linux') {
       environment {
