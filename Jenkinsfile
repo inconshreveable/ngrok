@@ -56,7 +56,7 @@ pipeline {
       steps {
         lock(resource: "${JOB_NAME}-sonarqube") {
           echo "obtained lock: ${JOB_NAME}-sonarqube"
-          milestone(ordinal: 20, label: 'sonarqube milestone')
+          milestone(ordinal: 50, label: 'sonarqube milestone')
           sh 'make docker-sonar'
         }
       }
@@ -66,7 +66,7 @@ pipeline {
         expression { BRANCH_NAME ==~ /master/ }
       }
       steps {
-        milestone(ordinal: 30, label: 'docker tag milestone')
+        milestone(ordinal: 60, label: 'docker tag milestone')
         sh 'make docker-tag'
       }
     }
@@ -75,7 +75,7 @@ pipeline {
         expression { BRANCH_NAME ==~ /master/ }
       }
       steps {
-        milestone(ordinal: 40, label: 'docker push milestone')
+        milestone(ordinal: 70, label: 'docker push milestone')
         sh '''
           eval "$(aws ecr get-login --region "$AWS_ECR_REGION" --registry-ids "$AWS_ECR_REGISTRY_ID" | sed 's/-e none //')"
         '''
