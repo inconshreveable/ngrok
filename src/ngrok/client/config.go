@@ -20,6 +20,7 @@ type Configuration struct {
 	ServerAddr         string                          `yaml:"server_addr,omitempty"`
 	InspectAddr        string                          `yaml:"inspect_addr,omitempty"`
 	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs,omitempty"`
+	SkipTlsVerify      bool                            `yaml:"skip_tls_verify,omitempty"`
 	AuthToken          string                          `yaml:"auth_token,omitempty"`
 	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
 	LogTo              string                          `yaml:"-"`
