@@ -2,7 +2,7 @@ FROM golang:1.10.3-alpine
 
 LABEL maintainer="ferhat.yildiz@turingts.com"
 
-RUN apk add make
+RUN apk add make git
 
 COPY . /tmp
 
