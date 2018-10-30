@@ -1,12 +1,14 @@
 package server
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"ngrok/conn"
 	"ngrok/msg"
 	"ngrok/util"
 	"ngrok/version"
+	"os"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -81,7 +83,31 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 		_ = msg.WriteMsg(ctlConn, &msg.AuthResp{Error: e.Error()})
 		ctlConn.Close()
 	}
+	readLine := func(token string, filename string) (bool, error) {
 
+		if token == "" {
+			return false, nil
+		}
+		f, err := os.Open(filename)
+		if err != nil {
+			return false, err
+		}
+		buf := bufio.NewReader(f)
+		for {
+			line, err := buf.ReadString('\n')
+			line = strings.TrimSpace(line)
+			if line == token {
+				return true, nil
+			}
+			if err != nil {
+				if err == io.EOF {
+					return false, nil
+				}
+				return false, err
+			}
+		}
+		return false, nil
+	}
 	// register the clientid
 	c.id = authMsg.ClientId
 	if c.id == "" {
@@ -98,6 +124,12 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 
 	if authMsg.Version != version.Proto {
 		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
+		return
+	}
+	authd, err := readLine(authMsg.User, "authtokens.txt")
+
+	if authd != true {
+		failAuth(fmt.Errorf("authtoken %s invalid", "is"))
 		return
 	}
 
@@ -322,7 +354,9 @@ func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
 	default:
 		// no proxy available in the pool, ask for one over the control channel
 		c.conn.Debug("No proxy in pool, requesting proxy from control . . .")
-		if err = util.PanicToError(func() { c.out <- &msg.ReqProxy{} }); err != nil {
+		if err = util.PanicToError(func() {
+			c.out <- &msg.ReqProxy{}
+		}); err != nil {
 			return
 		}
 

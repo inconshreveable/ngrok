@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	defaultServerAddr   = "ngrokd.ngrok.com:443"
+	defaultServerAddr   = "maike.com:4443"
 	defaultInspectAddr  = "127.0.0.1:4040"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
@@ -49,6 +49,7 @@ type ClientModel struct {
 	serverAddr    string
 	proxyUrl      string
 	authToken     string
+	password      string
 	tlsConfig     *tls.Config
 	tunnelConfig  map[string]*TunnelConfiguration
 	configPath    string
@@ -64,6 +65,7 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 	m := &ClientModel{
 		Logger: log.NewPrefixLogger("client"),
 
+		id: config.ClientId,
 		// server address
 		serverAddr: config.ServerAddr,
 
@@ -72,6 +74,9 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// auth token
 		authToken: config.AuthToken,
+
+		// password
+		password: config.Password,
 
 		// connection status
 		connStatus: mvc.ConnConnecting,
