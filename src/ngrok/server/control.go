@@ -22,6 +22,7 @@ const (
 	proxyMaxPoolSize    = 10
 )
 
+
 type Control struct {
 	// auth message
 	auth *msg.Auth
