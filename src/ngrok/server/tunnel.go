@@ -236,7 +236,7 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 
 		conn := conn.Wrap(tcpConn, "pub")
 		conn.AddLogPrefix(t.Id())
-		conn.Info("New connection from %v", conn.RemoteAddr())
+		conn.Info("New connection from %v AcceptForeign: %v", conn.RemoteAddr(), t.req.AcceptForeign)
 
 		go t.HandlePublicConnection(conn)
 	}

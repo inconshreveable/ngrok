@@ -1,0 +1,46 @@
+server_addr: "maike.com:4443"
+client_id: "maikeprivate"
+trust_host_root_certs: false
+auth_token: "tonsr:hello"
+password: "hello"
+tunnels:
+  rok:
+    subdomain: "rok"
+    auth: "admin:admin"
+    accept_foreign: "192.168.1.3"
+    proto:
+      http: 4040
+  mservice:
+    subdomain: "mservice"
+    proto:
+      http: 8081
+  mysql:
+    subdomain: "mysql"
+    remote_port: 23306
+    proto:
+      tcp: 3306
+  zookeeper:
+    subdomain: "zookeeper"
+    remote_port: 22181
+    proto:
+      tcp: 2181
+  redis:
+    subdomain: "redis"
+    remote_port: 26443
+    proto:
+      tcp: 6443
+  dubbo:
+    subdomain: "dubbo"
+    remote_port: 20890
+    proto:
+      tcp: 20880
+  ssh:
+    subdomain: "ssh"
+    remote_port: 20021
+    proto:
+      tcp: 21
+  sftp:
+    subdomain: "sftp"
+    remote_port: 20022
+    proto:
+      tcp: 22

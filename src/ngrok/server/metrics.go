@@ -172,6 +172,7 @@ func NewKeenIoMetrics(batchInterval time.Duration) *KeenIoMetrics {
 		Logger:       log.NewPrefixLogger("metrics"),
 		ApiKey:       os.Getenv("KEEN_API_KEY"),
 		ProjectToken: os.Getenv("KEEN_PROJECT_TOKEN"),
+		ReportAddr:   os.Getenv("KEEN_REPORT_ADDR"),
 		Metrics:      make(chan *KeenIoMetric, 1000),
 	}
 
@@ -219,7 +220,7 @@ func NewKeenIoMetrics(batchInterval time.Duration) *KeenIoMetrics {
 }
 
 func (k *KeenIoMetrics) AuthedRequest(method, path string, body *bytes.Reader) (resp *http.Response, err error) {
-	path = fmt.Sprintf("https://api.keen.io/3.0/projects/%s%s", k.ProjectToken, path)
+	path = fmt.Sprintf("%s%s%s", k.ReportAddr, k.ProjectToken, path)
 	req, err := http.NewRequest(method, path, body)
 	if err != nil {
 		return

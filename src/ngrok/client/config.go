@@ -16,22 +16,25 @@ import (
 )
 
 type Configuration struct {
+	ClientId           string                          `yaml:"client_id,omitempty"`
 	HttpProxy          string                          `yaml:"http_proxy,omitempty"`
 	ServerAddr         string                          `yaml:"server_addr,omitempty"`
 	InspectAddr        string                          `yaml:"inspect_addr,omitempty"`
 	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs,omitempty"`
 	AuthToken          string                          `yaml:"auth_token,omitempty"`
+	Password           string                          `yaml:"password,omitempty"`
 	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
 	LogTo              string                          `yaml:"-"`
 	Path               string                          `yaml:"-"`
 }
 
 type TunnelConfiguration struct {
-	Subdomain  string            `yaml:"subdomain,omitempty"`
-	Hostname   string            `yaml:"hostname,omitempty"`
-	Protocols  map[string]string `yaml:"proto,omitempty"`
-	HttpAuth   string            `yaml:"auth,omitempty"`
-	RemotePort uint16            `yaml:"remote_port,omitempty"`
+	Subdomain     string            `yaml:"subdomain,omitempty"`
+	Hostname      string            `yaml:"hostname,omitempty"`
+	Protocols     map[string]string `yaml:"proto,omitempty"`
+	HttpAuth      string            `yaml:"auth,omitempty"`
+	RemotePort    uint16            `yaml:"remote_port,omitempty"`
+	AcceptForeign string            `yaml:"accept_foreign,omitempty"`
 }
 
 func LoadConfiguration(opts *Options) (config *Configuration, err error) {
