@@ -2,11 +2,13 @@
 package term
 
 import (
+	"github.com/mdp/qrterminal"
 	termbox "github.com/nsf/termbox-go"
 	"ngrok/client/mvc"
 	"ngrok/log"
 	"ngrok/proto"
 	"ngrok/util"
+	"os"
 	"time"
 )
 
@@ -103,10 +105,18 @@ func (v *TermView) draw() {
 
 	v.Printf(0, 3, "%-30s%s/%s", "Version", state.GetClientVersion(), state.GetServerVersion())
 	var i int = 4
+	var PublicUrl string
+
 	for _, t := range state.GetTunnels() {
 		v.Printf(0, i, "%-30s%s -> %s", "Forwarding", t.PublicUrl, t.LocalAddr)
+		PublicUrl = t.PublicUrl
 		i++
 	}
+
+	if len(PublicUrl) > 0 {
+		qrterminal.GenerateHalfBlock(PublicUrl, qrterminal.L, os.Stdout)
+	}
+
 	v.Printf(0, i+0, "%-30s%s", "Web Interface", v.ctl.GetWebInspectAddr())
 
 	connMeter, connTimer := state.GetConnectionMetrics()
