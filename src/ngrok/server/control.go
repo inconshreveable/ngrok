@@ -304,7 +304,7 @@ func (c *Control) RegisterProxy(conn conn.Conn) {
 	}
 }
 
-// Remove a proxy connection from the pool and return it
+// GetProxy removes a proxy connection from the pool and return it
 // If not proxy connections are in the pool, request one
 // and wait until it is available
 // Returns an error if we couldn't get a proxy because it took too long
@@ -341,7 +341,7 @@ func (c *Control) GetProxy() (proxyConn conn.Conn, err error) {
 	return
 }
 
-// Called when this control is replaced by another control
+// Replaced: Called when this control is replaced by another control
 // this can happen if the network drops out and the client reconnects
 // before the old tunnel has lost its heartbeat
 func (c *Control) Replaced(replacement *Control) {

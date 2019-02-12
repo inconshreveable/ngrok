@@ -92,7 +92,7 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 	return
 }
 
-// Create a new tunnel from a registration message received
+// NewTunnel: Create a new tunnel from a registration message received
 // on a control channel
 func NewTunnel(m *msg.ReqTunnel, ctl *Control) (t *Tunnel, err error) {
 	t = &Tunnel{

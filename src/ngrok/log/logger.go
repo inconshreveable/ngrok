@@ -103,7 +103,7 @@ func (pl *PrefixLogger) ClearLogPrefixes() {
 	pl.prefix = ""
 }
 
-// we should never really use these . . . always prefer logging through a prefix logger
+// Debug: we should never really use these . . . always prefer logging through a prefix logger
 func Debug(arg0 string, args ...interface{}) {
 	root.Debug(arg0, args...)
 }

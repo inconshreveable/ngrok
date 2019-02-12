@@ -132,7 +132,7 @@ func serverName(addr string) string {
 	return host
 }
 
-// mvc.State interface
+// GetProtocols: mvc.State interface
 func (c ClientModel) GetProtocols() []proto.Protocol { return c.protocols }
 func (c ClientModel) GetClientVersion() string       { return version.MajorMinor() }
 func (c ClientModel) GetServerVersion() string       { return c.serverVersion }
@@ -162,7 +162,7 @@ func (c ClientModel) SetUpdateStatus(updateStatus mvc.UpdateStatus) {
 	c.update()
 }
 
-// mvc.Model interface
+// PlayRequest: mvc.Model interface
 func (c *ClientModel) PlayRequest(tunnel mvc.Tunnel, payload []byte) {
 	var localConn conn.Conn
 	localConn, err := conn.Dial(tunnel.LocalAddr, "prv", nil)

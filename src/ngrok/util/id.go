@@ -12,7 +12,7 @@ func RandomSeed() (seed int64, err error) {
 	return
 }
 
-// creates a random identifier of the specified length
+// RandId: creates a random identifier of the specified length
 func RandId(idlen int) string {
 	b := make([]byte, idlen)
 	var randVal uint32
@@ -26,7 +26,7 @@ func RandId(idlen int) string {
 	return fmt.Sprintf("%x", b)
 }
 
-// like RandId, but uses a crypto/rand for secure random identifiers
+// SecureRandId: like RandId, but uses a crypto/rand for secure random identifiers
 func SecureRandId(idlen int) (id string, err error) {
 	b := make([]byte, idlen)
 	n, err := rand.Read(b)
