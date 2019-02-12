@@ -57,7 +57,7 @@ func NewTunnelRegistry(cacheSize uint64, cacheFile string) *TunnelRegistry {
 	return registry
 }
 
-// Spawns a goroutine the periodically saves the cache to a file.
+// SaveCacheThread: Spawns a goroutine the periodically saves the cache to a file.
 func (r *TunnelRegistry) SaveCacheThread(path string, interval time.Duration) {
 	go func() {
 		r.Info("Saving affinity cache to %s every %s", path, interval.String())
@@ -125,7 +125,7 @@ func (r *TunnelRegistry) RegisterAndCache(url string, t *Tunnel) (err error) {
 
 }
 
-// Register a tunnel with the following process:
+// RegisterRepeat: Register a tunnel with the following process:
 // Consult the affinity cache to try to assign a previously used tunnel url if possible
 // Generate new urls repeatedly with the urlFn and register until one is available.
 func (r *TunnelRegistry) RegisterRepeat(urlFn func() string, t *Tunnel) (string, error) {

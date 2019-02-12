@@ -20,7 +20,7 @@ func MakePanicTrace(err interface{}) string {
 	return fmt.Sprintf(crashMessage, err, stackBuf[:n])
 }
 
-// Runs the given function and converts any panic encountered while doing so
+// PanicToError: Runs the given function and converts any panic encountered while doing so
 // into an error. Useful for sending to channels that will close
 func PanicToError(fn func()) (err error) {
 	defer func() {

@@ -50,7 +50,7 @@ type Controller struct {
 	config *Configuration
 }
 
-// public interface
+// NewController: public interface
 func NewController() *Controller {
 	ctl := &Controller{
 		Logger:  log.NewPrefixLogger("controller"),
