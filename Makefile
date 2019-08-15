@@ -8,13 +8,13 @@ deps: assets
 	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
 
 server: deps
-	go install -tags '$(BUILDTAGS)' ngrok/main/ngrokd
+	go install -tags '$(BUILDTAGS)' -gcflags "all=-trimpath=`pwd`" -asmflags "all=-trimpath=`pwd`" ngrok/main/ngrokd
 
 fmt:
 	go fmt ngrok/...
 
 client: deps
-	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
+	go install -tags '$(BUILDTAGS)' -gcflags "all=-trimpath=`pwd`" -asmflags "all=-trimpath=`pwd`" ngrok/main/ngrok
 
 assets: client-assets server-assets
 
