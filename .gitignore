@@ -4,3 +4,5 @@ vendor/
 client/assets/
 server/assets/
 .idea
+ngrok
+ngrokd
