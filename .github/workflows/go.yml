@@ -18,7 +18,6 @@ jobs:
         export GOPATH="/home/runner/go"
         export PATH="$GOPATH/bin:$PATH"
         go get -u github.com/jteeuwen/go-bindata/go-bindata
-        make deps
         mv $GOPATH/bin/go-bindata /usr/local/bin/go-bindata
 
     - name: Checkout
