@@ -31,3 +31,15 @@ jobs:
 
     - name: Build Server
       run: make server
+
+    - name: Upload Client
+      uses: actions/upload-artifact@master
+      with:
+        name: ngrok
+        path: ngrok
+
+    - name: Upload Server
+      uses: actions/upload-artifact@master
+      with:
+        name: ngrokd
+        path: ngrokd
