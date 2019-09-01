@@ -26,15 +26,16 @@ jobs:
     - name: Setup Modules
       run: |
         echo "set modules"
+        uname -a
         export GO111MODULE=on
         export GOPROXY=https://goproxy.io
         export PATH="$GOPATH/bin:$PATH"
         export PATH="$GOROOT/bin:$PATH"
         echo $PATH
-        echo "ls gopath"
-        ls "$GOPATH/bin"
+        echo "ls gopath $GOPATH/bin"
+        cd $GOPATH/bin && ls
         echo "ls goroot"
-        ls "$GOROOT/bin"
+        cd $GOROOT/bin && ls
         which go-bindata || echo "error"
         go env
 
