@@ -17,7 +17,7 @@ client: deps
 assets: client-assets server-assets
 
 bin/go-bindata:
-	go get github.com/jteeuwen/go-bindata/go-bindata
+	go install github.com/jteeuwen/go-bindata/go-bindata
 
 client-assets: bin/go-bindata
 	go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
