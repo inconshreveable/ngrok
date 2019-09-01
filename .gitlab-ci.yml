@@ -1,0 +1,22 @@
+image: jerson/go:1.12
+
+stages:
+  - build
+
+server:
+  stage: build
+  script:
+    - make server
+  artifacts:
+    paths:
+      - ngrok
+    expire_in: 1 week
+
+client:
+  stage: build
+  script:
+    - make client
+  artifacts:
+    paths:
+      - ngrok
+    expire_in: 1 week
