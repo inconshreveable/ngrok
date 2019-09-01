@@ -1,12 +1,6 @@
 *.swp
 bin/
-pkg/
-src/code.google.com
-src/github.com
-src/bitbucket.org
-src/launchpad.net
-src/gopkg.in
-src/golang.org
-src/ngrok/client/assets/
-src/ngrok/server/assets/
+vendor/
+client/assets/
+server/assets/
 .idea
