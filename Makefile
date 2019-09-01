@@ -4,13 +4,13 @@ BUILDTAGS=debug
 default: all
 
 deps: assets
-	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
+	go get -tags '$(BUILDTAGS)' -d -v ./...
 
 server: deps
 	go build -tags '$(BUILDTAGS)' ./cmd/ngrokd
 
 fmt:
-	go fmt ngrok/...
+	go fmt ./...
 
 client: deps
 	go build -tags '$(BUILDTAGS)' ./cmd/ngrok
