@@ -24,6 +24,8 @@ jobs:
         export GO111MODULE=on
         export GOPROXY=https://goproxy.io
         export PATH=$GOPATH/bin:$PATH
+        export PATH=$GOROOT/bin:$PATH
+        echo $PATH
         go env
 
     - name: Deps
