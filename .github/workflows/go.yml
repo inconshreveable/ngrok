@@ -26,6 +26,9 @@ jobs:
         export PATH=$GOPATH/bin:$PATH
         export PATH=$GOROOT/bin:$PATH
         echo $PATH
+        ls $GOPATH/bin
+        ls $GOROOT/bin
+        which go-bindata
         go env
 
     - name: Deps
