@@ -20,6 +20,10 @@ jobs:
       run: |
         export GO111MODULE=on
         export GOPROXY=https://goproxy.io
+        go env
 
-    - name: Build
-      run: make
+    - name: Build Client
+      run: make client
+
+    - name: Build Server
+      run: make server
