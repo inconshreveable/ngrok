@@ -11,6 +11,7 @@ type Options struct {
 	domain     string
 	tlsCrt     string
 	tlsKey     string
+	tlsCA      string
 	logto      string
 	loglevel   string
 }
@@ -22,6 +23,7 @@ func parseArgs() *Options {
 	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
 	tlsCrt := flag.String("tlsCrt", "", "Path to a TLS certificate file")
 	tlsKey := flag.String("tlsKey", "", "Path to a TLS key file")
+	tlsCA := flag.String("tlsCA", "", "Path to a TLS CA file")
 	logto := flag.String("log", "stdout", "Write log messages to this file. 'stdout' and 'none' have special meanings")
 	loglevel := flag.String("log-level", "DEBUG", "The level of messages to log. One of: DEBUG, INFO, WARNING, ERROR")
 	flag.Parse()
@@ -33,6 +35,7 @@ func parseArgs() *Options {
 		domain:     *domain,
 		tlsCrt:     *tlsCrt,
 		tlsKey:     *tlsKey,
+		tlsCA:      *tlsCA,
 		logto:      *logto,
 		loglevel:   *loglevel,
 	}
