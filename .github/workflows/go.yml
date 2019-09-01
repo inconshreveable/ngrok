@@ -19,21 +19,16 @@ jobs:
         export PATH="$GOPATH/bin:$PATH"
         go get -u github.com/jteeuwen/go-bindata/go-bindata
         make deps
+        mv $GOPATH/bin/go-bindata /usr/local/bin/go-bindata
 
     - name: Checkout
       uses: actions/checkout@v1
 
     - name: Deps
-      run: |
-        export PATH="/home/runner/go/bin:$PATH"
-        make deps
+      run: make deps
 
     - name: Build Client
-      run: |
-        export PATH="/home/runner/go/bin:$PATH"
-        make client
+      run: make client
 
     - name: Build Server
-      run: |
-        export PATH="/home/runner/go/bin:$PATH"
-        make server
+      run: make server
