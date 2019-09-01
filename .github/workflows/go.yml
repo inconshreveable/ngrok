@@ -20,7 +20,11 @@ jobs:
       run: |
         export GO111MODULE=on
         export GOPROXY=https://goproxy.io
+        export PATH=$GOPATH/bin:$PATH
         go env
+
+    - name: Deps
+      run: make deps
 
     - name: Build Client
       run: make client
