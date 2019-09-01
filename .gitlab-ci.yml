@@ -9,7 +9,7 @@ server:
     - make server
   artifacts:
     paths:
-      - ngrok
+      - ngrokd
     expire_in: 1 week
 
 client:
