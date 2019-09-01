@@ -23,12 +23,12 @@ jobs:
       run: |
         export GO111MODULE=on
         export GOPROXY=https://goproxy.io
-        export PATH=$GOPATH/bin:$PATH
-        export PATH=$GOROOT/bin:$PATH
+        export PATH="$GOPATH/bin:$PATH"
+        export PATH="$GOROOT/bin:$PATH"
         echo $PATH
-        ls $GOPATH/bin
-        ls $GOROOT/bin
-        which go-bindata
+        ls "$GOPATH/bin"
+        ls "$GOROOT/bin"
+        which go-bindata || echo "error"
         go env
 
     - name: Deps
