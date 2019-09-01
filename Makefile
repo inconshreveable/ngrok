@@ -43,7 +43,6 @@ release-all: fmt release-client release-server
 all: fmt client server
 
 clean:
-	go clean -i -r ./...
 	rm -rf client/assets/ server/assets/
 
 contributors:
