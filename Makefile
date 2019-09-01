@@ -1,44 +1,33 @@
 .PHONY: default server client deps fmt clean all release-all assets client-assets server-assets contributors
 
-BUILDTAGS=debug
 default: all
 
 deps: assets
-	go get -tags '$(BUILDTAGS)' -d -v ./...
+	go get -d -v ./...
 
 server: deps
-	go build -tags '$(BUILDTAGS)' ./cmd/ngrokd
+	go build ./cmd/ngrokd
 
 fmt:
 	go fmt ./...
 
 client: deps
-	go build -tags '$(BUILDTAGS)' ./cmd/ngrok
+	go build ./cmd/ngrok
 
 assets: client-assets server-assets
 
 bin/go-bindata:
-	GOOS="" GOARCH="" go get github.com/jteeuwen/go-bindata/go-bindata
+	go get github.com/jteeuwen/go-bindata/go-bindata
 
 client-assets: bin/go-bindata
 	go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
-		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
-		-o=client/assets/assets_$(BUILDTAGS).go \
+		-o=client/assets/all.go \
 		assets/client/...
 
 server-assets: bin/go-bindata
 	go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
-		-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
-		-o=server/assets/assets_$(BUILDTAGS).go \
+		-o=server/assets/all.go \
 		assets/server/...
-
-release-client: BUILDTAGS=release
-release-client: client
-
-release-server: BUILDTAGS=release
-release-server: server
-
-release-all: fmt release-client release-server
 
 all: fmt client server
 
