@@ -14,7 +14,10 @@ jobs:
       id: go
 
     - name: BinData
-      run: go get -u github.com/jteeuwen/go-bindata/go-bindata
+      run: |
+        go get -u github.com/jteeuwen/go-bindata/go-bindata
+        go install github.com/jteeuwen/go-bindata
+
 
     - name: Check out
       uses: actions/checkout@v1
