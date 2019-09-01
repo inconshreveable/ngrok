@@ -16,5 +16,10 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
+    - name: Setup Modules
+      run: |
+        export GO111MODULE=on
+        export GOPROXY=https://goproxy.io
+
     - name: Build
       run: make
