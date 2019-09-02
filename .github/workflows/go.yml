@@ -17,6 +17,7 @@ jobs:
 
     - name: go-bindata
       run: |
+        go env
         export GOPATH="/home/runner/go"
         export PATH="$GOPATH/bin:$PATH"
         go get -u github.com/jteeuwen/go-bindata/go-bindata
