@@ -128,8 +128,15 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 // Register a new tunnel on this control connection
 func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
 	for _, proto := range strings.Split(rawTunnelReq.Protocol, "+") {
-		tunnelReq := *rawTunnelReq
-		tunnelReq.Protocol = proto
+		// FIXME generate a copy from ReqTunnel for avoid overwrite protocol
+		tunnelReq := msg.ReqTunnel{
+			ReqId:      rawTunnelReq.ReqId,
+			Protocol:   proto,
+			Hostname:   rawTunnelReq.Hostname,
+			Subdomain:  rawTunnelReq.Subdomain,
+			HttpAuth:   rawTunnelReq.HttpAuth,
+			RemotePort: rawTunnelReq.RemotePort,
+		}
 
 		c.conn.Debug("Registering new tunnel")
 		t, err := NewTunnel(&tunnelReq, c)
@@ -149,11 +156,11 @@ func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
 		// acknowledge success
 		c.out <- &msg.NewTunnel{
 			Url:      t.url,
-			Protocol: proto,
+			Protocol: tunnelReq.Protocol,
 			ReqId:    rawTunnelReq.ReqId,
 		}
 
-		rawTunnelReq.Hostname = strings.Replace(t.url, proto+"://", "", 1)
+		rawTunnelReq.Hostname = strings.Replace(t.url, tunnelReq.Protocol+"://", "", 1)
 	}
 }
 
