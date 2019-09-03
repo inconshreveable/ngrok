@@ -127,7 +127,8 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 
 // Register a new tunnel on this control connection
 func (c *Control) registerTunnel(rawTunnelReq *msg.ReqTunnel) {
-	for _, proto := range strings.Split(rawTunnelReq.Protocol, "+") {
+	protocols := strings.Split(rawTunnelReq.Protocol, "+")
+	for _, proto := range protocols {
 		// FIXME generate a copy from ReqTunnel for avoid overwrite protocol
 		tunnelReq := msg.ReqTunnel{
 			ReqId:      rawTunnelReq.ReqId,

@@ -19,7 +19,6 @@ import (
 var defaultPortMap = map[string]int{
 	"http":  80,
 	"https": 443,
-	"smtp":  25,
 }
 
 /**
@@ -62,13 +61,9 @@ func registerVhost(t *Tunnel, protocol string, servingPort int) (err error) {
 		return fmt.Errorf("Couldn't find default port for protocol %s", protocol)
 	}
 
-	defaultPortSuffix := fmt.Sprintf(":%d", defaultPort)
-	if strings.HasSuffix(vhost, defaultPortSuffix) {
-		vhost = vhost[0 : len(vhost)-len(defaultPortSuffix)]
+	if servingPort == defaultPort {
+		vhost = opts.domain
 	}
-
-	// Canonicalize by always using lower-case
-	vhost = strings.ToLower(vhost)
 
 	// Register for specific hostname
 	hostname := strings.ToLower(strings.TrimSpace(t.req.Hostname))
