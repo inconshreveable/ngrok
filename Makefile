@@ -5,7 +5,7 @@ default: all
 deps: assets
 	go get -d -v ./...
 
-server:
+compress:
 	upx ngrokd
 	upx ngrok
 
