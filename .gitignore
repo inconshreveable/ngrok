@@ -6,3 +6,5 @@ server/assets/
 .idea
 /ngrok
 /ngrokd
+/ngrok.exe
+/ngrokd.exe
