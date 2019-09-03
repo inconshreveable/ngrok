@@ -5,14 +5,18 @@ default: all
 deps: assets
 	go get -d -v ./...
 
+server:
+	upx ngrokd
+	upx ngrok
+
 server: deps
-	go build ./cmd/ngrokd
+	go build -o ngrokd ./cmd/ngrokd
 
 fmt:
 	go fmt ./...
 
 client: deps
-	go build ./cmd/ngrok
+	go build -o ngrok ./cmd/ngrok
 
 assets: client-assets server-assets
 

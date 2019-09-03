@@ -92,7 +92,7 @@ func ParseArgs() (opts *Options, err error) {
 
 	protocol := flag.String(
 		"proto",
-		"https",
+		"http+https",
 		"The protocol of the traffic over the tunnel (http+https|https|tcp) (default: 'https')")
 
 	flag.Parse()
