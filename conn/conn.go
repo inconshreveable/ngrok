@@ -23,8 +23,9 @@ type Conn interface {
 	CloseRead() error
 }
 
-type loggedConn struct {
-	tcp *net.TCPConn
+type LoggedConn struct {
+	tcp  *net.TCPConn
+	tcps *tls.Conn
 	net.Conn
 	log.Logger
 	id  int32
@@ -33,18 +34,23 @@ type loggedConn struct {
 
 type Listener struct {
 	net.Addr
-	Conns chan *loggedConn
+	Conns chan *LoggedConn
 }
 
-func wrapConn(conn net.Conn, typ string) *loggedConn {
+func wrapConn(conn net.Conn, typ string) *LoggedConn {
 	switch c := conn.(type) {
 	case *vhost.HTTPConn:
-		wrapped := c.Conn.(*loggedConn)
-		return &loggedConn{wrapped.tcp, conn, wrapped.Logger, wrapped.id, wrapped.typ}
-	case *loggedConn:
+	case *vhost.TLSConn:
+		wrapped := c.Conn.(*LoggedConn)
+		return &LoggedConn{tcp: wrapped.tcp, Conn: conn, Logger: wrapped.Logger, id: wrapped.id, typ: wrapped.typ}
+	case *LoggedConn:
 		return c
 	case *net.TCPConn:
-		wrapped := &loggedConn{c, conn, log.NewPrefixLogger(), rand.Int31(), typ}
+		wrapped := &LoggedConn{Conn: conn, Logger: log.NewPrefixLogger(), id: rand.Int31(), typ: typ}
+		wrapped.AddLogPrefix(wrapped.Id())
+		return wrapped
+	case *tls.Conn:
+		wrapped := &LoggedConn{Conn: conn, Logger: log.NewPrefixLogger(), id: rand.Int31(), typ: typ}
 		wrapped.AddLogPrefix(wrapped.Id())
 		return wrapped
 	}
@@ -61,7 +67,7 @@ func Listen(addr, typ string, tlsCfg *tls.Config) (l *Listener, err error) {
 
 	l = &Listener{
 		Addr:  listener.Addr(),
-		Conns: make(chan *loggedConn),
+		Conns: make(chan *LoggedConn),
 	}
 
 	go func() {
@@ -83,11 +89,11 @@ func Listen(addr, typ string, tlsCfg *tls.Config) (l *Listener, err error) {
 	return
 }
 
-func Wrap(conn net.Conn, typ string) *loggedConn {
+func Wrap(conn net.Conn, typ string) *LoggedConn {
 	return wrapConn(conn, typ)
 }
 
-func Dial(addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
+func Dial(addr, typ string, tlsCfg *tls.Config) (conn *LoggedConn, err error) {
 	var rawConn net.Conn
 	if rawConn, err = net.Dial("tcp", addr); err != nil {
 		return
@@ -103,7 +109,19 @@ func Dial(addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
 	return
 }
 
-func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *loggedConn, err error) {
+func DialHTTPS(addr, typ string, tlsCfg *tls.Config) (conn *LoggedConn, err error) {
+	var rawConn net.Conn
+	if rawConn, err = tls.Dial("tcp", addr, tlsCfg); err != nil {
+		return
+	}
+
+	conn = wrapConn(rawConn, typ)
+	conn.Debug("New connection to: %v", rawConn.RemoteAddr())
+
+	return
+}
+
+func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *LoggedConn, err error) {
 	// parse the proxy address
 	var parsedUrl *url.URL
 	if parsedUrl, err = url.Parse(proxyUrl); err != nil {
@@ -161,22 +179,22 @@ func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *logged
 	return
 }
 
-func (c *loggedConn) StartTLS(tlsCfg *tls.Config) {
+func (c *LoggedConn) StartTLS(tlsCfg *tls.Config) {
 	c.Conn = tls.Client(c.Conn, tlsCfg)
 }
 
-func (c *loggedConn) Close() (err error) {
+func (c *LoggedConn) Close() (err error) {
 	if err := c.Conn.Close(); err == nil {
 		c.Debug("Closing")
 	}
 	return
 }
 
-func (c *loggedConn) Id() string {
+func (c *LoggedConn) Id() string {
 	return fmt.Sprintf("%s:%x", c.typ, c.id)
 }
 
-func (c *loggedConn) SetType(typ string) {
+func (c *LoggedConn) SetType(typ string) {
 	oldId := c.Id()
 	c.typ = typ
 	c.ClearLogPrefixes()
@@ -184,7 +202,7 @@ func (c *loggedConn) SetType(typ string) {
 	c.Info("Renamed connection %s", oldId)
 }
 
-func (c *loggedConn) CloseRead() error {
+func (c *LoggedConn) CloseRead() error {
 	// XXX: use CloseRead() in Conn.Join() and in Control.shutdown() for cleaner
 	// connection termination. Unfortunately, when I've tried that, I've observed
 	// failures where the connection was closed *before* flushing its write buffer,

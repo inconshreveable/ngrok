@@ -3,7 +3,7 @@ package client
 import (
 	"crypto/tls"
 	"fmt"
-	metrics "github.com/rcrowley/go-metrics"
+	"github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"math"
 	"net"
@@ -52,6 +52,7 @@ type ClientModel struct {
 	tlsConfig     *tls.Config
 	tunnelConfig  map[string]*TunnelConfiguration
 	configPath    string
+	TLS           bool
 }
 
 func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
@@ -99,6 +100,9 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// config path
 		configPath: config.Path,
+
+		// TLS for dial port
+		TLS: config.TLS,
 	}
 
 	// configure TLS
@@ -268,7 +272,7 @@ func (c *ClientModel) control() {
 
 	// request tunnels
 	reqIdToTunnelConfig := make(map[string]*TunnelConfiguration)
-	for _, config := range c.tunnelConfig {
+	for category, config := range c.tunnelConfig {
 		// create the protocol list to ask for
 		var protocols []string
 		for proto, _ := range config.Protocols {
@@ -276,6 +280,7 @@ func (c *ClientModel) control() {
 		}
 
 		reqTunnel := &msg.ReqTunnel{
+			Category:   category,
 			ReqId:      util.RandId(8),
 			Protocol:   strings.Join(protocols, "+"),
 			Hostname:   config.Hostname,
@@ -377,7 +382,12 @@ func (c *ClientModel) proxy() {
 
 	// start up the private connection
 	start := time.Now()
-	localConn, err := conn.Dial(tunnel.LocalAddr, "prv", nil)
+	var localConn *conn.LoggedConn
+	if c.TLS {
+		localConn, err = conn.DialHTTPS(tunnel.LocalAddr, "prv", &tls.Config{})
+	} else {
+		localConn, err = conn.Dial(tunnel.LocalAddr, "prv", nil)
+	}
 	if err != nil {
 		remoteConn.Warn("Failed to open private leg %s: %v", tunnel.LocalAddr, err)
 

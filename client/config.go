@@ -173,10 +173,10 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			}
 		}
 
-		if opts.inspectpublic{
+		if opts.inspectpublic {
 			config.Tunnels["inspector"] = &TunnelConfiguration{
-				Hostname:  opts.hostname,
-				HttpAuth:  opts.httpauth,
+				Hostname: opts.hostname,
+				HttpAuth: opts.httpauth,
 				Protocols: map[string]string{
 					"http": config.InspectAddr,
 				},
