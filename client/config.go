@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"github.com/phayes/freeport"
 	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"net"
@@ -72,6 +73,10 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		config.ServerAddr = defaultServerAddr
 	}
 
+	if opts.inspectaddr != "" {
+		config.InspectAddr = opts.inspectaddr
+	}
+
 	if config.InspectAddr == "" {
 		config.InspectAddr = defaultInspectAddr
 	}
@@ -83,6 +88,9 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 	// validate and normalize configuration
 	if config.InspectAddr != "disabled" {
 		if config.InspectAddr, err = normalizeAddress(config.InspectAddr, "inspect_addr"); err != nil {
+			return
+		}
+		if config.InspectAddr, err = uniqueAddress(config.InspectAddr); err != nil {
 			return
 		}
 	}
@@ -214,6 +222,27 @@ func defaultPath() string {
 	}
 
 	return path.Join(homeDir, ".ngrok")
+}
+
+func uniqueAddress(addr string) (string, error) {
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", err
+	}
+
+	l, err := net.Listen("tcp", ":"+port)
+	if err == nil {
+		l.Close()
+	}
+	if err != nil {
+		portNumber, err := freeport.GetFreePort()
+		if err != nil {
+			return "", err
+		}
+		port = fmt.Sprint(portNumber)
+	}
+	return fmt.Sprintf("%s:%s", host, port), nil
 }
 
 func normalizeAddress(addr string, propName string) (string, error) {

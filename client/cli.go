@@ -36,16 +36,18 @@ Examples:
 `
 
 type Options struct {
-	config    string
-	logto     string
-	loglevel  string
-	authtoken string
-	httpauth  string
-	hostname  string
-	protocol  string
-	subdomain string
-	command   string
-	args      []string
+	config        string
+	logto         string
+	loglevel      string
+	authtoken     string
+	httpauth      string
+	hostname      string
+	protocol      string
+	subdomain     string
+	command       string
+	inspectaddr   string
+	inspectpublic bool
+	args          []string
 }
 
 func ParseArgs() (opts *Options, err error) {
@@ -93,20 +95,31 @@ func ParseArgs() (opts *Options, err error) {
 	protocol := flag.String(
 		"proto",
 		"http+https",
-		"The protocol of the traffic over the tunnel (http+https|https|tcp) (default: 'https')")
+		"The protocol of the traffic over the tunnel (http+https|https|tcp)")
+
+	inspectaddr := flag.String(
+		"inspectaddr",
+		defaultInspectAddr,
+		"The addr for inspect requests")
+
+	inspectpublic := flag.Bool(
+		"inspectpublic", false,
+		"Should pass inspector to public access")
 
 	flag.Parse()
 
 	opts = &Options{
-		config:    *config,
-		logto:     *logto,
-		loglevel:  *loglevel,
-		httpauth:  *httpauth,
-		subdomain: *subdomain,
-		protocol:  *protocol,
-		authtoken: *authtoken,
-		hostname:  *hostname,
-		command:   flag.Arg(0),
+		config:        *config,
+		logto:         *logto,
+		loglevel:      *loglevel,
+		httpauth:      *httpauth,
+		subdomain:     *subdomain,
+		protocol:      *protocol,
+		authtoken:     *authtoken,
+		hostname:      *hostname,
+		inspectaddr:   *inspectaddr,
+		inspectpublic: *inspectpublic,
+		command:       flag.Arg(0),
 	}
 
 	switch opts.command {

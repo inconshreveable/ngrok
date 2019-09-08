@@ -127,7 +127,7 @@ func (ctl *Controller) AddView(v mvc.View) {
 }
 
 func (ctl *Controller) GetWebInspectAddr() string {
-	return ctl.config.InspectAddr
+	return fmt.Sprintf("http://%s", ctl.config.InspectAddr)
 }
 
 func (ctl *Controller) SetupModel(config *Configuration) *ClientModel {
