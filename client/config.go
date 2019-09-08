@@ -173,6 +173,16 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			}
 		}
 
+		if opts.inspectpublic{
+			config.Tunnels["inspector"] = &TunnelConfiguration{
+				Hostname:  opts.hostname,
+				HttpAuth:  opts.httpauth,
+				Protocols: map[string]string{
+					"http": config.InspectAddr,
+				},
+			}
+		}
+
 	// list tunnels
 	case "list":
 		for name, _ := range config.Tunnels {

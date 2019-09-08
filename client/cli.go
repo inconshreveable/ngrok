@@ -99,7 +99,8 @@ func ParseArgs() (opts *Options, err error) {
 		"The protocol of the traffic over the tunnel (http+https|https|tcp)")
 
 	tls := flag.Bool(
-		"tls", false,
+		"tls",
+		false,
 		"Use dial for tls port")
 
 	inspectaddr := flag.String(
@@ -108,7 +109,8 @@ func ParseArgs() (opts *Options, err error) {
 		"The addr for inspect requests")
 
 	inspectpublic := flag.Bool(
-		"inspectpublic", false,
+		"inspectpublic",
+		false,
 		"Should export inspector to public access")
 
 	flag.Parse()
