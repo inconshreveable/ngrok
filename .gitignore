@@ -4,7 +4,8 @@ vendor/
 client/assets/
 server/assets/
 .idea
-/ngrok
-/ngrokd
+/ngrok*
+/ngrokd*
 /ngrok.exe
 /ngrokd.exe
+/build

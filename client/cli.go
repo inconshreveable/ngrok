@@ -47,6 +47,7 @@ type Options struct {
 	command       string
 	inspectaddr   string
 	inspectpublic bool
+	tls           bool
 	args          []string
 }
 
@@ -97,6 +98,10 @@ func ParseArgs() (opts *Options, err error) {
 		"http+https",
 		"The protocol of the traffic over the tunnel (http+https|https|tcp)")
 
+	tls := flag.Bool(
+		"tls", false,
+		"Use dial for tls port")
+
 	inspectaddr := flag.String(
 		"inspectaddr",
 		defaultInspectAddr,
@@ -104,7 +109,7 @@ func ParseArgs() (opts *Options, err error) {
 
 	inspectpublic := flag.Bool(
 		"inspectpublic", false,
-		"Should pass inspector to public access")
+		"Should export inspector to public access")
 
 	flag.Parse()
 
@@ -119,6 +124,7 @@ func ParseArgs() (opts *Options, err error) {
 		hostname:      *hostname,
 		inspectaddr:   *inspectaddr,
 		inspectpublic: *inspectpublic,
+		tls:           *tls,
 		command:       flag.Arg(0),
 	}
 

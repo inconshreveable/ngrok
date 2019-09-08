@@ -1,6 +1,6 @@
 .PHONY: default server client deps fmt clean all release-all assets client-assets server-assets contributors
 
-default: all
+default: bin/go-bindata all
 
 deps: assets
 	go get -d -v ./...
@@ -21,7 +21,7 @@ client: deps
 assets: client-assets server-assets
 
 bin/go-bindata:
-	go get -u github.com/jteeuwen/go-bindata/go-bindata
+	go get github.com/jteeuwen/go-bindata/go-bindata
 
 client-assets: bin/go-bindata
 	go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \

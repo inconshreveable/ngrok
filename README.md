@@ -48,3 +48,28 @@ ngrok.com ran a pay-what-you-want hosted service of 1.x from early 2013 until Ap
 
 ## Developing on ngrok
 [ngrok developer's guide](docs/DEVELOPMENT.md)
+
+
+## Compile for linux
+
+```
+docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
+```
+
+## Cross compile
+
+```
+docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
+  make deps
+  mkdir build
+  for GOOS in darwin linux windows; do
+    for GOARCH in 386 amd64; do
+      echo "Building $GOOS-$GOARCH"
+      export GOOS=$GOOS
+      export GOARCH=$GOARCH
+      go build -o ./build/ngrokd-$GOOS-$GOARCH ./cmd/ngrokd
+      go build -o ./build/ngrok-$GOOS-$GOARCH ./cmd/ngrok
+    done
+done
+'
+```

@@ -23,6 +23,7 @@ type Configuration struct {
 	TrustHostRootCerts bool                            `yaml:"trust_host_root_certs,omitempty"`
 	AuthToken          string                          `yaml:"auth_token,omitempty"`
 	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
+	TLS                bool                            `yaml:"tls,omitempty"`
 	LogTo              string                          `yaml:"-"`
 	Path               string                          `yaml:"-"`
 }
@@ -66,6 +67,10 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		return
 	} else if matched {
 		config = &Configuration{AuthToken: content}
+	}
+
+	if opts.tls {
+		config.TLS = opts.tls
 	}
 
 	// set configuration defaults
