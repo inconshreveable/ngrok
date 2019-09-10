@@ -3,7 +3,6 @@ package client
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"math"
 	"net"
@@ -18,6 +17,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -382,14 +383,9 @@ func (c *ClientModel) proxy() {
 
 	// start up the private connection
 	start := time.Now()
-	var localConn *conn.LoggedConn
-	if c.TLS {
-		localConn, err = conn.DialHTTPS(tunnel.LocalAddr, "prv", &tls.Config{
-			InsecureSkipVerify: true,
-		})
-	} else {
-		localConn, err = conn.Dial(tunnel.LocalAddr, "prv", nil)
-	}
+
+	localConn, err := conn.Dial(tunnel.LocalAddr, "prv", nil)
+
 	if err != nil {
 		remoteConn.Warn("Failed to open private leg %s: %v", tunnel.LocalAddr, err)
 
