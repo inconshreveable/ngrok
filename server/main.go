@@ -121,7 +121,7 @@ func Main() {
 	listeners = make(map[string]*conn.Listener)
 
 	// load tls configuration
-	tlsConfig, err := LoadTLSConfig(opts.tlsCrt, opts.tlsKey, opts.tlsCA)
+	tlsConfig, err := LoadTLSConfig(opts.tlsCrt, opts.tlsKey)
 	if err != nil {
 		panic(err)
 	}
@@ -133,7 +133,11 @@ func Main() {
 
 	// listen for https
 	if opts.httpsAddr != "" {
-		listeners["https"] = startHttpListener(opts.httpsAddr, tlsConfig)
+		tlsConfigServer, err := LoadTLSConfigServer(opts.tlsCrt, opts.tlsKey, opts.tlsCA)
+		if err != nil {
+			panic(err)
+		}
+		listeners["https"] = startHttpListener(opts.httpsAddr, tlsConfigServer)
 	}
 
 	// ngrok clients
