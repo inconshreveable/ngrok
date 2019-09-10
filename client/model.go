@@ -384,7 +384,9 @@ func (c *ClientModel) proxy() {
 	start := time.Now()
 	var localConn *conn.LoggedConn
 	if c.TLS {
-		localConn, err = conn.DialHTTPS(tunnel.LocalAddr, "prv", &tls.Config{})
+		localConn, err = conn.DialHTTPS(tunnel.LocalAddr, "prv", &tls.Config{
+			InsecureSkipVerify: true,
+		})
 	} else {
 		localConn, err = conn.Dial(tunnel.LocalAddr, "prv", nil)
 	}

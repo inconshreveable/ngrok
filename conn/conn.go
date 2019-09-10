@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	vhost "github.com/inconshreveable/go-vhost"
 	"io"
 	"math/rand"
 	"net"
@@ -13,6 +12,8 @@ import (
 	"net/url"
 	"ngrok/log"
 	"sync"
+
+	vhost "github.com/inconshreveable/go-vhost"
 )
 
 type Conn interface {
@@ -40,6 +41,8 @@ type Listener struct {
 func wrapConn(conn net.Conn, typ string) *LoggedConn {
 	switch c := conn.(type) {
 	case *vhost.HTTPConn:
+		wrapped := c.Conn.(*LoggedConn)
+		return &LoggedConn{tcp: wrapped.tcp, Conn: conn, Logger: wrapped.Logger, id: wrapped.id, typ: wrapped.typ}
 	case *vhost.TLSConn:
 		wrapped := c.Conn.(*LoggedConn)
 		return &LoggedConn{tcp: wrapped.tcp, Conn: conn, Logger: wrapped.Logger, id: wrapped.id, typ: wrapped.typ}
