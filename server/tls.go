@@ -65,7 +65,7 @@ func LoadTLSConfig(crtPath string, keyPath string) (tlsConfig *tls.Config, err e
 	return
 }
 
-func LoadTLSConfigServer(crtPath string, keyPath string, caClientPath string) (tlsConfig *tls.Config, err error) {
+func LoadTLSConfigServer(crtPath string, keyPath string, clientCAPath string) (tlsConfig *tls.Config, err error) {
 	fileOrAsset := func(path string, default_path string) ([]byte, error) {
 		loadFn := ioutil.ReadFile
 		if path == "" {
@@ -77,10 +77,10 @@ func LoadTLSConfigServer(crtPath string, keyPath string, caClientPath string) (t
 	}
 
 	var (
-		crt    []byte
-		key    []byte
-		caCert []byte
-		cert   tls.Certificate
+		crt      []byte
+		key      []byte
+		clientCA []byte
+		cert     tls.Certificate
 	)
 
 	if crt, err = fileOrAsset(crtPath, "assets/server/tls/snakeoil.crt"); err != nil {
@@ -95,16 +95,16 @@ func LoadTLSConfigServer(crtPath string, keyPath string, caClientPath string) (t
 		return
 	}
 
-	if caClientPath != "" {
-		caCert, err = ioutil.ReadFile(caClientPath)
+	if clientCAPath != "" {
+		clientCA, err = ioutil.ReadFile(clientCAPath)
 		if err != nil {
 			return
 		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		clientCAs := x509.NewCertPool()
+		clientCAs.AppendCertsFromPEM(clientCA)
 
 		tlsConfig = &tls.Config{
-			ClientCAs:                caCertPool,
+			ClientCAs:                clientCAs,
 			ClientAuth:               tls.RequireAndVerifyClientCert,
 			Certificates:             []tls.Certificate{cert},
 			MinVersion:               tls.VersionTLS12,
