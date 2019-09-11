@@ -23,11 +23,6 @@ var cyphers = []uint16{
 	tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
 	tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-	tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_RSA_WITH_AES_128_CBC_SHA,
 }
 
 func LoadTLSConfig(crtPath string, keyPath string) (tlsConfig *tls.Config, err error) {
@@ -70,7 +65,7 @@ func LoadTLSConfig(crtPath string, keyPath string) (tlsConfig *tls.Config, err e
 	return
 }
 
-func LoadTLSConfigServer(crtPath string, keyPath string, caPath string) (tlsConfig *tls.Config, err error) {
+func LoadTLSConfigServer(crtPath string, keyPath string, caClientPath string) (tlsConfig *tls.Config, err error) {
 	fileOrAsset := func(path string, default_path string) ([]byte, error) {
 		loadFn := ioutil.ReadFile
 		if path == "" {
@@ -100,8 +95,8 @@ func LoadTLSConfigServer(crtPath string, keyPath string, caPath string) (tlsConf
 		return
 	}
 
-	if caPath != "" {
-		caCert, err = ioutil.ReadFile(caPath)
+	if caClientPath != "" {
+		caCert, err = ioutil.ReadFile(caClientPath)
 		if err != nil {
 			return
 		}
@@ -109,7 +104,6 @@ func LoadTLSConfigServer(crtPath string, keyPath string, caPath string) (tlsConf
 		caCertPool.AppendCertsFromPEM(caCert)
 
 		tlsConfig = &tls.Config{
-			RootCAs:                  caCertPool,
 			ClientCAs:                caCertPool,
 			ClientAuth:               tls.RequireAndVerifyClientCert,
 			Certificates:             []tls.Certificate{cert},

@@ -133,7 +133,7 @@ func Main() {
 
 	// listen for https
 	if opts.httpsAddr != "" {
-		tlsConfigServer, err := LoadTLSConfigServer(opts.tlsCrt, opts.tlsKey, opts.tlsCA)
+		tlsConfigServer, err := LoadTLSConfigServer(opts.tlsCrt, opts.tlsKey, opts.tlsClientCA)
 		if err != nil {
 			panic(err)
 		}
