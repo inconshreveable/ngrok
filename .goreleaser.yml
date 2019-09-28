@@ -47,6 +47,17 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+
 brews:
   - name: pgrok
     github:
@@ -58,3 +69,5 @@ brews:
     folder: Formula
     homepage: "https://github.com/jerson/pgrok"
     description: "Introspected tunnels to localhost a fork from pgrok."
+    test: |
+      system "#{bin}/pgrok -v"

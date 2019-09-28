@@ -2,6 +2,15 @@
 # pgrok - Introspected tunnels to localhost 
 ### ”I want to expose a local server behind a NAT or firewall to the internet.”
 
+# Install
+
+Install supports **Linux** and **MacOS** with **homebrew**
+```bash
+brew install jerson/tap/pgrok
+```
+
+# Download
+just download in [Release section](https://github.com/jerson/pgrok/releases)
 
 ## What is pgrok?
 pgrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
