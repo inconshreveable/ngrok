@@ -66,13 +66,15 @@ pgrok captures and analyzes all traffic over the tunnel for later inspection and
 
 ## Compile for linux
 
-```
+```bash
+git clone https://github.com/jerson/pgrok && cd pgrok
 docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
 ```
 
 ## Cross compile
 
-```
+```bash
+git clone https://github.com/jerson/pgrok && cd pgrok
 docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
   make deps
   mkdir build
