@@ -70,13 +70,3 @@ brews:
     description: "Introspected tunnels to localhost a fork from pgrok."
     test: |
       system "#{bin}/pgrok -v"
-dockers:
-  - image_templates:
-      - 'jerson/pgrok:{{ .Tag }}'
-      - 'jerson/pgrok:latest'
-    goos: linux
-    goarch: amd64
-    goarm: ''
-    binaries:
-      - pgrok
-      - pgrokd
