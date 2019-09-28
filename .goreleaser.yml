@@ -72,18 +72,20 @@ brews:
       system "#{bin}/pgrok -v"
 dockers:
   - image_templates:
-      - 'jerson/pgrok:{{ .Tag }}'
-      - 'jerson/pgrok:latest'
+      - 'jerson/pgrok:amd64-{{ .Tag }}'
+      - 'jerson/pgrok:amd64-latest'
     goos: linux
     goarch: amd64
+    goarm: ''
+    binaries:
+      - pgrok
+      - pgrokd
+  - image_templates:
+      - 'jerson/pgrok:arm64-{{ .Tag }}'
+      - 'jerson/pgrok:arm64-latest'
+    goos: linux
+    goarch: '
     goarm: arm64
     binaries:
       - pgrok
-  - image_templates:
-      - 'jerson/pgrokd:{{ .Tag }}'
-      - 'jerson/pgrokd:latest'
-    goos: linux
-    goarch: amd64
-    goarm: arm64
-    binaries:
       - pgrokd
