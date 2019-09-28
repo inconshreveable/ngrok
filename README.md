@@ -9,6 +9,28 @@ Install supports **Linux** and **MacOS** with **homebrew**
 ```bash
 brew install jerson/tap/pgrok
 ```
+# Usage
+
+```bash
+pgrok -subdomain=customsubdomain 3000
+```
+sample output
+
+```bash
+pgrok                                                           (Ctrl+C to quit)
+                                                                                
+Tunnel Status                 online                                            
+Version                       3.0/3.0                                           
+Forwarding                    http://customsubdomain.ejemplo.me -> 127.0.0.1:3000            
+Forwarding                    https://customsubdomain.ejemplo.me -> 127.0.0.1:3000           
+Web Interface                 http://127.0.0.1:4040                             
+# Conn                        0                                                 
+Avg Conn Time                 0.00ms 
+```
+
+# Downloads
+
+just download in [Release section](https://github.com/jerson/pgrok/releases)
 
 # Install server
 
@@ -20,11 +42,7 @@ brew install jerson/tap/pgrokd
 
 or you can just download it from download section
 
-# Download
-
-just download in [Release section](https://github.com/jerson/pgrok/releases)
-
-# Docker
+# Install server with Docker
 
 pgrok and pgrokd available in [Docker Hub](https://hub.docker.com/r/jerson/pgrok)
 
@@ -69,33 +87,6 @@ pgrok captures and analyzes all traffic over the tunnel for later inspection and
 ## Developing on pgrok
 
 [pgrok developer's guide](docs/DEVELOPMENT.md)
-
-## Compile with docker
-
-```bash
-git clone https://github.com/jerson/pgrok && cd pgrok
-docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
-```
-
-## Cross compile with docker
-
-```bash
-git clone https://github.com/jerson/pgrok && cd pgrok
-docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
-  make deps
-  make assets
-  mkdir build
-  for GOOS in darwin linux windows; do
-    for GOARCH in 386 amd64; do
-      echo "Building $GOOS-$GOARCH"
-      export GOOS=$GOOS
-      export GOARCH=$GOARCH
-      go build -o ./build/pgrokd-$GOOS-$GOARCH ./cmd/pgrokd
-      go build -o ./build/pgrok-$GOOS-$GOARCH ./cmd/pgrok
-    done
-done
-'
-```
 
 ## Disclaimer
 
