@@ -64,32 +64,5 @@ pgrok captures and analyzes all traffic over the tunnel for later inspection and
 ## Developing on pgrok
 [pgrok developer's guide](docs/DEVELOPMENT.md)
 
-## Compile for linux
-
-```bash
-git clone https://github.com/jerson/pgrok && cd pgrok
-docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
-```
-
-## Cross compile
-
-```bash
-git clone https://github.com/jerson/pgrok && cd pgrok
-docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
-  make deps
-  mkdir build
-  for GOOS in darwin linux windows; do
-    for GOARCH in 386 amd64; do
-      echo "Building $GOOS-$GOARCH"
-      export GOOS=$GOOS
-      export GOARCH=$GOARCH
-      go build -o ./build/pgrokd-$GOOS-$GOARCH ./cmd/pgrokd
-      go build -o ./build/pgrok-$GOOS-$GOARCH ./cmd/pgrok
-    done
-done
-'
-```
-
-
 ## Disclaimer
 pgrok is a fork of ngrok
