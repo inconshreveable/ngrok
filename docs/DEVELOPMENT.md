@@ -11,26 +11,36 @@ The pgrok client is the more complicated piece because it has UIs for displaying
     cd pgrok && make
     pgrok [LOCAL PORT]
 
-There are Makefile targets for compiling just the client or server.
 
-    make client
-    make server
+**NB: You must compile with Go 1.13+!.**
 
-**NB: You must compile with Go 1.1+! You must have Mercurial SCM Installed.**
 
-### Compiling release versions
-Both the client and the server contain static asset files.
-These include TLS/SSL certificates and the html/css/js for the client's web interface.
-The release versions embed all of this data into the binaries themselves, whereas the debug versions read these files from the filesystem.
+## Compiling with docker
 
-*You should always develop on debug versions so that you don't have to recompile when testing changes in the static assets.*
+```bash
+git clone https://github.com/jerson/pgrok && cd pgrok
+docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
+```
 
-There are Makefile targets for compiling the client and server for releases:
+## Cross compiling with docker
 
-    make release-client
-    make release-server
-    make release-all
-
+```bash
+git clone https://github.com/jerson/pgrok && cd pgrok
+docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
+  make deps
+  make assets
+  mkdir build
+  for GOOS in darwin linux windows; do
+    for GOARCH in 386 amd64; do
+      echo "Building $GOOS-$GOARCH"
+      export GOOS=$GOOS
+      export GOARCH=$GOARCH
+      go build -o ./build/pgrokd-$GOOS-$GOARCH ./cmd/pgrokd
+      go build -o ./build/pgrok-$GOOS-$GOARCH ./cmd/pgrok
+    done
+done
+'
+```
 
 ## Developing locally
 The strategy I use for developing on pgrok is to do the following:
