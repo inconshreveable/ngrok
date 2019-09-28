@@ -2,12 +2,13 @@
 package term
 
 import (
-	termbox "github.com/nsf/termbox-go"
 	"pgrok/client/mvc"
 	"pgrok/log"
 	"pgrok/proto"
 	"pgrok/util"
 	"time"
+
+	termbox "github.com/nsf/termbox-go"
 )
 
 type TermView struct {
@@ -75,7 +76,7 @@ func (v *TermView) draw() {
 	case mvc.UpdateReady:
 		updateMsg = "pgrok has updated: restart pgrok for the new version"
 	case mvc.UpdateAvailable:
-		updateMsg = "new version available at https://pgrok.com"
+		updateMsg = "new version available at https://github.com/jerson/pgrok"
 	default:
 		pct := float64(updateStatus) / 100.0
 		const barLength = 25

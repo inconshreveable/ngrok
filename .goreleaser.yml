@@ -4,6 +4,7 @@ env:
 before:
   hooks:
     - make deps
+    - make assets
 builds:
   - env:
       - CGO_ENABLED=0
