@@ -2,12 +2,21 @@
 # pgrok - Introspected tunnels to localhost 
 ### ”I want to expose a local server behind a NAT or firewall to the internet.”
 
-# Install
+# Install client
 
 Install supports **Linux** and **MacOS** with **homebrew**
 ```bash
 brew install jerson/tap/pgrok
 ```
+
+# Install server
+
+Install supports **Linux** and **MacOS** with **homebrew**
+```bash
+brew install jerson/tap/pgrokd
+```
+
+or you can just download it from download section
 
 # Download
 just download in [Release section](https://github.com/jerson/pgrok/releases)

@@ -48,7 +48,24 @@ changelog:
       - "^docs:"
       - "^test:"
 archives:
-  - replacements:
+  - id: pgrokd
+    builds:
+      - pgrokd
+    name_template: "pgrokd_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+  - id: pgrok
+    builds:
+      - pgrok
+    name_template: "pgrok_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    replacements:
       darwin: Darwin
       linux: Linux
       windows: Windows
@@ -59,6 +76,8 @@ archives:
         format: zip
 brews:
   - name: pgrok
+    ids:
+      - pgrok
     github:
       owner: jerson
       name: homebrew-tap
@@ -70,3 +89,17 @@ brews:
     description: "Introspected tunnels to localhost a fork from pgrok."
     test: |
       system "#{bin}/pgrok -v"
+  - name: pgrokd
+    ids:
+      - pgrokd
+    github:
+      owner: jerson
+      name: homebrew-tap
+    commit_author:
+      name: Gerson Alexander Pardo Gamez
+      email: jeral17@gmail.com
+    folder: Formula
+    homepage: "https://github.com/jerson/pgrok"
+    description: "Introspected tunnels to localhost a fork from pgrok."
+    test: |
+      system "#{bin}/pgrokd -v"
