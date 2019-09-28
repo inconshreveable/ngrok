@@ -87,6 +87,8 @@ brews:
     folder: Formula
     homepage: "https://github.com/jerson/pgrok"
     description: "Introspected tunnels to localhost a fork from pgrok."
+    install: |
+      bin.install "pgrok"
     test: |
       system "#{bin}/pgrok -v"
   - name: pgrokd
@@ -101,5 +103,7 @@ brews:
     folder: Formula
     homepage: "https://github.com/jerson/pgrok"
     description: "Introspected tunnels to localhost a fork from pgrok."
+    install: |
+      bin.install "pgrokd"
     test: |
       system "#{bin}/pgrokd -v"
