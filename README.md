@@ -34,12 +34,12 @@ services:
   pgrokd:
     image: jerson/pgrok
     entrypoint: pgrokd    
-    command: -domain sample.com -httpAddr=:8443 -httpsAddr=:9443 -tunnelAddr=:4443 -tlsCrt=/certs/tls.crt -tlsKey=/certs/tls.key
+    command: -domain sample.com -httpAddr=:80 -httpsAddr=:443 -tunnelAddr=:4443 -tlsCrt=/certs/tls.crt -tlsKey=/certs/tls.key
     volumes:
       - /home/certs:/certs
     ports:
-     - 8443:8443
-     - 9443:9443
+     - 80:80
+     - 443:443
      - 4443:4443
 ```
 
