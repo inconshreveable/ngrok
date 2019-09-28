@@ -37,7 +37,7 @@ services:
   pgrokd:
     image: jerson/pgrok
     entrypoint: pgrokd
-    command: -domain sample.com -httpAddr=:80 -httpsAddr=:443 -tunnelAddr=:4443 -tlsCrt=/certs/tls.crt -tlsKey=/certs/tls.key
+    command: -domain ejemplo.me -httpAddr=:80 -httpsAddr=:443 -tunnelAddr=:4443 -tlsCrt=/certs/tls.crt -tlsKey=/certs/tls.key
     volumes:
       - /home/certs:/certs
     ports:
