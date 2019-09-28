@@ -57,7 +57,6 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-
 brews:
   - name: pgrok
     github:
