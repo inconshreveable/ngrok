@@ -91,7 +91,7 @@ brews:
     install: |
       bin.install "pgrok"
     test: |
-      system "#{bin}/pgrok -v"
+      system "#{bin}/pgrok", "-v"
   - name: pgrokd
     ids:
       - pgrokd
@@ -107,4 +107,4 @@ brews:
     install: |
       bin.install "pgrokd"
     test: |
-      system "#{bin}/pgrokd -v"
+      system "#{bin}/pgrokd", "-v"
