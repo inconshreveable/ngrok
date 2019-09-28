@@ -3,7 +3,7 @@
 package client
 
 import (
-	"ngrok/client/mvc"
+	"pgrok/client/mvc"
 )
 
 // no auto-updating in debug mode

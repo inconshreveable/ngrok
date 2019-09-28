@@ -3,9 +3,9 @@
 package client
 
 import (
-	"ngrok/client/mvc"
-	"ngrok/log"
-	"ngrok/version"
+	"pgrok/client/mvc"
+	"pgrok/log"
+	"pgrok/version"
 	"time"
 
 	"gopkg.in/inconshreveable/go-update.v0"
@@ -92,9 +92,9 @@ func applyUpdate(s mvc.State, result *check.Result) {
 		return
 	}
 
-	log.Error("Error while updating ngrok: %v", err)
+	log.Error("Error while updating pgrok: %v", err)
 	if errRecover != nil {
-		log.Error("Error while recovering from failed ngrok update, your binary may be missing: %v", errRecover.Error())
+		log.Error("Error while recovering from failed pgrok update, your binary may be missing: %v", errRecover.Error())
 	}
 
 	// tell the user to update manually

@@ -6,13 +6,13 @@ import (
 	"io/ioutil"
 	"math"
 	"net"
-	"ngrok/client/mvc"
-	"ngrok/conn"
-	"ngrok/log"
-	"ngrok/msg"
-	"ngrok/proto"
-	"ngrok/util"
-	"ngrok/version"
+	"pgrok/client/mvc"
+	"pgrok/conn"
+	"pgrok/log"
+	"pgrok/msg"
+	"pgrok/proto"
+	"pgrok/util"
+	"pgrok/version"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	defaultServerAddr   = "ngrokd.server.com:443"
+	defaultServerAddr   = "pgrokd.server.com:443"
 	defaultInspectAddr  = "127.0.0.1:4040"
 	pingInterval        = 20 * time.Second
 	maxPongLatency      = 15 * time.Second
@@ -417,7 +417,7 @@ Content-Length: %d
 	c.update()
 }
 
-// Hearbeating to ensure our connection ngrokd is still live
+// Hearbeating to ensure our connection pgrokd is still live
 func (c *ClientModel) heartbeat(lastPongAddr *int64, conn conn.Conn) {
 	lastPing := time.Unix(atomic.LoadInt64(lastPongAddr)-1, 0)
 	ping := time.NewTicker(pingInterval)

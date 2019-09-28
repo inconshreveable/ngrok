@@ -1,4 +1,4 @@
-module ngrok
+module pgrok
 
 go 1.12
 

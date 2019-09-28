@@ -4,8 +4,9 @@ vendor/
 client/assets/
 server/assets/
 .idea
-/ngrok*
-/ngrokd*
-/ngrok.exe
-/ngrokd.exe
+/pgrok*
+/pgrokd*
+/pgrok.exe
+/pgrokd.exe
 /build
+/dist

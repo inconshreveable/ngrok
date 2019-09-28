@@ -1,4 +1,4 @@
-image: jerson/go:1.12
+image: jerson/go:1.13
 
 stages:
   - build
@@ -9,7 +9,7 @@ server:
     - make server
   artifacts:
     paths:
-      - ngrokd
+      - pgrokd
     expire_in: 1 week
 
 client:
@@ -18,5 +18,5 @@ client:
     - make client
   artifacts:
     paths:
-      - ngrok
+      - pgrok
     expire_in: 1 week

@@ -3,8 +3,8 @@ package client
 import (
 	"flag"
 	"fmt"
-	"ngrok/version"
 	"os"
+	"pgrok/version"
 )
 
 const usage1 string = `Usage: %s [OPTIONS] <local port or address>
@@ -13,25 +13,25 @@ Options:
 
 const usage2 string = `
 Examples:
-	ngrok 80
-	ngrok -subdomain=example 8080
-	ngrok -proto=tcp 22
-	ngrok -hostname="example.com" -httpauth="user:password" 10.0.0.1
+	pgrok 80
+	pgrok -subdomain=example 8080
+	pgrok -proto=tcp 22
+	pgrok -hostname="example.com" -httpauth="user:password" 10.0.0.1
 
 
-Advanced usage: ngrok [OPTIONS] <command> [command args] [...]
+Advanced usage: pgrok [OPTIONS] <command> [command args] [...]
 Commands:
-	ngrok start [tunnel] [...]    Start tunnels by name from config file
+	pgrok start [tunnel] [...]    Start tunnels by name from config file
 	ngork start-all               Start all tunnels defined in config file
-	ngrok list                    List tunnel names from config file
-	ngrok help                    Print help
-	ngrok version                 Print ngrok version
+	pgrok list                    List tunnel names from config file
+	pgrok help                    Print help
+	pgrok version                 Print pgrok version
 
 Examples:
-	ngrok start www api blog pubsub
-	ngrok -log=stdout -config=ngrok.yml start ssh
-	ngrok start-all
-	ngrok version
+	pgrok start www api blog pubsub
+	pgrok -log=stdout -config=pgrok.yml start ssh
+	pgrok start-all
+	pgrok version
 
 `
 
@@ -61,7 +61,7 @@ func ParseArgs() (opts *Options, err error) {
 	config := flag.String(
 		"config",
 		"",
-		"Path to ngrok configuration file. (default: $HOME/.ngrok)")
+		"Path to pgrok configuration file. (default: $HOME/.pgrok)")
 
 	logto := flag.String(
 		"log",
@@ -76,7 +76,7 @@ func ParseArgs() (opts *Options, err error) {
 	authtoken := flag.String(
 		"authtoken",
 		"",
-		"Authentication token for identifying an ngrok.com account")
+		"Authentication token for identifying an pgrok.com account")
 
 	httpauth := flag.String(
 		"httpauth",
@@ -86,12 +86,12 @@ func ParseArgs() (opts *Options, err error) {
 	subdomain := flag.String(
 		"subdomain",
 		"",
-		"Request a custom subdomain from the ngrok server. (HTTP only)")
+		"Request a custom subdomain from the pgrok server. (HTTP only)")
 
 	hostname := flag.String(
 		"hostname",
 		"",
-		"Request a custom hostname from the ngrok server. (HTTP only) (requires CNAME of your DNS)")
+		"Request a custom hostname from the pgrok server. (HTTP only) (requires CNAME of your DNS)")
 
 	protocol := flag.String(
 		"proto",
@@ -145,8 +145,8 @@ func ParseArgs() (opts *Options, err error) {
 		os.Exit(0)
 	case "":
 		err = fmt.Errorf("Error: Specify a local port to tunnel to, or " +
-			"an ngrok command.\n\nExample: To expose port 80, run " +
-			"'ngrok 80'")
+			"an pgrok command.\n\nExample: To expose port 80, run " +
+			"'pgrok 80'")
 		return
 
 	default:

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/inconshreveable/mousetrap"
 	"math/rand"
-	"ngrok/log"
-	"ngrok/util"
 	"os"
+	"pgrok/log"
+	"pgrok/util"
 	"runtime"
 	"time"
 )
@@ -14,7 +14,7 @@ import (
 func init() {
 	if runtime.GOOS == "windows" {
 		if mousetrap.StartedByExplorer() {
-			fmt.Println("Don't double-click ngrok!")
+			fmt.Println("Don't double-click pgrok!")
 			fmt.Println("You need to open cmd.exe and run it from the command line!")
 			time.Sleep(5 * time.Second)
 			os.Exit(1)

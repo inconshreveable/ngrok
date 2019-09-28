@@ -1,0 +1,22 @@
+on:
+  push:
+    tags:
+      - "v*"
+name: GoReleaser
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@master
+      - name: releaser
+        uses: docker://jerson/goreleaser:0.118
+        run: |
+          go get -u github.com/jteeuwen/go-bindata/go-bindata
+          goreleaser
+        env:
+          GITHUB_TOKEN: ${{ secrets.GLOBAL_GITHUB_TOKEN }}
+        with:
+          args: release
+        if: success()

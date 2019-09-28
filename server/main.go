@@ -3,11 +3,11 @@ package server
 import (
 	"crypto/tls"
 	"math/rand"
-	"ngrok/conn"
-	log "ngrok/log"
-	"ngrok/msg"
-	"ngrok/util"
 	"os"
+	"pgrok/conn"
+	log "pgrok/log"
+	"pgrok/msg"
+	"pgrok/util"
 	"runtime/debug"
 	"time"
 )
@@ -140,6 +140,6 @@ func Main() {
 		listeners["https"] = startHttpListener(opts.httpsAddr, tlsConfigServer)
 	}
 
-	// ngrok clients
+	// pgrok clients
 	tunnelListener(opts.tunnelAddr, tlsConfig)
 }

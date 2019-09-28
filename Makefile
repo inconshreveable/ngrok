@@ -6,17 +6,17 @@ deps: assets
 	go get -d -v ./...
 
 compress:
-	upx ngrokd
-	upx ngrok
+	upx pgrokd
+	upx pgrok
 
 server: deps
-	go build -o ngrokd ./cmd/ngrokd
+	go build -o pgrokd ./cmd/pgrokd
 
 fmt:
 	go fmt ./...
 
 client: deps
-	go build -o ngrok ./cmd/ngrok
+	go build -o pgrok ./cmd/pgrok
 
 assets: client-assets server-assets
 
@@ -40,5 +40,5 @@ clean:
 	rm -rf client/assets/ server/assets/
 
 contributors:
-	echo "Contributors to ngrok, both large and small:\n" > CONTRIBUTORS
+	echo "Contributors to pgrok, both large and small:\n" > CONTRIBUTORS
 	git log --raw | grep "^Author: " | sort | uniq | cut -d ' ' -f2- | sed 's/^/- /' | cut -d '<' -f1 >> CONTRIBUTORS

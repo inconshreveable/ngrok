@@ -10,7 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"ngrok/log"
+	"pgrok/log"
 	"sync"
 
 	vhost "github.com/inconshreveable/go-vhost"
@@ -141,7 +141,7 @@ func DialHttpProxy(proxyUrl, addr, typ string, tlsCfg *tls.Config) (conn *logged
 	if proxyAuth != "" {
 		req.Header.Set("Proxy-Authorization", proxyAuth)
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; ngrok)")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; pgrok)")
 	req.Write(conn)
 
 	// read the proxy's response

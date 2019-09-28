@@ -9,10 +9,10 @@ const crashMessage = `panic: %v
 
 %s
 
-Oh noes! ngrok crashed!
+Oh noes! pgrok crashed!
 
 Please submit the stack trace and any relevant information to:
-github.com/inconshreveable/ngrok/issues`
+github.com/inconshreveable/pgrok/issues`
 
 func MakePanicTrace(err interface{}) string {
 	stackBuf := make([]byte, 4096)

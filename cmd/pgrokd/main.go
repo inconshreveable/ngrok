@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ngrok/server"
+	"pgrok/server"
 )
 
 func main() {

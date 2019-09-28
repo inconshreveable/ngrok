@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ngrok/client"
+	"pgrok/client"
 )
 
 func main() {

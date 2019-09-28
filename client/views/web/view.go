@@ -4,12 +4,12 @@ package web
 import (
 	"github.com/gorilla/websocket"
 	"net/http"
-	"ngrok/client/assets"
-	"ngrok/client/mvc"
-	"ngrok/log"
-	"ngrok/proto"
-	"ngrok/util"
 	"path"
+	"pgrok/client/assets"
+	"pgrok/client/mvc"
+	"pgrok/log"
+	"pgrok/proto"
+	"pgrok/util"
 )
 
 type WebView struct {

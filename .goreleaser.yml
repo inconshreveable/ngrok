@@ -1,0 +1,67 @@
+env:
+  - GO111MODULE=on
+  - GOPROXY=https://goproxy.io
+before:
+  hooks:
+    - make deps
+builds:
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    main: ./cmd/pgrok/main.go
+    id: "pgrok"
+    binary: pgrok
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - i386
+      - arm
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    main: ./cmd/pgrokd/main.go
+    id: "pgrokd"
+    binary: pgrokd
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - i386
+      - arm
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+brews:
+  - name: pgrok
+    github:
+      owner: jerson
+      name: homebrew-tap
+    commit_author:
+      name: Gerson Alexander Pardo Gamez
+      email: jeral17@gmail.com
+    folder: Formula
+    homepage: "https://github.com/jerson/pgrok"
+    description: "Introspected tunnels to localhost a fork from pgrok."

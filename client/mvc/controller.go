@@ -1,7 +1,7 @@
 package mvc
 
 import (
-	"ngrok/util"
+	"pgrok/util"
 )
 
 type Controller interface {

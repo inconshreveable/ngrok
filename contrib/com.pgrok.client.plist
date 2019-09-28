@@ -10,10 +10,10 @@ Unfortunetly I was unable to get any environment variables working in the launch
 	<key>KeepAlive</key>
 	<true/>
 	<key>Label</key>
-	<string>com.ngrok.client</string>
+	<string>com.pgrok.client</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/local/bin/ngrok</string>
+		<string>/usr/local/bin/pgrok</string>
 		<string>-log</string>
 		<string>stdout</string>
 		<string>-subdomain</string>
@@ -21,8 +21,8 @@ Unfortunetly I was unable to get any environment variables working in the launch
 		<string>80</string>
 	</array>
 	<key>StandardOutPath</key>
-	<string>/tmp/ngrok.log</string>
+	<string>/tmp/pgrok.log</string>
 	<key>StandardErrorPath</key>
-	<string>/tmp/ngrok.log</string>
+	<string>/tmp/pgrok.log</string>
 </dict>
 </plist>

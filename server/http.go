@@ -5,15 +5,15 @@ import (
 	"fmt"
 	vhost "github.com/inconshreveable/go-vhost"
 	//"net"
-	"ngrok/conn"
-	"ngrok/log"
+	"pgrok/conn"
+	"pgrok/log"
 	"strings"
 	"time"
 )
 
 const (
 	NotAuthorized = `HTTP/1.0 401 Not Authorized
-WWW-Authenticate: Basic realm="ngrok"
+WWW-Authenticate: Basic realm="pgrok"
 Content-Length: 23
 
 Authorization required

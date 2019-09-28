@@ -3,10 +3,10 @@ package server
 import (
 	"fmt"
 	"io"
-	"ngrok/conn"
-	"ngrok/msg"
-	"ngrok/util"
-	"ngrok/version"
+	"pgrok/conn"
+	"pgrok/msg"
+	"pgrok/util"
+	"pgrok/version"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -97,7 +97,7 @@ func NewControl(ctlConn conn.Conn, authMsg *msg.Auth) {
 	ctlConn.AddLogPrefix(c.id)
 
 	if authMsg.Version != version.Proto {
-		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://ngrok.com", version.MajorMinor(), authMsg.Version))
+		failAuth(fmt.Errorf("Incompatible versions. Server %s, client %s. Download a new version at http://pgrok.com", version.MajorMinor(), authMsg.Version))
 		return
 	}
 
