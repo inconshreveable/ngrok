@@ -102,7 +102,7 @@ brews:
       email: jeral17@gmail.com
     folder: Formula
     homepage: "https://github.com/jerson/pgrok"
-    description: "Introspected tunnels to localhost a fork from pgrok."
+    description: "Server introspected tunnels to localhost a fork from pgrok."
     install: |
       bin.install "pgrokd"
     test: |
