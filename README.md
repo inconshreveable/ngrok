@@ -83,6 +83,7 @@ docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
 git clone https://github.com/jerson/pgrok && cd pgrok
 docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
   make deps
+  make assets
   mkdir build
   for GOOS in darwin linux windows; do
     for GOARCH in 386 amd64; do
