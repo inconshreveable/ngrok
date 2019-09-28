@@ -10,7 +10,7 @@ builds:
     ldflags:
       - -s -w
     main: ./cmd/pgrok/main.go
-    id: "pgrok"
+    id: pgrok
     binary: pgrok
     goos:
       - darwin
@@ -19,14 +19,14 @@ builds:
     goarch:
       - amd64
       - arm64
-      - i386
+      - 386
       - arm
   - env:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
     main: ./cmd/pgrokd/main.go
-    id: "pgrokd"
+    id: pgrokd
     binary: pgrokd
     goos:
       - darwin
@@ -35,7 +35,7 @@ builds:
     goarch:
       - amd64
       - arm64
-      - i386
+      - 386
       - arm
 checksum:
   name_template: "checksums.txt"
@@ -49,8 +49,6 @@ changelog:
       - "^test:"
 brews:
   - name: pgrok
-    ids:
-      - pgrok
     github:
       owner: jerson
       name: homebrew-tap
@@ -60,15 +58,3 @@ brews:
     folder: Formula
     homepage: "https://github.com/jerson/pgrok"
     description: "Introspected tunnels to localhost a fork from pgrok."
-  - name: pgrokd
-    ids:
-      - pgrokd
-    github:
-      owner: jerson
-      name: homebrew-tap
-    commit_author:
-      name: Gerson Alexander Pardo Gamez
-      email: jeral17@gmail.com
-    folder: Formula
-    homepage: "https://github.com/jerson/pgrok"
-    description: "Server for introspected tunnels to localhost a fork from pgrok."
