@@ -25,6 +25,24 @@ just download in [Release section](https://github.com/jerson/pgrok/releases)
 
 pgrok and pgrokd available in [Docker Hub](https://hub.docker.com/r/jerson/pgrok)
 
+Sample server in docker-compose
+
+```yaml
+version: '3.7'
+
+services:
+  pgrokd:
+    image: jerson/pgrok
+    entrypoint: pgrokd    
+    command: -domain sample.com -httpAddr=:8443 -httpsAddr=:9443 -tunnelAddr=:4443 -tlsCrt=/certs/tls.crt -tlsKey=/certs/tls.key
+    volumes:
+      - /home/certs:/certs
+    ports:
+     - 8443:8443
+     - 9443:9443
+     - 4443:4443
+```
+
 ## What is pgrok?
 pgrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
 pgrok captures and analyzes all traffic over the tunnel for later inspection and replay.
