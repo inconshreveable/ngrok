@@ -21,6 +21,10 @@ or you can just download it from download section
 # Download
 just download in [Release section](https://github.com/jerson/pgrok/releases)
 
+# Docker
+
+pgrok and pgrokd available in [Docker Hub](https://hub.docker.com/r/jerson/pgrok)
+
 ## What is pgrok?
 pgrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
 pgrok captures and analyzes all traffic over the tunnel for later inspection and replay.
@@ -41,10 +45,6 @@ pgrok captures and analyzes all traffic over the tunnel for later inspection and
 
 ## Developing on pgrok
 [pgrok developer's guide](docs/DEVELOPMENT.md)
-
-
-## Disclaimer
-pgrok is a fork of ngrok
 
 ## Compile for linux
 
@@ -69,3 +69,7 @@ docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
 done
 '
 ```
+
+
+## Disclaimer
+pgrok is a fork of ngrok
