@@ -1,22 +1,18 @@
-image: jerson/go:1.13
+image: docker:latest
 
 stages:
   - build
 
-server:
-  stage: build
-  script:
-    - make server
-  artifacts:
-    paths:
-      - pgrokd
-    expire_in: 1 week
+variables:
+  APP_VERSION: $CI_COMMIT_REF_NAME
+  REGISTRY: $CI_REGISTRY_IMAGE
 
-client:
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+
+pgrok:
   stage: build
   script:
-    - make client
-  artifacts:
-    paths:
-      - pgrok
-    expire_in: 1 week
+    - docker build --pull -t $REGISTRY:$APP_VERSION  -t $REGISTRY .
+    - docker push $REGISTRY:$APP_VERSION
+    - docker push $REGISTRY
