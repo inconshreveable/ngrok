@@ -1,0 +1,58 @@
+version: 2
+jobs:
+  build-ngrok:
+
+    machine:
+      docker_layer_caching: true
+
+    working_directory: ~/project
+
+    steps:
+      - checkout
+      - run:
+          name: Build ngrokd and ngrok image
+          command: |
+            docker-compose build build
+            docker-compose up build
+            docker-compose build ngrokd ngrok
+
+  build-subdir2subdomain:
+
+    machine:
+      docker_layer_caching: true
+
+    working_directory: ~/project
+
+    steps:
+      - checkout
+      - run:
+          name: Build subdir2subdomain image
+          command: |
+            ./scripts/subdir2subdomain/prepare.sh
+            docker-compose build subdir2subdomain
+
+  push-docker-images:
+
+    machine:
+      docker_layer_caching: true
+
+    working_directory: ~/project
+
+    steps:
+      - checkout
+      - run:
+          name: Build ngrokd and ngrok
+          command: |
+            ./scripts/docker/push.sh
+
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build-ngrok
+      - build-subdir2subdomain
+      - push-docker-images:
+          requires:
+            - build-ngrok
+            - build-subdir2subdomain

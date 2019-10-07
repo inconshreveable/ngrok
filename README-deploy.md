@@ -1,4 +1,4 @@
-# ngrock 
+# ngrok deploy guidline
 
 ## build ngrokd/ngrok docker images
 
@@ -18,10 +18,10 @@ $ docker-compose build subdir2subdomain
 ## Run in local environment
 
 ```sh
-$ docker-compose up -d ngrokd ngrok subdir2subdomain stub-server dnsmasq 
+$ docker-compose up -d ngrokd ngrok subdir2subdomain stub-server dnsmasq
 ```
 
-Access to https://localhost/subdir2subdomain/omura.ngrok-dev/posts
+Access to https://localhost/subdir2subdomain/omura.ngrok-dev/
 
 ## push docker images to github package registry
 
