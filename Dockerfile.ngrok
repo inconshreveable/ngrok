@@ -1,0 +1,17 @@
+FROM ubuntu:latest
+
+WORKDIR /root
+
+ADD ./bin/ngrok .
+
+RUN chmod +x ./ngrok
+
+ENV NGROK_SUB_DOMAIN=
+
+ARG NGROK_DOMAIN=ngrok-dev.enrapt.jp
+ENV NGROK_DOMAIN ${NGROK_DOMAIN}
+
+RUN echo server_addr: $NGROK_DOMAIN:4443 >> ~/.ngrok
+RUN echo trust_host_root_certs: false >> ~/.ngrok
+
+CMD ./ngrok -subdomain=${NGROK_SUB_DOMAIN} 8080

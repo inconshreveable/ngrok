@@ -1,0 +1,15 @@
+FROM ubuntu:latest
+RUN apt-get update
+RUN apt-get install -y build-essential
+RUN apt-get install -y golang
+RUN apt-get install -y openssl
+RUN apt-get install -y git
+
+WORKDIR /ngrok
+
+ARG NGROK_DOMAIN=ngrok-dev.enrapt.jp
+ENV NGROK_DOMAIN ${NGROK_DOMAIN}
+
+ADD . .
+
+CMD ./scripts/ngrok/build.sh

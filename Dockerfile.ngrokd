@@ -1,0 +1,11 @@
+FROM ubuntu:latest
+
+WORKDIR /root
+
+ADD ./bin ./ngrok/bin
+RUN chmod +x ./ngrok/bin/ngrokd
+
+ARG NGROK_DOMAIN=ngrok-dev.enrapt.jp
+ENV NGROK_DOMAIN ${NGROK_DOMAIN}
+
+CMD ./ngrok/bin/ngrokd -httpAddr ":20880" -tlsKey="./ngrok/bin/device.key" -tlsCrt="./ngrok/bin/device.crt" -domain ${NGROK_DOMAIN}

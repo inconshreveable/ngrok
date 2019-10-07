@@ -1,0 +1,36 @@
+version: '2'
+
+services:
+
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    volumes:
+      - ./bin:/ngrok/bin
+
+  ngrokd:
+    build:
+      context: .
+      dockerfile: Dockerfile.ngrokd
+      args:
+        NGROK_DOMAIN: ${NGROK_DOMAIN}
+    ports:
+      - 80:80
+      - 443:443
+
+  ngrok:
+    build:
+      context: .
+      dockerfile: Dockerfile.ngrok
+      args:
+        NGROK_DOMAIN: ${NGROK_DOMAIN}
+    env_file: .env
+    command: ./ngrok -subdomain=${NGROK_SUB_DOMAIN} -log=stdout  stub-server:80
+    links:
+      - ngrokd:${NGROK_DOMAIN}
+
+  stub-server:
+    image: clue/json-server
+    volumes:
+      - ./stub-server:/data
