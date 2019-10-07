@@ -9,3 +9,6 @@ docker push docker.pkg.github.com/enrapt/ngrok/ngrokd:latest
 
 docker tag ngrok_ngrok docker.pkg.github.com/enrapt/ngrok/ngrok:latest
 docker push docker.pkg.github.com/enrapt/ngrok/ngrok:latest
+
+docker tag ngrok_subdir2subdomain docker.pkg.github.com/enrapt/ngrok/subdir2subdomain:latest
+docker push docker.pkg.github.com/enrapt/ngrok/subdir2subdomain:latest

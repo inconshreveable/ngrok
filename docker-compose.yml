@@ -16,8 +16,12 @@ services:
       args:
         NGROK_DOMAIN: ${NGROK_DOMAIN}
     ports:
-      - 80:80
-      - 443:443
+      - 4443:4443
+      - 20880:20880
+    networks:
+      default:
+        ipv4_address: 172.101.0.10
+    dns: 172.101.0.50
 
   ngrok:
     build:
@@ -26,11 +30,49 @@ services:
       args:
         NGROK_DOMAIN: ${NGROK_DOMAIN}
     env_file: .env
-    command: ./ngrok -subdomain=${NGROK_SUB_DOMAIN} -log=stdout  stub-server:80
-    links:
-      - ngrokd:${NGROK_DOMAIN}
+    command: ./ngrok -subdomain=${NGROK_SUB_DOMAIN} -log=stdout stub-server:80
+    networks:
+      default:
+        ipv4_address: 172.101.0.20
+    dns: 172.101.0.50
+
+  subdir2subdomain:
+    build:
+      context: subdir2subdomain
+      dockerfile: Dockerfile
+    ports:
+      - 443:443
+    volumes:
+      - ./subdir2subdomain/nginx.local.conf:/etc/nginx/nginx.conf
+    networks:
+      default:
+        ipv4_address: 172.101.0.30
+    dns: 172.101.0.50
 
   stub-server:
     image: clue/json-server
     volumes:
       - ./stub-server:/data
+    networks:
+      default:
+        ipv4_address: 172.101.0.40
+    dns: 172.101.0.50
+
+  dnsmasq:
+    image: andyshinn/dnsmasq
+    networks:
+      default:
+        ipv4_address: 172.101.0.50
+    extra_hosts:
+      - ${NGROK_SUB_DOMAIN}.${NGROK_DOMAIN}:172.101.0.10
+      - ${NGROK_DOMAIN}:172.101.0.10
+      - stub-server:172.101.0.40
+    restart: always
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.101.0.0/16
