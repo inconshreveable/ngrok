@@ -54,7 +54,7 @@ archives:
       - pgrokd
     name_template: "pgrokd_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     replacements:
-      darwin: Darwin
+      darwin: MacOS
       linux: Linux
       windows: Windows
       386: i386
@@ -67,7 +67,7 @@ archives:
       - pgrok
     name_template: "pgrok_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     replacements:
-      darwin: Darwin
+      darwin: MacOS
       linux: Linux
       windows: Windows
       386: i386
@@ -132,15 +132,3 @@ nfpms:
       - rpm
     builds:
       - pgrok
-  - id: pgrokd
-    homepage: "https://github.com/jerson/pgrok"
-    description: "Server introspected tunnels to localhost a fork from pgrok."
-    maintainer: Gerson Alexander Pardo Gamez <jeral17@gmail.com>
-    license: MIT
-    formats:
-      - deb
-      - rpm
-    recommends:
-      - rpm
-    builds:
-      - pgrokd
