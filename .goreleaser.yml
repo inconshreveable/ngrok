@@ -109,12 +109,23 @@ brews:
     test: |
       system "#{bin}/pgrokd", "-v"
 scoop:
-  bucket:
-    owner: jerson
-    name: scoop-bucket
-  commit_author:
-    name: Gerson Alexander Pardo Gamez
-    email: jeral17@gmail.com
-  homepage: "https://github.com/jerson/pgrok"
-  description: "Introspected tunnels to localhost a fork from pgrok."
-  license: MIT
+  - id: pgrok
+    bucket:
+      owner: jerson
+      name: scoop-bucket
+    commit_author:
+      name: Gerson Alexander Pardo Gamez
+      email: jeral17@gmail.com
+    homepage: "https://github.com/jerson/pgrok"
+    description: "Introspected tunnels to localhost a fork from pgrok."
+    license: MIT
+  - id: pgrokd
+    bucket:
+      owner: jerson
+      name: scoop-bucket
+    commit_author:
+      name: Gerson Alexander Pardo Gamez
+      email: jeral17@gmail.com
+    homepage: "https://github.com/jerson/pgrok"
+    description: "Server introspected tunnels to localhost a fork from pgrok."
+    license: MIT
