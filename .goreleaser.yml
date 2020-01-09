@@ -118,38 +118,29 @@ scoop:
   homepage: "https://github.com/jerson/pgrok"
   description: "Introspected tunnels to localhost a fork from pgrok."
   license: MIT
-  ids:
-    - pgrok
 
 nfpms:
-  - name_template: "{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+  - id: pgrok
     homepage: "https://github.com/jerson/pgrok"
     description: "Introspected tunnels to localhost a fork from pgrok."
     maintainer: Gerson Alexander Pardo Gamez <jeral17@gmail.com>
     license: MIT
-    name: pgrok
-    ids:
-      - pgrok
     formats:
       - deb
       - rpm
-    dependencies:
-      - git
     recommends:
       - rpm
-
-snapcrafts:
-  - name_template: "{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    summary: "Introspected tunnels to localhost a fork from pgrok."
-    description: "Introspected tunnels to localhost a fork from pgrok."
-    grade: stable
-    confinement: classic
-    publish: true
-    name: pgrok
-    ids:
+    builds:
       - pgrok
+  - id: pgrokd
+    homepage: "https://github.com/jerson/pgrok"
+    description: "Server introspected tunnels to localhost a fork from pgrok."
+    maintainer: Gerson Alexander Pardo Gamez <jeral17@gmail.com>
     license: MIT
-    replacements:
-      amd64: 64-bit
-      386: 32-bit
-      darwin: MacOS
+    formats:
+      - deb
+      - rpm
+    recommends:
+      - rpm
+    builds:
+      - pgrokd
