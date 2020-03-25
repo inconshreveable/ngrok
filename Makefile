@@ -50,8 +50,5 @@ registry: registry-build registry-push
 registry-build:
 	docker build --pull -t $(REGISTRY):$(APP_VERSION) .
 
-registry-pull:
-	docker pull $(REGISTRY):$(APP_VERSION)
-
 registry-push:
 	docker push $(REGISTRY):$(APP_VERSION)
