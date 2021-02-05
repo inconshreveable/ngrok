@@ -66,7 +66,7 @@ func LoadTLSConfig(crtPath, keyPath string) (tlsConfig *tls.Config, err error) {
 	return
 }
 
-func LoadTLSConfigServer(crtPath, keyPath, clientCAPath string) (tlsConfig *tls.Config, err error) {
+func LoadTLSConfigWithCA(crtPath, keyPath, clientCAPath string) (tlsConfig *tls.Config, err error) {
 
 	tlsConfig, err = LoadTLSConfig(crtPath, keyPath)
 	if err != nil {

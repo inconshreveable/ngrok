@@ -9,7 +9,7 @@ import (
 	"pgrok/client/assets"
 )
 
-func LoadTLSConfig(rootCertPaths []string) (*tls.Config, error) {
+func LoadTLSRootCAs(rootCertPaths []string) (*x509.CertPool, error) {
 	pool := x509.NewCertPool()
 
 	for _, certPath := range rootCertPaths {
@@ -31,5 +31,13 @@ func LoadTLSConfig(rootCertPaths []string) (*tls.Config, error) {
 		pool.AddCert(certs[0])
 	}
 
-	return &tls.Config{RootCAs: pool}, nil
+	return pool, nil
+}
+
+func LoadTLSCertificate(certPath, certKey string) ([]tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(certPath, certKey)
+	if err != nil {
+		return nil, err
+	}
+	return []tls.Certificate{cert}, nil
 }

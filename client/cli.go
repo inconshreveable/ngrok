@@ -48,6 +48,8 @@ type Options struct {
 	inspectaddr   string
 	inspectpublic bool
 	tls           bool
+	tlsClientCrt  string
+	tlsClientKey  string
 	args          []string
 }
 
@@ -103,6 +105,16 @@ func ParseArgs() (opts *Options, err error) {
 		false,
 		"Use dial for tls port")
 
+	tlsClientCrt := flag.String(
+		"tlsClientCrt",
+		"",
+		"Path to a TLS Client CRT file if server requires")
+
+	tlsClientKey := flag.String(
+		"tlsClientKey",
+		"",
+		"Path to a TLS Client Key file if server requires")
+
 	inspectaddr := flag.String(
 		"inspectaddr",
 		defaultInspectAddr,
@@ -127,6 +139,8 @@ func ParseArgs() (opts *Options, err error) {
 		inspectaddr:   *inspectaddr,
 		inspectpublic: *inspectpublic,
 		tls:           *tls,
+		tlsClientCrt:  *tlsClientCrt,
+		tlsClientKey:  *tlsClientKey,
 		command:       flag.Arg(0),
 	}
 

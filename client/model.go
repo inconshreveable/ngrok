@@ -54,6 +54,8 @@ type ClientModel struct {
 	tunnelConfig  map[string]*TunnelConfiguration
 	configPath    string
 	TLS           bool
+	TLSClientCrt  string
+	TLSClientKey  string
 }
 
 func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
@@ -104,18 +106,33 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 
 		// TLS for dial port
 		TLS: config.TLS,
+
+		// TLSClientCrt for connect using a client certificate
+		TLSClientCrt: config.TLSClientCrt,
+
+		// TLSClientKey for connect using a client certificate
+		TLSClientKey: config.TLSClientKey,
 	}
 
+	m.tlsConfig = &tls.Config{}
 	// configure TLS
 	if config.TrustHostRootCerts {
 		m.Info("Trusting host's root certificates")
-		m.tlsConfig = &tls.Config{}
 	} else {
-		m.Info("Trusting root CAs: %v", rootCrtPaths)
-		var err error
-		if m.tlsConfig, err = LoadTLSConfig(rootCrtPaths); err != nil {
+		m.Info("using root CAs: %v", rootCrtPaths)
+		rootCAs, err := LoadTLSRootCAs(rootCrtPaths)
+		if err != nil {
 			panic(err)
 		}
+		m.tlsConfig.RootCAs = rootCAs
+	}
+
+	if m.TLSClientCrt != "" {
+		certificates, err := LoadTLSCertificate(m.TLSClientCrt, m.TLSClientKey)
+		if err != nil {
+			panic(err)
+		}
+		m.tlsConfig.Certificates = certificates
 	}
 
 	// configure TLS SNI

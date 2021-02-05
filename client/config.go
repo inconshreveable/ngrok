@@ -24,6 +24,8 @@ type Configuration struct {
 	AuthToken          string                          `yaml:"auth_token,omitempty"`
 	Tunnels            map[string]*TunnelConfiguration `yaml:"tunnels,omitempty"`
 	TLS                bool                            `yaml:"tls,omitempty"`
+	TLSClientCrt       string                          `yaml:"tls_client_crt,omitempty"`
+	TLSClientKey       string                          `yaml:"tls_client_key,omitempty"`
 	LogTo              string                          `yaml:"-"`
 	Path               string                          `yaml:"-"`
 }
@@ -80,6 +82,14 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 
 	if opts.inspectaddr != "" {
 		config.InspectAddr = opts.inspectaddr
+	}
+
+	if opts.tlsClientCrt != "" {
+		config.TLSClientCrt = opts.tlsClientCrt
+	}
+
+	if opts.tlsClientKey != "" {
+		config.TLSClientKey = opts.tlsClientKey
 	}
 
 	if config.InspectAddr == "" {

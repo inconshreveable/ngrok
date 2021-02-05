@@ -120,12 +120,6 @@ func Main() {
 	// start listeners
 	listeners = make(map[string]*conn.Listener)
 
-	// load tls configuration
-	tlsConfig, err := LoadTLSConfig(opts.tlsCrt, opts.tlsKey)
-	if err != nil {
-		panic(err)
-	}
-
 	// listen for http
 	if opts.httpAddr != "" {
 		listeners["http"] = startHttpListener(opts.httpAddr, nil)
@@ -133,11 +127,17 @@ func Main() {
 
 	// listen for https
 	if opts.httpsAddr != "" {
-		tlsConfigServer, err := LoadTLSConfigServer(opts.tlsCrt, opts.tlsKey, opts.tlsClientCA)
+		tlsConfigServer, err := LoadTLSConfigWithCA(opts.tlsCrt, opts.tlsKey, opts.tlsClientCA)
 		if err != nil {
 			panic(err)
 		}
 		listeners["https"] = startHttpListener(opts.httpsAddr, tlsConfigServer)
+	}
+
+	// load tls configuration
+	tlsConfig, err := LoadTLSConfigWithCA(opts.tlsCrt, opts.tlsKey, opts.tunnelTLSClientCA)
+	if err != nil {
+		panic(err)
 	}
 
 	// pgrok clients
