@@ -80,6 +80,10 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 		config.ServerAddr = defaultServerAddr
 	}
 
+	if opts.serveraddr != "" {
+		config.ServerAddr = opts.serveraddr
+	}
+
 	if opts.inspectaddr != "" {
 		config.InspectAddr = opts.inspectaddr
 	}

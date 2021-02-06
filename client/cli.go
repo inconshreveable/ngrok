@@ -46,6 +46,7 @@ type Options struct {
 	subdomain     string
 	command       string
 	inspectaddr   string
+	serveraddr    string
 	inspectpublic bool
 	tls           bool
 	tlsClientCrt  string
@@ -115,6 +116,11 @@ func ParseArgs() (opts *Options, err error) {
 		"",
 		"Path to a TLS Client Key file if server requires")
 
+	serveraddr := flag.String(
+		"serveraddr",
+		defaultServerAddr,
+		"The addr for server")
+
 	inspectaddr := flag.String(
 		"inspectaddr",
 		defaultInspectAddr,
@@ -136,6 +142,7 @@ func ParseArgs() (opts *Options, err error) {
 		protocol:      *protocol,
 		authtoken:     *authtoken,
 		hostname:      *hostname,
+		serveraddr:    *serveraddr,
 		inspectaddr:   *inspectaddr,
 		inspectpublic: *inspectpublic,
 		tls:           *tls,
