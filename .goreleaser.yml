@@ -94,7 +94,7 @@ brews:
   - name: pgrokd
     ids:
       - pgrokd
-    github:
+    tap:
       owner: jerson
       name: homebrew-tap
     commit_author:
