@@ -27,6 +27,7 @@ jobs:
           sudo apt install -y make
           go get -u golang.org/x/lint/golint
           go get -u github.com/jteeuwen/go-bindata/go-bindata
+          git checkout -f
       - uses: goreleaser/goreleaser-action@v2
         with:
           distribution: goreleaser
