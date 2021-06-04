@@ -78,7 +78,7 @@ brews:
   - name: pgrok
     ids:
       - pgrok
-    github:
+    tap:
       owner: jerson
       name: homebrew-tap
     commit_author:
