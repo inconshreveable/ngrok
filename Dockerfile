@@ -5,15 +5,9 @@ ENV GOPROXY https://proxy.golang.org,direct
 ENV WORKDIR /app
 WORKDIR ${WORKDIR}
 
-RUN echo "@testing http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-    echo "@community http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN apk add --no-cache make
 
-RUN apk add --no-cache binutils make openssh gcc musl-dev build-base \
-                       zip unzip git mercurial curl rpm bash jpegoptim \
-                       pngquant upx@community
-
-RUN mkdir -p /var/log/go/ && \
-    mkdir -p ${GOPATH}/src/ && \
+RUN mkdir -p ${GOPATH}/src/ && \
     mkdir -p ${GOPATH}/bin/
 
 ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
