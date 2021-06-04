@@ -1,6 +1,5 @@
 env:
-  - GO111MODULE=on
-  - GOPROXY=https://goproxy.io
+  - GOPROXY=https://proxy.golang.org,direct
 before:
   hooks:
     - make deps
