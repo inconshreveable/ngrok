@@ -14,7 +14,7 @@ builds:
     binary: pgrok
     targets:
       - darwin_amd64
-#      - darwin_arm64
+      - darwin_arm64
       - windows_amd64
       - windows_arm_6
       - windows_386
@@ -31,7 +31,7 @@ builds:
     binary: pgrokd
     targets:
       - darwin_amd64
-#      - darwin_arm64
+      - darwin_arm64
       - windows_amd64
       - windows_arm_7
       - windows_386
