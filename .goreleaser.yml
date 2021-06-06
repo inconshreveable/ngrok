@@ -12,15 +12,16 @@ builds:
     main: ./cmd/pgrok/main.go
     id: pgrok
     binary: pgrok
-    goos:
-      - darwin
-      - linux
-      - windows
-    goarch:
-      - amd64
-      - arm64
-      - 386
-      - arm
+    targets:
+      - darwin_amd64
+#      - darwin_arm64
+      - windows_amd64
+      - windows_arm_6
+      - windows_386
+      - linux_amd64
+      - linux_arm_7
+      - linux_arm64
+      - linux_386
   - env:
       - CGO_ENABLED=0
     ldflags:
@@ -28,15 +29,16 @@ builds:
     main: ./cmd/pgrokd/main.go
     id: pgrokd
     binary: pgrokd
-    goos:
-      - darwin
-      - linux
-      - windows
-    goarch:
-      - amd64
-      - arm64
-      - 386
-      - arm
+    targets:
+      - darwin_amd64
+#      - darwin_arm64
+      - windows_amd64
+      - windows_arm_7
+      - windows_386
+      - linux_amd64
+      - linux_arm_7
+      - linux_arm64
+      - linux_386
 checksum:
   name_template: "checksums.txt"
 snapshot:
@@ -117,7 +119,6 @@ scoop:
   homepage: "https://github.com/jerson/pgrok"
   description: "Introspected tunnels to localhost a fork from pgrok."
   license: MIT
-
 nfpms:
   - id: pgrok
     homepage: "https://github.com/jerson/pgrok"
@@ -131,3 +132,53 @@ nfpms:
       - rpm
     builds:
       - pgrok
+      - pgrokd
+dockers:
+  - goos: linux
+    goarch: amd64
+    use_buildx: true
+    ids:
+      - pgrok
+      - pgrokd
+    image_templates:
+      - "jerson/pgrok:{{ .Tag }}-amd64"
+      - "jerson/pgrok:latest-amd64"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+    dockerfile: Dockerfile.goreleaser
+  - goos: linux
+    goarch: arm64
+    use_buildx: true
+    ids:
+      - pgrok
+      - pgrokd
+    image_templates:
+      - "jerson/pgrok:{{ .Tag }}-arm64v8"
+      - "jerson/pgrok:latest-arm64v8"
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+    dockerfile: Dockerfile.goreleaser
+  - goos: linux
+    goarch: arm
+    goarm: 7
+    use_buildx: true
+    ids:
+      - pgrok
+      - pgrokd
+    image_templates:
+      - "jerson/pgrok:{{ .Tag }}-armv7"
+      - "jerson/pgrok:latest-armv7"
+    build_flag_templates:
+      - "--platform=linux/arm/v7"
+    dockerfile: Dockerfile.goreleaser
+docker_manifests:
+  - name_template: jerson/pgrok:{{ .Version }}
+    image_templates:
+      - jerson/pgrok:{{ .Version }}-amd64
+      - jerson/pgrok:{{ .Version }}-arm64v8
+      - jerson/pgrok:{{ .Version }}-armv7
+  - name_template: jerson/pgrok:latest
+    image_templates:
+      - jerson/pgrok:latest-amd64
+      - jerson/pgrok:latest-arm64v8
+      - jerson/pgrok:latest-armv7
