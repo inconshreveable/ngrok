@@ -20,14 +20,6 @@ jobs:
           images: |
             jerson/pgrok
             ghcr.io/jerson/pgrok
-          flavor: |
-            latest=auto
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
       - uses: docker/setup-qemu-action@v1
       - uses: docker/setup-buildx-action@v1
       - if: github.event_name != 'pull_request'
