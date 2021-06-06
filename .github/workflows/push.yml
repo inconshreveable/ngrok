@@ -1,0 +1,24 @@
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+
+name: Docker
+jobs:
+  docker:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/setup-qemu-action@v1
+      - uses: docker/setup-buildx-action@v1
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: jerson/pgrok:latest
+      - run: echo ${{ steps.docker_build.outputs.digest }}
