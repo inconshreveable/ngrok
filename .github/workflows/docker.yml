@@ -20,14 +20,14 @@ jobs:
           images: |
             jerson/pgrok
             ghcr.io/jerson/pgrok
+          flavor: |
+            latest=auto
           tags: |
-            type=schedule
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha
       - uses: docker/setup-qemu-action@v1
       - uses: docker/setup-buildx-action@v1
       - if: github.event_name != 'pull_request'
@@ -40,7 +40,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GLOBAL_GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - id: docker_build
         uses: docker/build-push-action@v2
         with:
