@@ -4,9 +4,9 @@ on:
     branches:
       - 'master'
 
-name: Docker
+name: Docker image
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -20,5 +20,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: jerson/pgrok:latest
       - run: echo ${{ steps.docker_build.outputs.digest }}
