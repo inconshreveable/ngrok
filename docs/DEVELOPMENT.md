@@ -1,68 +1,78 @@
-# Developer's guide to ngrok
+# Developer's guide to pgrok
 
 
 ## Components
-The ngrok project is composed of two components, the ngrok client (ngrok) and the ngrok server (ngrokd).
-The ngrok client is the more complicated piece because it has UIs for displaying saved requests and responses.
+The pgrok project is composed of two components, the pgrok client (pgrok) and the pgrok server (pgrokd).
+The pgrok client is the more complicated piece because it has UIs for displaying saved requests and responses.
 
 ## Compiling
 
-    git clone git@github.com:inconshreveable/ngrok.git
-    cd ngrok && make
-    bin/ngrok [LOCAL PORT]
+    git clone git@github.com:jerson/pgrok.git
+    cd pgrok && make
+    pgrok [LOCAL PORT]
 
-There are Makefile targets for compiling just the client or server.
 
-    make client
-    make server
+**NB: You must compile with Go 1.13+!.**
 
-**NB: You must compile with Go 1.1+! You must have Mercurial SCM Installed.**
 
-### Compiling release versions
-Both the client and the server contain static asset files.
-These include TLS/SSL certificates and the html/css/js for the client's web interface.
-The release versions embed all of this data into the binaries themselves, whereas the debug versions read these files from the filesystem.
+## Compiling with docker
 
-*You should always develop on debug versions so that you don't have to recompile when testing changes in the static assets.*
+```bash
+git clone https://github.com/jerson/pgrok && cd pgrok
+docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c 'make'
+```
 
-There are Makefile targets for compiling the client and server for releases:
+## Cross compiling with docker
 
-    make release-client
-    make release-server
-    make release-all
-
+```bash
+git clone https://github.com/jerson/pgrok && cd pgrok
+docker run --rm -it -w /app -v $PWD:/app jerson/go:1.13 sh -c '
+  make deps
+  make assets
+  mkdir build
+  for GOOS in darwin linux windows; do
+    for GOARCH in 386 amd64; do
+      echo "Building $GOOS-$GOARCH"
+      export GOOS=$GOOS
+      export GOARCH=$GOARCH
+      go build -o ./build/pgrokd-$GOOS-$GOARCH ./cmd/pgrokd
+      go build -o ./build/pgrok-$GOOS-$GOARCH ./cmd/pgrok
+    done
+done
+'
+```
 
 ## Developing locally
-The strategy I use for developing on ngrok is to do the following:
+The strategy I use for developing on pgrok is to do the following:
 
 Add the following lines to /etc/hosts:
 
-    127.0.0.1 ngrok.me
-    127.0.0.1 test.ngrok.me
+    127.0.0.1 pgrok.me
+    127.0.0.1 test.pgrok.me
 
-Run ngrokd with the following options:
+Run pgrokd with the following options:
 
-    ./bin/ngrokd -domain ngrok.me
+    ./bin/pgrokd -domain pgrok.me
 
-Create an ngrok configuration file, "debug.yml" with the following contents:
+Create an pgrok configuration file, "debug.yml" with the following contents:
 
-    server_addr: ngrok.me:4443
+    server_addr: pgrok.me:4443
     tunnels:
       test:
         proto:
           http: 8080
 
 
-Then run ngrok with either of these commands:
+Then run pgrok with either of these commands:
 
-    ./bin/ngrok -config=debug.yml -log=ngrok.log start test
-    ./bin/ngrok -config=debug.yml -log=ngrok.log -subdomain=test 8080
+    ./bin/pgrok -config=debug.yml -log=pgrok.log start test
+    ./bin/pgrok -config=debug.yml -log=pgrok.log -subdomain=test 8080
 
-This will get you setup with an ngrok client talking to an ngrok server all locally under your control. Happy hacking!
+This will get you setup with an pgrok client talking to an pgrok server all locally under your control. Happy hacking!
 
 
 ## Network protocol and tunneling
-At a high level, ngrok's tunneling works as follows:
+At a high level, pgrok's tunneling works as follows:
 
 ### Connection Setup and Authentication
 1. The client initiates a long-lived TCP connection to the server over which they will pass JSON instruction messages. This connection is called the *Control Connection*.
@@ -94,30 +104,25 @@ Messages are sent over the wire as netstrings of the form:
 
 The message length is sent as a 64-bit little endian integer.
 
-### Code
-The definitions and shared protocol routines lives under _src/ngrok/msg_
-
-#### src/ngrok/msg/msg.go
+#### msg/msg.go
 All of the different message types (Auth, AuthResp, ReqTunnel, RegProxy, StartProxy, etc) are defined here and their fields documented. This is a good place to go to understand exactly what messages are sent between the client and server.
     
-## ngrokd - the server
+## pgrokd - the server
 ### Code
-Code for the server lives under src/ngrok/server
+Code for the server lives under server
 
 ### Entry point
-The ngrokd entry point is in _src/ngrok/server/main.go_.
-There is a stub at _src/ngrok/main/ngrokd/ngrokd.go_ for the purposes of creating a properly named binary and being in its own "main" package to comply with go's build system.
+The pgrokd entry point is in _/cmd/pgrokd/main.go_.
 
-## ngrok - the client
+## pgrok - the client
 ### Code
-Code for the client lives under src/ngrok/client
+Code for the client lives under client
 
 ### Entry point
-The ngrok entry point is in _src/ngrok/client/main.go_.
-There is a stub at _src/ngrok/main/ngrok/ngrok.go_ for the purposes of creating a properly named binary and being in its own "main" package to comply with go's build system.
+The pgrok entry point is in _cmd/pgrok/main.go_.
 
 ## Static assets
-The html and javascript code for the ngrok web interface as well as other static assets like TLS/SSL certificates live under the top-level _assets_ directory.
+The html and javascript code for the pgrok web interface as well as other static assets like TLS/SSL certificates live under the top-level _assets_ directory.
 
 ## Beyond
 More documentation can be found in the comments of the code itself.

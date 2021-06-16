@@ -1,0 +1,40 @@
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+name: Release
+
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - uses: android-actions/setup-android@v2
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r21d
+      - uses: docker/setup-buildx-action@v1
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Install Deps
+        run: |
+          sudo apt install -y make
+          go get -u golang.org/x/lint/golint
+          go get -u github.com/jteeuwen/go-bindata/go-bindata
+          git checkout -f
+      - uses: goreleaser/goreleaser-action@v2
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --auto-snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GLOBAL_GITHUB_TOKEN }}
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_TOOLCHAIN: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin

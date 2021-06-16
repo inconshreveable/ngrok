@@ -1,50 +1,93 @@
-[![Build
-status](https://travis-ci.org/inconshreveable/ngrok.svg)](https://travis-ci.org/inconshreveable/ngrok)
+# pgrok - Introspected tunnels to localhost
 
-# ngrok - Introspected tunnels to localhost ([homepage](https://ngrok.com))
 ### ”I want to expose a local server behind a NAT or firewall to the internet.”
-![](https://ngrok.com/static/img/overview.png)
 
-## What is ngrok?
-ngrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
-ngrok captures and analyzes all traffic over the tunnel for later inspection and replay.
+# Install client
 
-## ngrok 2.x
+Install supports **Linux** and **MacOS** with **homebrew**
 
-ngrok 2.x is the successor to 1.x and the focus of all current development effort. Its source code is not available.
+```bash
+brew install jerson/tap/pgrok
+```
+# Usage
 
-**NOTE** This repository contains the code for ngrok 1.x.
+```bash
+pgrok -subdomain=customsubdomain 3000
+```
+sample output
 
-## Status of the ngrok 1.x project
+```bash
+pgrok                                                           (Ctrl+C to quit)
+                                                                                
+Tunnel Status                 online                                            
+Version                       3.0/3.0                                           
+Forwarding                    http://customsubdomain.ejemplo.me -> 127.0.0.1:3000            
+Forwarding                    https://customsubdomain.ejemplo.me -> 127.0.0.1:3000           
+Web Interface                 http://127.0.0.1:4040                             
+# Conn                        0                                                 
+Avg Conn Time                 0.00ms 
+```
 
-ngrok 1.x is no longer developed, supported or maintained by its author, except to ensure that the project continues to compile. The contribution policy has the following guidelines:
+# Downloads
 
-1. All issues against this repository will be closed unless they demonstrate a crash or other complete failure of ngrok's functionality.
-2. All issues against this repository are for 1.x only, any issues for 2.x will be closed.
-3. No new features will be added. Any pull requests with new features will be closed. Please fork the project instead.
-4. Pull requests fixing existing bugs or improving documentation are welcomed.
+just download in [Release section](https://github.com/jerson/pgrok/releases)
 
-#### The ngrok 1.x hosted service
+# Install server
 
-ngrok.com ran a pay-what-you-want hosted service of 1.x from early 2013 until April 7, 2016. Afterwards, it only runs 2.x service.
+Install supports **Linux** and **MacOS** with **homebrew**
 
-## Production Use
+```bash
+brew install jerson/tap/pgrokd
+```
 
-**DO NOT RUN THIS VERSION OF NGROK (1.X) IN PRODUCTION**. Both the client and server are known to have serious reliability issues including memory and file descriptor leaks as well as crashes. There is also no HA story as the server is a SPOF. You are advised to run 2.0 for any production quality system. 
+or you can just download it from download section
 
-## What can I do with ngrok?
-- Expose any http service behind a NAT or firewall to the internet on a subdomain of ngrok.com
-- Expose any tcp service behind a NAT or firewall to the internet on a random port of ngrok.com
+# Install server with Docker
+
+pgrok and pgrokd available in [Docker Hub](https://hub.docker.com/r/jerson/pgrok)
+
+Sample server in docker-compose
+
+```yaml
+version: "3.7"
+
+services:
+  pgrokd:
+    image: jerson/pgrok
+    entrypoint: pgrokd
+    command: -domain ejemplo.me -httpAddr=:80 -httpsAddr=:443 -tunnelAddr=:4443 -tlsCrt=/certs/tls.crt -tlsKey=/certs/tls.key
+    volumes:
+      - /home/certs:/certs
+    ports:
+      - 80:80
+      - 443:443
+      - 4443:4443
+```
+
+## What is pgrok?
+
+pgrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
+pgrok captures and analyzes all traffic over the tunnel for later inspection and replay.
+
+## What can I do with pgrok?
+
+- Expose any http service behind a NAT or firewall to the internet on a subdomain of ejemplo.me
+- Expose any tcp service behind a NAT or firewall to the internet on a random port of ejemplo.me
 - Inspect all http requests/responses that are transmitted over the tunnel
 - Replay any request that was transmitted over the tunnel
 
+## What is pgrok useful for?
 
-## What is ngrok useful for?
 - Temporarily sharing a website that is only running on your development machine
 - Demoing an app at a hackathon without deploying
 - Developing any services which consume webhooks (HTTP callbacks) by allowing you to replay those requests
 - Debugging and understanding any web service by inspecting the HTTP traffic
 - Running networked services on machines that are firewalled off from the internet
 
-## Developing on ngrok
-[ngrok developer's guide](docs/DEVELOPMENT.md)
+## Developing on pgrok
+
+[pgrok developer's guide](docs/DEVELOPMENT.md)
+
+## Disclaimer
+
+pgrok is a fork of ngrok
