@@ -22,7 +22,6 @@ builds:
       - linux_arm_7
       - linux_arm64
       - linux_386
-      - android_arm_7
       - android_arm64
   - env:
       - CGO_ENABLED=0
