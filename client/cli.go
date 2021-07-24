@@ -118,7 +118,7 @@ func ParseArgs() (opts *Options, err error) {
 
 	serveraddr := flag.String(
 		"serveraddr",
-		defaultServerAddr,
+		"",
 		"The addr for server")
 
 	inspectaddr := flag.String(
