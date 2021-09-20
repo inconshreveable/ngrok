@@ -53,10 +53,13 @@ func NewHttp() *Http {
 	}
 }
 
-func extractBody(r io.Reader) ([]byte, io.ReadCloser, error) {
+func extractBody(r io.ReadCloser) ([]byte, io.ReadCloser, error) {
 	buf := new(bytes.Buffer)
-	_, err := buf.ReadFrom(r)
-	return buf.Bytes(), ioutil.NopCloser(buf), err
+	// copied from https://github.com/xinxin8816/ngrok/commit/3463565536ab417d7c0a1d4b6cf5a073c128f944
+	//_, err := buf.ReadFrom(r)
+	defer r.Close()
+	//return buf.Bytes(), ioutil.NopCloser(buf), err
+	return buf.Bytes(), nil, nil
 }
 
 func (h *Http) GetName() string { return "http" }
