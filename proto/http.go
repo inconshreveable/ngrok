@@ -3,6 +3,8 @@ package proto
 import (
 	"bufio"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -84,7 +86,7 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn, connCtx interf
 
 		// make sure we read the body of the request so that
 		// we don't block the writer
-		_, err = httputil.DumpRequest(req, true)
+		_, err = DumpRequest(req, true)
 
 		h.reqMeter.Mark(1)
 		if err != nil {
@@ -109,6 +111,124 @@ func (h *Http) readRequests(tee *conn.Tee, lastTxn chan *HttpTxn, connCtx interf
 	}
 }
 
+//from httputil, here to use custom drainBody func
+func DumpRequest(req *http.Request, body bool) ([]byte, error) {
+	var err error
+	save := req.Body
+	if !body || req.Body == nil {
+		req.Body = nil
+	} else {
+		save, req.Body, err = drainBody(req.Body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var b bytes.Buffer
+
+	// By default, print out the unmodified req.RequestURI, which
+	// is always set for incoming server requests. But because we
+	// previously used req.URL.RequestURI and the docs weren't
+	// always so clear about when to use DumpRequest vs
+	// DumpRequestOut, fall back to the old way if the caller
+	// provides a non-server Request.
+	reqURI := req.RequestURI
+	if reqURI == "" {
+		reqURI = req.URL.RequestURI()
+	}
+
+	fmt.Fprintf(&b, "%s %s HTTP/%d.%d\r\n", valueOrDefault(req.Method, "GET"),
+		reqURI, req.ProtoMajor, req.ProtoMinor)
+
+	absRequestURI := strings.HasPrefix(req.RequestURI, "http://") || strings.HasPrefix(req.RequestURI, "https://")
+	if !absRequestURI {
+		host := req.Host
+		if host == "" && req.URL != nil {
+			host = req.URL.Host
+		}
+		if host != "" {
+			fmt.Fprintf(&b, "Host: %s\r\n", host)
+		}
+	}
+
+	chunked := len(req.TransferEncoding) > 0 && req.TransferEncoding[0] == "chunked"
+	if len(req.TransferEncoding) > 0 {
+		fmt.Fprintf(&b, "Transfer-Encoding: %s\r\n", strings.Join(req.TransferEncoding, ","))
+	}
+	if req.Close {
+		fmt.Fprintf(&b, "Connection: close\r\n")
+	}
+
+	err = req.Header.WriteSubset(&b, reqWriteExcludeHeaderDump)
+	if err != nil {
+		return nil, err
+	}
+
+	io.WriteString(&b, "\r\n")
+
+	if req.Body != nil {
+		var dest io.Writer = &b
+		if chunked {
+			dest = httputil.NewChunkedWriter(dest)
+		}
+		_, err = io.Copy(dest, req.Body)
+		if chunked {
+			dest.(io.Closer).Close()
+			io.WriteString(&b, "\r\n")
+		}
+	}
+
+	req.Body = save
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+//from httputil, here to use custom drainBody func
+var errNoBody = errors.New("sentinel error value")
+var emptyBody = io.NopCloser(strings.NewReader(""))
+
+type failureToReadBody struct{}
+
+func (failureToReadBody) Read([]byte) (int, error) { return 0, errNoBody }
+func (failureToReadBody) Close() error             { return nil }
+
+// DumpResponse is like DumpRequest but dumps a response.
+func DumpResponse(resp *http.Response, body bool) ([]byte, error) {
+	var b bytes.Buffer
+	var err error
+	save := resp.Body
+	savecl := resp.ContentLength
+
+	if !body {
+		// For content length of zero. Make sure the body is an empty
+		// reader, instead of returning error through failureToReadBody{}.
+		if resp.ContentLength == 0 {
+			resp.Body = emptyBody
+		} else {
+			resp.Body = failureToReadBody{}
+		}
+	} else if resp.Body == nil {
+		resp.Body = emptyBody
+	} else {
+		save, resp.Body, err = drainBody(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = resp.Write(&b)
+	if err == errNoBody {
+		err = nil
+	}
+	resp.Body = save
+	resp.ContentLength = savecl
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
 func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 	for txn := range lastTxn {
 		resp, err := http.ReadResponse(tee.ReadBuffer(), txn.Req.Request)
@@ -121,7 +241,7 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		}
 		// make sure we read the body of the response so that
 		// we don't block the reader
-		_, _ = httputil.DumpResponse(resp, true)
+		_, _ = DumpResponse(resp, true)
 
 		txn.Resp = &HttpResponse{Response: resp}
 		// apparently, Body can be nil in some cases
@@ -174,7 +294,7 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 // debugging only.
 func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
 	var buf bytes.Buffer
-	if _, err = buf.ReadFrom(b); err != nil {
+	if buf.Reset(); err != nil {
 		return nil, nil, err
 	}
 	if err = b.Close(); err != nil {
@@ -251,7 +371,8 @@ func DumpRequestOut(req *http.Request, body bool) ([]byte, error) {
 		req, _ := http.ReadRequest(bufio.NewReader(pr))
 		// THIS IS THE PART THAT'S BROKEN IN THE STDLIB (as of Go 1.3)
 		if req != nil && req.Body != nil {
-			ioutil.ReadAll(req.Body)
+			//this part consumes memory from requests, doesn't appear to be needed
+			//ioutil.ReadAll(req.Body)
 		}
 		dr.c <- strings.NewReader("HTTP/1.1 204 No Content\r\n\r\n")
 	}()
