@@ -20,6 +20,22 @@ fmt:
 client: deps
 	go build -o pgrok ./cmd/pgrok
 
+compile-all:
+	GOOS=linux GOARCH=386 go build -o pgrok_linux_i386 ./cmd/pgrok
+	GOOS=windows GOARCH=386 go build -o pgrok_windows_i386 ./cmd/pgrok
+	GOOS=linux GOARCH=arm64 go build -o pgrok_linux_arm64 ./cmd/pgrok
+	GOOS=windows GOARCH=arm64 go build -o pgrok_windows_arm64 ./cmd/pgrok
+	GOOS=linux GOARCH=amd64 go build -o pgrok_linux_amd64 ./cmd/pgrok
+	GOOS=windows GOARCH=amd64 go build -o pgrok_windows_amd64 ./cmd/pgrok
+
+	GOOS=linux GOARCH=386 go build -o pgrokd_linux_i386 ./cmd/pgrokd
+	GOOS=windows GOARCH=386 go build -o pgrokd_windows_i386 ./cmd/pgrokd
+	GOOS=linux GOARCH=arm64 go build -o pgrokd_linux_arm64 ./cmd/pgrokd
+	GOOS=windows GOARCH=arm64 go build -o pgrokd_windows_arm64 ./cmd/pgrokd
+	GOOS=linux GOARCH=amd64 go build -o pgrokd_linux_amd64 ./cmd/pgrokd
+	GOOS=windows GOARCH=amd64 go build -o pgrokd_windows_amd64 ./cmd/pgrokd
+
+
 assets: client-assets server-assets
 
 go-bindata:

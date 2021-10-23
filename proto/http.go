@@ -118,7 +118,8 @@ func DumpRequest(req *http.Request, body bool) ([]byte, error) {
 	if !body || req.Body == nil {
 		req.Body = nil
 	} else {
-		save, req.Body, err = drainBody(req.Body)
+		//save, req.Body, err = drainBody(req.Body)
+		io.Copy(ioutil.Discard, req.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +213,8 @@ func DumpResponse(resp *http.Response, body bool) ([]byte, error) {
 	} else if resp.Body == nil {
 		resp.Body = emptyBody
 	} else {
-		save, resp.Body, err = drainBody(resp.Body)
+		io.Copy(ioutil.Discard, resp.Body)
+		//save, resp.Body, err = drainBody(resp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -241,6 +243,9 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 		}
 		// make sure we read the body of the response so that
 		// we don't block the reader
+
+		// Drain and close the body to let the Transport reuse the connection
+
 		_, _ = DumpResponse(resp, true)
 
 		txn.Resp = &HttpResponse{Response: resp}
@@ -292,16 +297,17 @@ func (h *Http) readResponses(tee *conn.Tee, lastTxn chan *HttpTxn) {
 // elaborate trick where the other copy is made during Request/Response.Write.
 // This would complicate things too much, given that these functions are for
 // debugging only.
-func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
+/*func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
 	var buf bytes.Buffer
 	if buf.Reset(); err != nil {
 		return nil, nil, err
 	}
+
 	if err = b.Close(); err != nil {
 		return nil, nil, err
 	}
 	return ioutil.NopCloser(&buf), ioutil.NopCloser(bytes.NewReader(buf.Bytes())), nil
-}
+}*/
 
 // dumpConn is a net.Conn which writes to Writer and reads from Reader
 type dumpConn struct {
@@ -339,7 +345,8 @@ func DumpRequestOut(req *http.Request, body bool) ([]byte, error) {
 		}
 	} else {
 		var err error
-		save, req.Body, err = drainBody(req.Body)
+		io.Copy(ioutil.Discard, req.Body)
+		//save, req.Body, err = drainBody(req.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -373,6 +380,9 @@ func DumpRequestOut(req *http.Request, body bool) ([]byte, error) {
 		if req != nil && req.Body != nil {
 			//this part consumes memory from requests, doesn't appear to be needed
 			//ioutil.ReadAll(req.Body)
+			//better way
+			//io.Copy(ioutil.Discard, req.Body)
+
 		}
 		dr.c <- strings.NewReader("HTTP/1.1 204 No Content\r\n\r\n")
 	}()
