@@ -188,7 +188,7 @@ func DumpRequest(req *http.Request, body bool) ([]byte, error) {
 
 //from httputil, here to use custom drainBody func
 var errNoBody = errors.New("sentinel error value")
-var emptyBody = io.NopCloser(strings.NewReader(""))
+var emptyBody = ioutil.NopCloser(strings.NewReader(""))
 
 type failureToReadBody struct{}
 
