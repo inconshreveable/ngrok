@@ -2,6 +2,8 @@
 
 ### ”I want to expose a local server behind a NAT or firewall to the internet.”
 
+**ejemplo.me** service is shuting down, please take a look, https://github.com/jerson/pgrok/issues/20
+
 # Install client
 
 Install supports **Linux** and **MacOS** with **homebrew**
