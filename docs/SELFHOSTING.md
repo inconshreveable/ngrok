@@ -49,7 +49,7 @@ if you include this, all pgrok client will need two aditional arguments to conne
 
      -tunnelTLSClientCA=./ca.crt
 
-to see which parameters pgrok client needs, is in "5. Connect with a client" section
+to see which parameters pgrok client needs, is in "Configure client" section
 
 #### Protect you exposed subdomain with a CA
 
@@ -97,7 +97,7 @@ services:
 
 
 
-## 5. Configure the client
+## 5. Configure client
 
 In order to connect with a client, you'll need to set two options in pgrok's configuration file.
 The pgrok configuration file is a simple YAML file that is read from ~/.pgrok by default. You may specify
