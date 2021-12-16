@@ -49,7 +49,7 @@ if you include this, all pgrok client will need two aditional arguments to conne
 
      -tunnelTLSClientCA=./ca.crt
 
-to see which parameters pgrok client needs, is in "Configure client" section
+to see which parameters pgrok client needs, is in "Connect with a client" section
 
 #### Protect you exposed subdomain with a CA
 
