@@ -99,7 +99,7 @@ services:
 
 ## 5. Configure client
 
-In order to connect with a client, you'll need to set two options in pgrok's configuration file.
+In order to Configure client, you'll need to set two options in pgrok's configuration file.
 The pgrok configuration file is a simple YAML file that is read from ~/.pgrok by default. You may specify
 a custom configuration file path with the -config switch. Your config file must contain the following two
 options.
