@@ -17,7 +17,7 @@ Unfortunetly I was unable to get any environment variables working in the launch
 		<string>-log</string>
 		<string>stdout</string>
 		<string>-subdomain</string>
-		<string>mySubDomain</string>
+		<string>my</string>
 		<string>80</string>
 	</array>
 	<key>StandardOutPath</key>

@@ -1,0 +1,1 @@
+{"buildTargets":[".PHONY","all","assets","bin/go-bindata","clean","client","client-assets","contributors","default","deps","fmt","release-all","release-client","release-server","server","server-assets"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

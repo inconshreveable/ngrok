@@ -1,0 +1,443 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 3.81
+# Copyright (C) 2006  Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.
+# There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+# This program built for i386-apple-darwin11.3.0
+ 
+
+# Make data base, printed on Mon Aug 22 18:59:15 2022
+
+# Variables
+
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+ 
+?F = $(notdir $?)
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# environment
+BASH_SILENCE_DEPRECATION_WARNING = 1
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# makefile
+CURDIR := /Users/dolfly/Projects/github/dolfly/ngrok
+# makefile
+SHELL = /bin/sh
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en","availableLanguages":{},"_languagePackSupport":true}
+# environment
+_ = /usr/bin/make
+# environment
+HOMEBREW_CORE_GIT_REMOTE = https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git
+# environment
+PEAR_HOME = /usr/local/pear
+# environment
+GIFSICLE_OPTS = -k 16 -O3
+# makefile (from `Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# environment
+PERL_MM_OPT = INSTALL_BASE=/Users/dolfly/perl5
+# environment
+__CFBundleIdentifier = com.microsoft.VSCode
+# environment
+VSCODE_CWD = /
+# environment
+PROTOC = /Users/dolfly/.bin/protoc
+# environment
+PATH = /opt/homebrew/opt/mysql@5.7/bin:/Users/dolfly/Library/Python/3.8/bin:/Users/dolfly/.BCloud/bin:/Users/dolfly/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-4.0.1-2021-04-21-1bb58d97e/bin:/Library/Frameworks/Python.framework/Versions/3.7/bin:/usr/local/opt/qt/bin:/Users/dolfly/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Users/dolfly/Work/github/flutter/bin:/Users/dolfly/.cargo/bin:/Users/dolfly/perl5/bin:/Users/dolfly/.bin/protoc/bin:/Users/dolfly/go/bin:/Users/dolfly/.bin/jadx-0.7.1/bin:/Users/dolfly/Library/Android/sdk/build-tools/latest:/Users/dolfly/Library/Android/sdk/platform-tools:/Users/dolfly/Library/Android/sdk/tools:/Users/dolfly/Library/Android/sdk/tools/bin:/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin:/usr/local/pear/bin:/usr/local/sbin:/Users/dolfly/.krew/bin:/Users/dolfly/.bin:/Users/dolfly/.bin/solaria:/Users/dolfly/.bin/matrix:/Users/dolfly/Library/Python/2.7/bin:/usr/local/go/bin:/opt/homebrew/bin:~/.pub-cache/bin:/Users/dolfly/.rvm/bin
+# environment
+SSLKEYLOGFILE = /tmp/sslkeylog.log
+# environment
+LOG_DST = /Users/dolfly/Library/Application Support/Code/logs/20220822T185835/exthost1/dendron.dendron/dendron.log
+# environment
+GO_1_16_HONE = /usr/local/go
+# environment
+SDKMAN_DIR = /Users/dolfly/.sdkman
+# environment
+HADOOP_OPTS = -Djava.library.path=/usr/local/Cellar/hadoop/2.7.2/lib
+# environment
+HELM_EXPERIMENTAL_OCI = 1
+# environment
+HOMEBREW_BREW_GIT_REMOTE = https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.git
+# makefile (from `Makefile', line 2)
+GOPATH := /Users/dolfly/Projects/github/dolfly/ngrok
+# environment
+LOG_LEVEL = info
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# environment
+ANDROID_HOME = /Users/dolfly/Library/Android/sdk
+# environment
+RUSTUP_DIST_SERVER = https://mirrors.ustc.edu.cn/rust-static
+# default
+.FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
+# environment
+HOMEBREW_GITHUB_API_TOKEN = 5da8a4a0aaa497fd019899f9502ac383c68ab2b7
+# environment
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.Q26fg3onVD/Listeners
+# automatic
+%F = $(notdir $%)
+# environment
+JADX_HOME = /Users/dolfly/.bin/jadx-0.7.1
+# environment
+HOME = /Users/dolfly
+# environment
+PWD = /Users/dolfly/Projects/github/dolfly/ngrok
+# environment
+BETTERCAP_GITHUB_API_TOKEN = 5da8a4a0aaa497fd019899f9502ac383c68ab2b7
+# environment
+ORIGINAL_XDG_CURRENT_DESKTOP = undefined
+# environment
+HADOOP_HOME = /usr/local/Cellar/hadoop/2.7.2
+# environment
+DRONE_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZXh0IjoiZG9sZmx5IiwidHlwZSI6InVzZXIifQ.DjqX23JoleIVwRusdnMd0zFgyZesMSEvkeS6arJ0gOs
+# environment
+DRONE_SERVER = http://drone.dongyuezhao.cn
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+HIVE_HOME = /usr/local/Cellar/hive/2.0.1/libexec
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+PERL_MB_OPT = --install_base "/Users/dolfly/perl5"
+# environment
+PERL_LOCAL_LIB_ROOT = /Users/dolfly/perl5
+# default
+MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
+# environment
+PERL5LIB = /Users/dolfly/perl5/lib/perl5
+# environment
+VSCODE_CODE_CACHE_PATH = /Users/dolfly/Library/Application Support/Code/CachedData/da76f93349a72022ca4670c1b84860304616aaa2
+# environment
+LOGNAME = dolfly
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# environment
+HADOOP_COMMON_LIB_NATIVE_DIR = /usr/local/Cellar/hadoop/2.7.2/lib/native
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+HOMEBREW_NO_GITHUB_API = 1
+# environment
+XPC_FLAGS = 0x0
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+PUB_HOSTED_URL = https://pub.flutter-io.cn
+# environment
+JAVA_HOME = /Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home
+# default
+MAKE_VERSION := 3.81
+# environment
+USER = dolfly
+# makefile
+.DEFAULT_GOAL := default
+# environment
+HOMEBREW_BOTTLE_DOMAIN = https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+LOGGER_MODE = debug
+# environment
+BREW_HOME = /usr/local
+# default
+MAKE_COMMAND := /Applications/Xcode.app/Contents/Developer/usr/bin/make
+# environment
+ETCDCTL_API = 3
+# default
+.VARIABLES := 
+# environment
+TMPDIR = /var/folders/k6/ml6kqt5s469__r6qzcdw1f3r0000gp/T/
+# automatic
+*F = $(notdir $*)
+# environment
+VSCODE_IPC_HOOK = /Users/dolfly/Library/Application Support/Code/1.70.0-main.sock
+# environment
+MallocNanoZone = 0
+# makefile
+MAKEFLAGS = Rrqp
+# environment
+MFLAGS = -Rrqp
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+MINISHIFT_GITHUB_API_TOKEN = 5da8a4a0aaa497fd019899f9502ac383c68ab2b7
+# environment
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.80190592.80190598
+# makefile (from `Makefile', line 4)
+BUILDTAGS = debug
+# environment
+FLUTTER_STORAGE_BASE_URL = https://storage.flutter-io.cn
+# automatic
++F = $(notdir $+)
+# environment
+SVN_EDITOR = vim
+# environment
+__CF_USER_TEXT_ENCODING = 0x1F6:0x19:0x34
+# environment
+COMMAND_MODE = unix2003
+# default
+MAKEFILES := 
+# automatic
+<F = $(notdir $<)
+# environment
+EDITOR = vim
+# environment
+LC_ALL = C
+# environment
+GF_PLUGIN_DIR = /usr/local/var/lib/grafana/plugins
+# environment
+GO_1_16_BIN = /usr/local/go/bin
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# environment
+COPYFILE_DISABLE = 1
+# default
+.INCLUDE_DIRS = /usr/local/include
+# environment
+HCAT_HOME = /usr/local/Cellar/hive/2.0.1/libexec/hcatalog
+# environment
+MAKELEVEL := 0
+# environment
+SHLVL = 2
+# environment
+CLICOLOR = 1
+# environment
+LANG = C
+# environment
+VSCODE_PID = 8262
+# environment
+RUSTUP_UPDATE_ROOT = https://mirrors.ustc.edu.cn/rust-static/rustup
+# environment
+SSH_ALL_SCP_STATS = 1
+# environment
+CLASSPAHT = .:/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/dt.jar:/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/tools.jar
+# variable set hash-table stats:
+# Load=106/1024=10%, Rehash=0, Collisions=7/137=5%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 16777232, inode 82006111): 14 files, no impossibilities.
+
+# 14 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+all: fmt client server
+#  Phony target (prerequisite of .PHONY).
+#  Command-line target.
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/2=0%
+
+client: deps
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 17):
+	go install -tags '$(BUILDTAGS)' ngrok/main/ngrok
+	
+
+server-assets: bin/go-bindata
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 31):
+	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
+	-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
+	-o=src/ngrok/server/assets/assets_$(BUILDTAGS).go \
+	assets/server/...
+	
+
+ 
+.PHONY: default server client deps fmt clean all release-all assets client-assets server-assets contributors
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+release-server: server
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+# makefile (from `Makefile', line 39)
+# BUILDTAGS = release
+# variable set hash-table stats:
+# Load=1/32=3%, Rehash=0, Collisions=0/1=0%
+
+deps: assets
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 8):
+	go get -tags '$(BUILDTAGS)' -d -v ngrok/...
+	
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-08-22 18:58:26
+#  File has been updated.
+#  Successfully updated.
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+
+server: deps
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 11):
+	go install -tags '$(BUILDTAGS)' ngrok/main/ngrokd
+	
+
+default: all
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+release-all: fmt release-client release-server
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+
+bin/go-bindata:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 22):
+	GOOS="" GOARCH="" go get github.com/jteeuwen/go-bindata/go-bindata
+	
+
+fmt:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  Implicit/static pattern stem: `'
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := fmt
+# automatic
+# % := 
+# automatic
+# * := 
+# automatic
+# + := 
+# automatic
+# | := 
+# automatic
+# < := 
+# automatic
+# ^ := 
+# automatic
+# ? := 
+# variable set hash-table stats:
+# Load=8/32=25%, Rehash=0, Collisions=1/10=10%
+#  commands to execute (from `Makefile', line 14):
+	go fmt ngrok/...
+	
+
+assets: client-assets server-assets
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+
+contributors:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 51):
+	echo "Contributors to ngrok, both large and small:\n" > CONTRIBUTORS
+	git log --raw | grep "^Author: " | sort | uniq | cut -d ' ' -f2- | sed 's/^/- /' | cut -d '<' -f1 >> CONTRIBUTORS
+	
+
+client-assets: bin/go-bindata
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 25):
+	bin/go-bindata -nomemcopy -pkg=assets -tags=$(BUILDTAGS) \
+	-debug=$(if $(findstring debug,$(BUILDTAGS)),true,false) \
+	-o=src/ngrok/client/assets/assets_$(BUILDTAGS).go \
+	assets/client/...
+	
+
+release-client: client
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+# makefile (from `Makefile', line 36)
+# BUILDTAGS = release
+# variable set hash-table stats:
+# Load=1/32=3%, Rehash=0, Collisions=0/1=0%
+
+clean:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 47):
+	go clean -i -r ngrok/...
+	rm -rf src/ngrok/client/assets/ src/ngrok/server/assets/
+	
+
+# files hash-table stats:
+# Load=19/1024=2%, Rehash=0, Collisions=2/65=3%
+# VPATH Search Paths
+
+# No `vpath' search paths.
+
+# No general (`VPATH' variable) search path.
+
+# # of strings in strcache: 1
+# # of strcache buffers: 1
+# strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
+# strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
+
+# Finished Make data base on Mon Aug 22 18:59:15 2022
+
+ 

@@ -1,0 +1,8 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "editor.quickSuggestions": {
+        "other": "on",
+        "comments": true,
+        "strings": "off"
+    }
+}

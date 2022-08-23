@@ -1,0 +1,18 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/dolfly/Projects/github/dolfly/ngrok'
+go fmt ngrok/...
+GOOS="" GOARCH="" go get github.com/jteeuwen/go-bindata/go-bindata
+bin/go-bindata -nomemcopy -pkg=assets -tags=debug \
+		-debug=true \
+		-o=src/ngrok/client/assets/assets_debug.go \
+		assets/client/...
+bin/go-bindata -nomemcopy -pkg=assets -tags=debug \
+		-debug=true \
+		-o=src/ngrok/server/assets/assets_debug.go \
+		assets/server/...
+go get -tags 'debug' -d -v ngrok/...
+ 
+go install -tags 'debug' ngrok/main/ngrok
+go install -tags 'debug' ngrok/main/ngrokd
+make: Leaving directory `/Users/dolfly/Projects/github/dolfly/ngrok'
+ 
