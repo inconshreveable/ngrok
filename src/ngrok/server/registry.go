@@ -4,10 +4,11 @@ import (
 	"encoding/gob"
 	"fmt"
 	"net"
-	"ngrok/cache"
-	"ngrok/log"
 	"sync"
 	"time"
+
+	"ngrok/src/ngrok/cache"
+	"ngrok/src/ngrok/log"
 )
 
 const (
@@ -122,7 +123,6 @@ func (r *TunnelRegistry) RegisterAndCache(url string, t *Tunnel) (err error) {
 		r.affinity.Set(idCacheKey, cacheUrl(url))
 	}
 	return
-
 }
 
 // Register a tunnel with the following process:

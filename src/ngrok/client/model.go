@@ -3,21 +3,23 @@ package client
 import (
 	"crypto/tls"
 	"fmt"
-	metrics "github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"math"
 	"net"
-	"ngrok/client/mvc"
-	"ngrok/conn"
-	"ngrok/log"
-	"ngrok/msg"
-	"ngrok/proto"
-	"ngrok/util"
-	"ngrok/version"
 	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"ngrok/src/ngrok/client/mvc"
+	"ngrok/src/ngrok/conn"
+	"ngrok/src/ngrok/log"
+	"ngrok/src/ngrok/msg"
+	"ngrok/src/ngrok/proto"
+	"ngrok/src/ngrok/util"
+	"ngrok/src/ngrok/version"
+
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -123,7 +125,6 @@ func newClientModel(config *Configuration, ctl mvc.Controller) *ClientModel {
 // server name in release builds is the host part of the server address
 func serverName(addr string) string {
 	host, _, err := net.SplitHostPort(addr)
-
 	// should never panic because the config parser calls SplitHostPort first
 	if err != nil {
 		panic(err)
@@ -157,6 +158,7 @@ func (c ClientModel) GetBytesInMetrics() (metrics.Counter, metrics.Histogram) {
 func (c ClientModel) GetBytesOutMetrics() (metrics.Counter, metrics.Histogram) {
 	return c.metrics.bytesOutCount, c.metrics.bytesOut
 }
+
 func (c ClientModel) SetUpdateStatus(updateStatus mvc.UpdateStatus) {
 	c.updateStatus = updateStatus
 	c.update()
@@ -271,7 +273,7 @@ func (c *ClientModel) control() {
 	for _, config := range c.tunnelConfig {
 		// create the protocol list to ask for
 		var protocols []string
-		for proto, _ := range config.Protocols {
+		for proto := range config.Protocols {
 			protocols = append(protocols, proto)
 		}
 

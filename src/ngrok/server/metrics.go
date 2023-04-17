@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	gometrics "github.com/rcrowley/go-metrics"
 	"io/ioutil"
 	"net/http"
-	"ngrok/conn"
-	"ngrok/log"
 	"os"
 	"time"
+
+	"ngrok/src/ngrok/conn"
+	"ngrok/src/ngrok/log"
+
+	gometrics "github.com/rcrowley/go-metrics"
 )
 
 var metrics Metrics
@@ -144,7 +146,6 @@ func (m *LocalMetrics) Report() {
 			"bytesIn.count":         m.bytesInCount.Count(),
 			"bytesOut.count":        m.bytesOutCount.Count(),
 		})
-
 		if err != nil {
 			m.Error("Failed to serialize metrics: %v", err)
 			continue
@@ -319,7 +320,7 @@ func (k *KeenIoMetrics) CloseTunnel(t *Tunnel) {
 		Url:      t.url,
 		User:     t.ctl.auth.User,
 		Version:  t.ctl.auth.MmVersion,
-		//Reason: reason,
+		// Reason: reason,
 		Duration:  time.Since(t.start).Seconds(),
 		HttpAuth:  t.req.HttpAuth != "",
 		Subdomain: t.req.Subdomain != "",

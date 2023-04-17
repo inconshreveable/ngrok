@@ -2,14 +2,16 @@
 package web
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
-	"ngrok/client/assets"
-	"ngrok/client/mvc"
-	"ngrok/log"
-	"ngrok/proto"
-	"ngrok/util"
 	"path"
+
+	"ngrok/src/ngrok/client/assets"
+	"ngrok/src/ngrok/client/mvc"
+	"ngrok/src/ngrok/log"
+	"ngrok/src/ngrok/proto"
+	"ngrok/src/ngrok/util"
+
+	"github.com/gorilla/websocket"
 )
 
 type WebView struct {
@@ -36,7 +38,6 @@ func NewWebView(ctl mvc.Controller, addr string) *WebView {
 	// handle web socket connections
 	http.HandleFunc("/_ws", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
-
 		if err != nil {
 			http.Error(w, "Failed websocket upgrade", 400)
 			wv.Warn("Failed websocket upgrade: %v", err)

@@ -3,8 +3,9 @@ package client
 import (
 	"flag"
 	"fmt"
-	"ngrok/version"
 	"os"
+
+	"ngrok/src/ngrok/version"
 )
 
 const usage1 string = `Usage: %s [OPTIONS] <local port or address>

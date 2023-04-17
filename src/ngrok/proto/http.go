@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"ngrok/conn"
-	"ngrok/util"
 	"strings"
 	"sync"
 	"time"
+
+	"ngrok/src/ngrok/conn"
+	"ngrok/src/ngrok/util"
 
 	metrics "github.com/rcrowley/go-metrics"
 )

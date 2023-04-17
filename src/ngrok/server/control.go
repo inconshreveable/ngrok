@@ -3,13 +3,14 @@ package server
 import (
 	"fmt"
 	"io"
-	"ngrok/conn"
-	"ngrok/msg"
-	"ngrok/util"
-	"ngrok/version"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"ngrok/src/ngrok/conn"
+	"ngrok/src/ngrok/msg"
+	"ngrok/src/ngrok/util"
+	"ngrok/src/ngrok/version"
 )
 
 const (

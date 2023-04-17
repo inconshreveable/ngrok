@@ -3,13 +3,14 @@ package server
 import (
 	"crypto/tls"
 	"math/rand"
-	"ngrok/conn"
-	log "ngrok/log"
-	"ngrok/msg"
-	"ngrok/util"
 	"os"
 	"runtime/debug"
 	"time"
+
+	"ngrok/src/ngrok/conn"
+	log "ngrok/src/ngrok/log"
+	"ngrok/src/ngrok/msg"
+	"ngrok/src/ngrok/util"
 )
 
 const (

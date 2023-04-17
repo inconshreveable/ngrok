@@ -2,13 +2,14 @@ package client
 
 import (
 	"fmt"
-	"ngrok/client/mvc"
-	"ngrok/client/views/term"
-	"ngrok/client/views/web"
-	"ngrok/log"
-	"ngrok/proto"
-	"ngrok/util"
 	"sync"
+
+	"ngrok/src/ngrok/client/mvc"
+	"ngrok/src/ngrok/client/views/term"
+	"ngrok/src/ngrok/client/views/web"
+	"ngrok/src/ngrok/log"
+	"ngrok/src/ngrok/proto"
+	"ngrok/src/ngrok/util"
 )
 
 type command interface{}

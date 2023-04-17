@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"ngrok/conn"
-	"ngrok/log"
-	"ngrok/msg"
-	"ngrok/util"
 	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"ngrok/src/ngrok/conn"
+	"ngrok/src/ngrok/log"
+	"ngrok/src/ngrok/msg"
+	"ngrok/src/ngrok/util"
 )
 
 var defaultPortMap = map[string]int{
@@ -223,7 +224,6 @@ func (t *Tunnel) listenTcp(listener *net.TCPListener) {
 
 		// accept public connections
 		tcpConn, err := listener.AcceptTCP()
-
 		if err != nil {
 			// not an error, we're shutting down this tunnel
 			if atomic.LoadInt32(&t.closing) == 1 {

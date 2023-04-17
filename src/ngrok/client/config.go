@@ -2,17 +2,19 @@ package client
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"net"
 	"net/url"
-	"ngrok/log"
 	"os"
 	"os/user"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"ngrok/src/ngrok/log"
+
+	"gopkg.in/yaml.v1"
 )
 
 type Configuration struct {
@@ -162,7 +164,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 
 	// list tunnels
 	case "list":
-		for name, _ := range config.Tunnels {
+		for name := range config.Tunnels {
 			fmt.Println(name)
 		}
 		os.Exit(0)
@@ -184,7 +186,7 @@ func LoadConfiguration(opts *Options) (config *Configuration, err error) {
 			}
 		}
 
-		for name, _ := range config.Tunnels {
+		for name := range config.Tunnels {
 			if !requestedTunnels[name] {
 				delete(config.Tunnels, name)
 			}
@@ -271,6 +273,6 @@ func SaveAuthToken(configPath, authtoken string) (err error) {
 		return
 	}
 
-	err = ioutil.WriteFile(configPath, newConfigBytes, 0600)
+	err = ioutil.WriteFile(configPath, newConfigBytes, 0o600)
 	return
 }
