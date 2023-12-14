@@ -1,9 +1,21 @@
-[![Build
-status](https://travis-ci.org/inconshreveable/ngrok.svg)](https://travis-ci.org/inconshreveable/ngrok)
+# The latest ngrok version can be found at [https://ngrok.com](https://ngrok.com).
+
+Thank you to all the folks who used the original ngrok v1, hardening and providing feedback. We're excited that ngrok lives on with the latest and fully supported version at [https://ngrok.com](https://ngrok.com).
+
+This repository is for the original ngrok v1 which has been unsupported for many years. It has been archived and is no longer actively maintained or monitored.
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+
 
 # ngrok - Introspected tunnels to localhost ([homepage](https://ngrok.com))
 ### ”I want to expose a local server behind a NAT or firewall to the internet.”
-![](https://ngrok.com/static/img/overview.png)
 
 ## What is ngrok?
 ngrok is a reverse proxy that creates a secure tunnel from a public endpoint to a locally running web service.
@@ -17,12 +29,7 @@ ngrok 2.x is the successor to 1.x and the focus of all current development effor
 
 ## Status of the ngrok 1.x project
 
-ngrok 1.x is no longer developed, supported or maintained by its author, except to ensure that the project continues to compile. The contribution policy has the following guidelines:
-
-1. All issues against this repository will be closed unless they demonstrate a crash or other complete failure of ngrok's functionality.
-2. All issues against this repository are for 1.x only, any issues for 2.x will be closed.
-3. No new features will be added. Any pull requests with new features will be closed. Please fork the project instead.
-4. Pull requests fixing existing bugs or improving documentation are welcomed.
+ngrok 1.x is no longer developed, supported or maintained by its author.
 
 #### The ngrok 1.x hosted service
 
