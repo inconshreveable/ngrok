@@ -1,9 +1,8 @@
 # The latest ngrok version can be found at [https://ngrok.com](https://ngrok.com).
 
-This repository is for the original ngrok v1 which has been unsupported for many years. 
+Thank you to all the folks who used the original ngrok v1, hardening and providing feedback. We're excited that ngrok lives on with the latest and fully supported version at [https://ngrok.com](https://ngrok.com).
 
-This repository has been archived and is no longer actively maintained or monitored.
-
+This repository is for the original ngrok v1 which has been unsupported for many years. It has been archived and is no longer actively maintained or monitored.
 <br />
 <br />
 <br />
