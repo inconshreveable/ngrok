@@ -17,7 +17,7 @@ type Options struct {
 
 func parseArgs() *Options {
 	httpAddr := flag.String("httpAddr", ":80", "Public address for HTTP connections, empty string to disable")
-	httpsAddr := flag.String("httpsAddr", ":443", "Public address listening for HTTPS connections, emptry string to disable")
+	httpsAddr := flag.String("httpsAddr", ":443", "Public address listening for HTTPS connections, empty string to disable")
 	tunnelAddr := flag.String("tunnelAddr", ":4443", "Public address listening for ngrok client")
 	domain := flag.String("domain", "ngrok.com", "Domain where the tunnels are hosted")
 	tlsCrt := flag.String("tlsCrt", "", "Path to a TLS certificate file")
