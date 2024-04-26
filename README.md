@@ -2,6 +2,10 @@
 
 [https://ngrok.com](https://ngrok.com)
 
+## ngrok Community on GitHub
+
+If you are having an issue with the ngrok cloud service please open an issue on the [ngrok community on GitHub](https://github.com/ngrok/ngrok)
+
 ## This repository is archived
 
 This is the GitHub repository for the old v1 version of ngrok which was actively developed from 2013-2016.
@@ -10,7 +14,7 @@ This is the GitHub repository for the old v1 version of ngrok which was actively
 
 Thank you to everyone who contributed to ngrok v1 it in its early days with PRs, issues and feedback. If you wish to continue development on this codebase, please fork it.
 
-ngrok's service continues to operate and you can sign up for it here: [https://ngrok.com/signup](https://ngrok.com/signup)
+ngrok's cloud service continues to operate and you can sign up for it here: [https://ngrok.com/signup](https://ngrok.com/signup)
 
 ## What is ngrok?
 
